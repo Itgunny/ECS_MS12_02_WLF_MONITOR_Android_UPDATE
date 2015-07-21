@@ -243,6 +243,7 @@ public class CANUpdatePopup extends Dialog{
 					SectionIndex = CAN1Comm.Get_SectionNumber_RX_REQUEST_PACKET_M_61184_250_83();
 					PacketIndex = CAN1Comm.Get_PacketNumber_RX_REQUEST_PACKET_M_61184_250_83();
 
+					Log.d(TAG, "Request>>FWID:"+FWID+" SectionIndex:"+SectionIndex+" PacketIndex:"+PacketIndex);
 					SendPacket(GetPacketfromFile(_updatefile, _firmwareinfo, SectionIndex, PacketIndex),SectionIndex,PacketIndex,_firmwareinfo.PacketUnitSize);
 
 					DisplayProgress((SectionIndex * _firmwareinfo.NumberofPacket) + PacketIndex);

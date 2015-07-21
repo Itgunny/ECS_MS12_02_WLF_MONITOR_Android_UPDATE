@@ -126,7 +126,7 @@ public class CAN1CommManager extends ICAN1CommManager.Stub{		// ttySAC1(Linux), 
 	@Override
 	public int TxCANToMCU(int PS) {
 		// TODO Auto-generated method stub
-		Log.v(TAG,"TxCommandToMCU");
+		Log.v(TAG,"TxCommandToMCU("+PS+")");
 		return service.UART1_TxComm(PS);
 	}
 	public int TxCMDToMCU(int CMD, int DAT1, int DAT2, int DAT3, int DAT4, int DAT5, int DAT6, int DAT7, int DAT8) {

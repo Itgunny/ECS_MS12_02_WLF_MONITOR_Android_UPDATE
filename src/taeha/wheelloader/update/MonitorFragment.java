@@ -105,7 +105,7 @@ public class MonitorFragment extends Fragment{
 					if(ParentActivity.getisDisConnected() == false){
 						List<File> dirList = getDirFileList(ROOT_PATH_USB);
 						File dir = new File(ROOT_PATH);
-						if(dir.exists()){
+						if(!dir.exists()){
 							dir.mkdirs();
 							Toast.makeText(ParentActivity.getApplicationContext(), "You have to input .pdf file.", 50).show();
 						}
