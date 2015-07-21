@@ -79,6 +79,9 @@ public class CAN1CommManager extends ICAN1CommManager.Stub{		// ttySAC1(Linux), 
 	public int native_system_updates_Native(){
 		return service.native_system_updates();
 	};
+	public int native_system_sync_Native(){
+		return service.native_system_sync();
+	};
 	///////////////////////////////////////////////////////////
 	
 	//////////////////////Register Callback////////////////////

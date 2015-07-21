@@ -7,6 +7,7 @@ interface ICAN1CommManager
 
 	int TxCANToMCU(int PS) ;
 	int native_system_updates_Native();
+	int native_system_sync_Native();
 	
 	//int TxCMDToMCU(int CMD, int DAT);
 	

@@ -55,9 +55,7 @@ public class MCUListFragment extends Fragment{
 			@Override
 			public void onItemClick(AdapterView<?> arg0, View arg1, int arg2, long arg3) {
 				// TODO Auto-generated method stub
-				Log.d(TAG, arg0.getItemAtPosition(arg2).toString());
-				int index = arg0.getItemAtPosition(arg2).toString().indexOf("v");
-				UpdateFile.MCU_FIRMWARE_NAME = arg0.getItemAtPosition(arg2).toString().substring(0, index+1);
+				UpdateFile.MCU_FIRMWARE_NAME = arg0.getItemAtPosition(arg2).toString();
 				Log.d(TAG, "FIRMWARE_NAME : " + UpdateFile.MCU_FIRMWARE_NAME);
 				ParentActivity.showMCUSelect();
 			}

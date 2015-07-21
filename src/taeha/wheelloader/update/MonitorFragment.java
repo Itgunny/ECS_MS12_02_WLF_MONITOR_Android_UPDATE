@@ -107,13 +107,24 @@ public class MonitorFragment extends Fragment{
 						File dir = new File(ROOT_PATH);
 						if(!dir.exists()){
 							dir.mkdirs();
-							Toast.makeText(ParentActivity.getApplicationContext(), "You have to input .pdf file.", 50).show();
+							//Toast.makeText(ParentActivity.getApplicationContext(), "You have to input .pdf file.", 50).show();
 						}
 						try{
 							for(int i = 0; i < dirList.size(); i++){
 								String fileName = dirList.get(i).getName();
 								fileCopy(ROOT_PATH_USB + "/" + fileName, ROOT_PATH + "/" + fileName);
 								Toast.makeText(ParentActivity.getApplicationContext(), "Copy Sucess " + fileName, 50).show();
+								// ++, 150630 cjg	
+					        	Runtime runtime = Runtime.getRuntime();
+					        	Process process;
+					        	try{
+					        		String cmd = "sync";
+					        		process = runtime.exec(cmd);
+					        		Log.d(TAG, "sync");
+					        	}catch(Exception e){
+					        		e.fillInStackTrace();
+					        	}
+					        	// --, 150630 cjg
 							}	
 						}catch(Exception e){
 							Log.d(TAG, "exception");

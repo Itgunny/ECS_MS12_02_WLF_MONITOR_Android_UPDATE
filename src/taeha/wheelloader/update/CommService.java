@@ -95,7 +95,7 @@ public class CommService extends Service{
 		try {
 			System.loadLibrary("can_serial_port");
 			System.loadLibrary("can_data_parsing");
-			System.load("/system/lib/libistrack.so");
+			System.loadLibrary("istrack");
 		} catch (Throwable t) {
 			// TODO: handle exception
 			Log.e(TAG,"Load Library Error");
@@ -105,6 +105,7 @@ public class CommService extends Service{
 	/////////////////////////////////////////////////////////////////////
 	//////////////////NATIVE METHOD/////////////////////////////////////
 	public static native int native_system_updates();
+	public static native int native_system_sync();
 	public native FileDescriptor Open_UART1(String path, int baudrate, int flag);
 	public native void Close_UART1();				
 	public native int Write_UART1(byte[] Data, int size);
@@ -284,6 +285,17 @@ public class CommService extends Service{
 		switch (Data) {
 		case POWER_OFF:
 			SoundPoolKeyButtonEnding.play(SoundID, fVolume, fVolume, 0, 0, 1);
+			// ++, 150630, cjg
+        	Runtime runtime = Runtime.getRuntime();
+        	Process process;
+        	try{
+        		String cmd = "sync";
+        		process = runtime.exec(cmd);
+        		Log.d(TAG, "sync");
+        	}catch(Exception e){
+        		e.fillInStackTrace();
+        	}
+        	// --, 150630, cjg
 			break;
 
 		default:

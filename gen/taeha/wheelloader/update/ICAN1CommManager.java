@@ -74,6 +74,14 @@ reply.writeNoException();
 reply.writeInt(_result);
 return true;
 }
+case TRANSACTION_native_system_sync_Native:
+{
+data.enforceInterface(DESCRIPTOR);
+int _result = this.native_system_sync_Native();
+reply.writeNoException();
+reply.writeInt(_result);
+return true;
+}
 case TRANSACTION_TxUpdate:
 {
 data.enforceInterface(DESCRIPTOR);
@@ -201,6 +209,23 @@ _data.recycle();
 }
 return _result;
 }
+@Override public int native_system_sync_Native() throws android.os.RemoteException
+{
+android.os.Parcel _data = android.os.Parcel.obtain();
+android.os.Parcel _reply = android.os.Parcel.obtain();
+int _result;
+try {
+_data.writeInterfaceToken(DESCRIPTOR);
+mRemote.transact(Stub.TRANSACTION_native_system_sync_Native, _data, _reply, 0);
+_reply.readException();
+_result = _reply.readInt();
+}
+finally {
+_reply.recycle();
+_data.recycle();
+}
+return _result;
+}
 //int TxCMDToMCU(int CMD, int DAT);
 
 @Override public int TxUpdate(byte[] Data, int size) throws android.os.RemoteException
@@ -282,15 +307,17 @@ static final int TRANSACTION_OpenComport = (android.os.IBinder.FIRST_CALL_TRANSA
 static final int TRANSACTION_CloseComport = (android.os.IBinder.FIRST_CALL_TRANSACTION + 1);
 static final int TRANSACTION_TxCANToMCU = (android.os.IBinder.FIRST_CALL_TRANSACTION + 2);
 static final int TRANSACTION_native_system_updates_Native = (android.os.IBinder.FIRST_CALL_TRANSACTION + 3);
-static final int TRANSACTION_TxUpdate = (android.os.IBinder.FIRST_CALL_TRANSACTION + 4);
-static final int TRANSACTION_UART3_UpdatePacketComm = (android.os.IBinder.FIRST_CALL_TRANSACTION + 5);
-static final int TRANSACTION_Callback_KeyButton = (android.os.IBinder.FIRST_CALL_TRANSACTION + 6);
-static final int TRANSACTION_Callback_UpdateResponse = (android.os.IBinder.FIRST_CALL_TRANSACTION + 7);
+static final int TRANSACTION_native_system_sync_Native = (android.os.IBinder.FIRST_CALL_TRANSACTION + 4);
+static final int TRANSACTION_TxUpdate = (android.os.IBinder.FIRST_CALL_TRANSACTION + 5);
+static final int TRANSACTION_UART3_UpdatePacketComm = (android.os.IBinder.FIRST_CALL_TRANSACTION + 6);
+static final int TRANSACTION_Callback_KeyButton = (android.os.IBinder.FIRST_CALL_TRANSACTION + 7);
+static final int TRANSACTION_Callback_UpdateResponse = (android.os.IBinder.FIRST_CALL_TRANSACTION + 8);
 }
 public void OpenComport() throws android.os.RemoteException;
 public void CloseComport() throws android.os.RemoteException;
 public int TxCANToMCU(int PS) throws android.os.RemoteException;
 public int native_system_updates_Native() throws android.os.RemoteException;
+public int native_system_sync_Native() throws android.os.RemoteException;
 //int TxCMDToMCU(int CMD, int DAT);
 
 public int TxUpdate(byte[] Data, int size) throws android.os.RemoteException;

@@ -34,7 +34,7 @@ public class MainActivity extends Activity {
 	
 	
 	public static final int VERSION_HIGH		= 2;
-	public static final int VERSION_LOW			= 4;
+	public static final int VERSION_LOW			= 5;
 	public static final int VERSION_SUB_HIGH	= 0;
 //	public static final int VERSION_SUB_LOW		= 0;
 	
@@ -66,7 +66,8 @@ public class MainActivity extends Activity {
 	////2.4.0 15.06.23
 	// Icon 적용
 	// pdf 파일 복사 버그 수정
-
+	////2.4.0 15.06.30
+	// sync 추가(파일복사)
 	////////////////////////////////////////////////////////////////////
 	
 	public static final int INDEX_MAIN_TOP								= 0X1100;
@@ -165,6 +166,17 @@ public class MainActivity extends Activity {
 							if(countCopy == 0){
 								showMonitorCopyFileToUSBPopup();
 								countCopy = 1;
+								// ++, 150630 cjg	
+					        	Runtime runtime = Runtime.getRuntime();
+					        	Process process;
+					        	try{
+					        		String cmd = "sync";
+					        		process = runtime.exec(cmd);
+					        		Log.d(TAG, "sync");
+					        	}catch(Exception e){
+					        		e.fillInStackTrace();
+					        	}
+					        	// --, 150630 cjg	
 							}
 							
 						}catch(Exception e){
@@ -222,12 +234,12 @@ public class MainActivity extends Activity {
 	public void initContentProvider(){
 		Log.i("PROVIDERT", "B Click Auth get Button!");
 		
-		// ContentResolver 媛앹껜 �뼸�뼱 �삤湲�
+		// ContentResolver 媛앹�?�뼸�뼱 �삤湲�
 		ContentResolver cr = getContentResolver();
-		// ContentProviderDataA �뼱�뵆由ъ��씠�뀡 insert() 硫붿꽌�뱶�뿉 �젒洹�
+		// ContentProviderDataA �뼱�뵆?�ъ��씠��?insert() 硫붿꽌�뱶��?�젒洹�
 		Uri uri = cr.insert(CONTENT_URI, new ContentValues());
 		
-		// ContentProviderDataA �뼱�뵆由ъ��씠�뀡 �뿉�꽌 由ы꽩諛쏆� Data媛� �뀑�똿 �븯湲�
+		// ContentProviderDataA �뼱�뵆?�ъ��씠��?�뿉�꽌 ?�ы꽩諛쏆�?Data媛� �뀑�??�븯湲�
 		List<String> authValues = uri.getPathSegments();
 		String serviceType = authValues.get(0);
 		String authkey = authValues.get(1);
