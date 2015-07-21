@@ -74,10 +74,10 @@ public class UpperFragment extends Fragment{
 
 	private void InitValuables(){
 		Log.d(TAG,"InitValuables");
-		
+		// ++, 150401 cjg
 		strVersion = Integer.toString(ParentActivity.VERSION_HIGH) + "." + Integer.toString(ParentActivity.VERSION_LOW) + "." 
-				+ Integer.toString(ParentActivity.VERSION_SUB_HIGH) + "." + Integer.toString(ParentActivity.VERSION_SUB_LOW);
-		
+				+ Integer.toString(ParentActivity.VERSION_SUB_HIGH);
+		// --, 150401 cjg
 		SetVersion(strVersion);
 	}
 	////////////////////////////////////////////////////////////////////
@@ -122,6 +122,7 @@ public class UpperFragment extends Fragment{
 		InitResource();
 		InitValuables();
 		InitButtonListener();
+		setButtonInvisible(View.INVISIBLE);
 		return mRoot;
 
 	}
@@ -184,27 +185,26 @@ public class UpperFragment extends Fragment{
 		// TODO Auto-generated method stub
 		Log.d(TAG, "onStart");
 		super.onStart();
-
 	}
-
 	@Override
 	public void onStop() {
 		// TODO Auto-generated method stub
 		Log.d(TAG, "onStop");
 		super.onStop();
-
 	}
 	/////////////////////////////////////////////////////////////////////
 	public void SetTitle(String title){
-		
 		textViewTitle.setText(title);
-
 	}
 	public void SetVersion(String version){
 		textViewVersion.setText(version);
 	}
-	
 	public void SetButtonClickable(boolean clickable){
 		imgbtnBack.setClickable(clickable);
 	}
+	//++, 150326 cjg  
+	public void setButtonInvisible(int visibility){
+		imgbtnBack.setVisibility(visibility);
+	}
+	//--, 150326 cjg
 }

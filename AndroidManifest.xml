@@ -2,8 +2,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="taeha.wheelloader.update"
     android:versionCode="1"
-    android:versionName="1.0" >
-
+    android:versionName="1.0">
+	<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+	<uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
     <uses-sdk
         android:minSdkVersion="8"
         android:targetSdkVersion="15" />
@@ -20,7 +21,7 @@
                 <action android:name="taeha.wheelloader.update.CommService" />
             </intent-filter>
         </service>       
-        
+
         <activity
             android:name="taeha.wheelloader.update.MainActivity"
             android:label="@string/app_name" 

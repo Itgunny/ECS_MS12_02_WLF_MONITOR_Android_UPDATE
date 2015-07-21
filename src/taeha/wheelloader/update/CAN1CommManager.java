@@ -43,6 +43,7 @@ public class CAN1CommManager extends ICAN1CommManager.Stub{		// ttySAC1(Linux), 
 	public static final int SA_CLUSTER 	= 0x17;
 	public static final int SA_BKCU		= 0x34;				
 	
+	public static final int LONG_LEFT_RIGHT 	= 0X0100000C;
 	
 	
 	static final RemoteCallbackList<ICAN1CommManagerCallback> callbacks = new RemoteCallbackList<ICAN1CommManagerCallback>();

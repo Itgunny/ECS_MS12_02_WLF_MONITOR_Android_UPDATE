@@ -72,23 +72,23 @@ public class MainFragment extends Fragment{
 			public void onItemClick(AdapterView<?> arg0, View arg1, int arg2,long arg3) {
 				// TODO Auto-generated method stub
 				switch (arg2) {
-				
 				case STATE_MONIOR:
 					ParentActivity.showMonitor();
+					ParentActivity._UpperFragment.setButtonInvisible(View.VISIBLE); // ++, -- 150326 cjg
 					break;
 				case STATE_MCU:
 					ParentActivity.showMCU();
+					ParentActivity._UpperFragment.setButtonInvisible(View.VISIBLE); // ++, -- 150326 cjg
 					break;
 				case STATE_CLUSTER:
 					ParentActivity.showCluster();
+					ParentActivity._UpperFragment.setButtonInvisible(View.VISIBLE); // ++, -- 150326 cjg
 					break;
 				case STATE_BKCU:
 					ParentActivity.showBKCU();
+					ParentActivity._UpperFragment.setButtonInvisible(View.VISIBLE); // ++, -- 150326 cjg
 					break;
-		
-
 				default:
-					
 					break;
 				}
 				
@@ -121,11 +121,14 @@ public class MainFragment extends Fragment{
         mapCluster.put("First Line", ParentActivity.getResources().getString(string.Cluster));
         mapCluster.put("Second Line","");
         data.add(mapCluster);
-        
-        mapBKCU.put("First Line", ParentActivity.getResources().getString(string.BKCU));
-        mapBKCU.put("Second Line","");
-        data.add(mapBKCU);
-        
+        // ++, 150401 cjg
+		if(ParentActivity.isAvailableBKCU.equals("-")){
+		}else{
+			mapBKCU.put("First Line", ParentActivity.getResources().getString(string.BKCU));
+			mapBKCU.put("Second Line","");
+			data.add(mapBKCU);
+		}
+		// --, 150401 cjg
         SimpleAdapter adapter = new SimpleAdapter(ParentActivity, data,
                 android.R.layout.simple_list_item_2, 
                 new String[] {"First Line", "Second Line" }, 

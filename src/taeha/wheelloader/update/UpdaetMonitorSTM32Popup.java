@@ -34,28 +34,28 @@ public class UpdaetMonitorSTM32Popup extends Dialog{
 	private static final String TAG = "UpdaetMonitorSTM32Popup";
 
 	
-	private static final int FILE_DOWN_ENABLE 				= 0x01;
-	private static final int FILE_DOWN_FINISH 				= 0x02;
-	private static final int FILE_DOWN_VERIFY 				= 0x03;
-	private static final int FILE_DOWN_PROGRAM_FAIL 		= 0x04;
-	private static final int FILE_DOWN_VERIFY_FAIL 			= 0x05;
-	private static final int FILE_DOWN_ENABLE_RES 			= 0x01;
-	private static final int FILE_DOWN_FINISH_RES 			= 0x02;
-	private static final int FILE_DOWN_VERIFY_RES 			= 0x03;
-	private static final int FILE_DOWN_PROGRAM_FAIL_RES 	= 0x04;
-	private static final int FILE_DOWN_VERIFY_FAIL_RES 		= 0x05;
+	private static final int FILE_DOWN_ENABLE 				= 0x01; // 1
+	private static final int FILE_DOWN_FINISH 				= 0x02; // 2
+	private static final int FILE_DOWN_VERIFY 				= 0x03; // 3
+	private static final int FILE_DOWN_PROGRAM_FAIL 		= 0x04; // 4
+	private static final int FILE_DOWN_VERIFY_FAIL 			= 0x05; // 5
+	private static final int FILE_DOWN_ENABLE_RES 			= 0x01; // 1
+	private static final int FILE_DOWN_FINISH_RES 			= 0x02; // 2
+	private static final int FILE_DOWN_VERIFY_RES 			= 0x03; // 3
+	private static final int FILE_DOWN_PROGRAM_FAIL_RES 	= 0x04; // 4
+	private static final int FILE_DOWN_VERIFY_FAIL_RES 		= 0x05; // 5
 	
-	private static final int STX = 0x02;
-	private static final int ETX = 0x03;
-	private static final int EOT = 0x04;
-	private static final int ACK = 0x06;
-	private static final int NAK = 0x15;
+	private static final int STX = 0x02; // 1
+	private static final int ETX = 0x03; // 2
+	private static final int EOT = 0x04; // 3
+	private static final int ACK = 0x06; // 4
+	private static final int NAK = 0x15; // 5
 	
 	
-	private static final int TIMEOUT 			= 100;
+	private static final int TIMEOUT 			= 100; //Update 시간초과
 
 	// CAN1CommManager
-	private static CAN1CommManager CAN1Comm;
+	private static CAN1CommManager CAN1Comm;   
 	private static MainActivity ParentActivity;
 	
 	@Override
@@ -94,6 +94,7 @@ public class UpdaetMonitorSTM32Popup extends Dialog{
 
 		
 		int Response = 0;
+		
 		boolean UpdateProgramFlag = false;
 		boolean UpdateVerifyFlag = false;
 		int FactoryInitFlag;
@@ -244,6 +245,7 @@ public class UpdaetMonitorSTM32Popup extends Dialog{
 		
 		// Erase Seq.
 		public boolean EraseFlash(){
+			
 			sendCMD(CAN1Comm.CMD_DOWN,FILE_DOWN_ENABLE,FactoryInitFlag);
 			StartTimeoutTimer();
 			Log.d(TAG,"wait Flash Erase Response");
@@ -304,17 +306,22 @@ public class UpdaetMonitorSTM32Popup extends Dialog{
 		}
 		
 		
-		
+		//Update Program
 		public boolean UpdateProgram(){
-			// TODO Auto-generated method stub
+			// TODO Auto-generated method stub 
+			// Flash 초기화
 			if(EraseFlash() == false){
 				return false;
 			}
+			//Find Update Files
 			UpdateFileFindClass UpdateFile;
 			UpdateFile = new UpdateFileFindClass(ParentActivity);
 			
+			//File & Input Stream.
 			File f;
 			InputStream is;
+			
+			//File Information.
 			long Length = 0;
 			long Index = 0;
 			int TotalPacket = 0;
@@ -322,16 +329,20 @@ public class UpdaetMonitorSTM32Popup extends Dialog{
 			int CRC = 0;
 			int RetryCount = 0;
 			
+			// if f == 1 : get Last Version of Firmware.
 			if(FactoryInitFlag == 1){
 				f = UpdateFile.GetMonitorSTM32FactoryInitUpdateFile();
+			// if f != 1 : update Current Version of Firmware. 
 			}else{
 				f = UpdateFile.GetMonitorSTM32UpdateFile();
 			}
+			// if f == null : false
 			if(f == null){
 				return false;
 			}
 			
 			try {
+				// inputStream : File 초기화
 				is = new FileInputStream(f);
 			} catch (FileNotFoundException e) {
 				// TODO Auto-generated catch block
@@ -340,16 +351,21 @@ public class UpdaetMonitorSTM32Popup extends Dialog{
 				return false;
 			}
 			
+			//Save Length.
 			Length = f.length();
 			
 			
+			//File Data 1024.
+			//Send Data 1030.
 			byte[] FileData = new byte[1024];
 			byte[] SendData = new byte[1030];
 			
-			SendData[0] = STX;
-			SendData[1] = 0;
+			//Send Data STX
+			SendData[0] = STX; // STX
+			SendData[1] = 0; 
 			SendData[2] = 0;
-			SendData[1029] = ETX;
+			SendData[1029] = ETX; // ETX
+			
 			
 			if(Length % 1024 == 0){
 				TotalPacket = (int) (Length / 1024);
@@ -361,22 +377,24 @@ public class UpdaetMonitorSTM32Popup extends Dialog{
 			progressProgram.setMax(TotalPacket);
 			progressVerify.setMax(TotalPacket);
 			
-		
+			
 			for(nProgress = 0; nProgress < TotalPacket; nProgress++){
-				
+				// 값 초기화.
 				for(int j = 0; j < 1024; j++){
 					FileData[j] = (byte)0xFF;
 				}
 				
 				try {
+					// 1024 만큼 읽어온다.
 					nRead = is.read(FileData, 0, 1024);
+					
 					CRC = MakeCrc16(FileData, Crc16Table, 1024);
 				} catch (IOException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
 				
-				
+				// send Data
 				SendData[1] = (byte) (nProgress & 0x00FF);
 				SendData[2] = (byte) ((nProgress & 0xFF00) >> 8);
 				
@@ -573,8 +591,6 @@ public class UpdaetMonitorSTM32Popup extends Dialog{
 				}
 				
 			}
-			
-		
 		}
 		
 		public boolean VerifyUpdateFile(byte[] Data,int size){

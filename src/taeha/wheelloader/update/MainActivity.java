@@ -1,23 +1,30 @@
 package taeha.wheelloader.update;
 
-import java.io.IOException;
 import java.io.OutputStream;
-import java.util.Timer;
+import java.util.List;
 
 import taeha.wheelloader.update.R.string;
-
-import android.os.Bundle;
-import android.os.IBinder;
-import android.os.RemoteException;
 import android.app.Activity;
 import android.app.Dialog;
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
+import android.content.ContentResolver;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.ServiceConnection;
+import android.net.Uri;
+import android.os.Bundle;
+import android.os.Handler;
+import android.os.IBinder;
+import android.os.Message;
+import android.os.RemoteException;
 import android.util.Log;
 import android.view.Menu;
+import android.view.View;
+import android.widget.Toast;
 
 public class MainActivity extends Activity {
 	/////////////////////////////CONSTANT////////////////////////////////
@@ -25,23 +32,28 @@ public class MainActivity extends Activity {
 	
 	
 	public static final int VERSION_HIGH		= 2;
-	public static final int VERSION_LOW			= 0;
+	public static final int VERSION_LOW			= 1;
 	public static final int VERSION_SUB_HIGH	= 0;
-	public static final int VERSION_SUB_LOW		= 4;
+//	public static final int VERSION_SUB_LOW		= 0;
 	
 	////////////////////////////////////////////////////////////////////
 	////2.0.0.2
-	//	Enter DW Mode �� 2�� ������ �߰� (Cluster Serial Flash Erase Time)
+	//	Enter DW Mode 후 2초 딜레이 추가 (Cluster Serial Flash Erase Time)
 	////2.0.0.3
-	// Requeset �� ���� ���� �� 1ȸ ���û
-	// CTS, ACK ���� ���� �� 4ȸ ���û
-	// Status Text �߰� 
-	// CAN Update Popup ���� �� Thread�� ���� ����
-	// CAN Update ���� ����
-	// Bootloader Status ǥ�� �߰�
-	// OS Update �� 3�ʰ� LCD Off CMD �߰�
+	// Request 후 응답 없을 시 1회 재요청
+	// CTS, ACK 응답 없을 시 4회 재요청
+	// Status Text 추가 
+	// CAN Update Popup 종료 시 Thread도 강제 종료
+	// CAN Update 문구 수정
+	// Bootloader Status 표시 추가
+	// OS Update 시 3초간 LCD Off CMD 추가
 	////2.0.0.4
-	// BKCU ������Ʈ �߰� 
+	// BKCU 업데이트 추가 
+	////2.1.0
+	// Monitor Update page에서 Left+Right Long키 입력 시 Error report copy
+	// BKCU CID 판별하여 표시
+	// Version 3자리일 경우 뻗는 현상 개선
+	// 메인 Back 버튼 제거
 	////////////////////////////////////////////////////////////////////
 	
 	public static final int INDEX_MAIN_TOP								= 0X1100;
@@ -51,6 +63,7 @@ public class MainActivity extends Activity {
 	public static final int INDEX_MONITOR_STM32_UPDATE					= 0X2111;
 	public static final int INDEX_MONITOR_ANDROID_OS					= 0X2200;
 	public static final int INDEX_MONITOR_ANDROID_OS_QUESTION			= 0X2210;
+	public static final int INDEX_MONITOR_COPY_TO_USB					= 0X2220;
 	
 	public static final int INDEX_CLUSTER_TOP							= 0X3000;
 	public static final int INDEX_CLUSTER_QUESTION						= 0X3110;
@@ -66,6 +79,7 @@ public class MainActivity extends Activity {
 	
 	public static final int CMD_DUMMY		= 0xF5;
 	
+	public static boolean isDisConnected 				= true;
 	
 	////////////////////////////////////////////////////////////////////
 	
@@ -81,8 +95,9 @@ public class MainActivity extends Activity {
 	///////////////////////////POPUP////////////////////////////////////
 	UpdaetMonitorSTM32Popup.Builder MonitorSTM32Builder;
 	UpdateQuestionMonitorSTM32Popup.Builder MonitorUpdateQuestionBuilder;
+	MonitorCopyErrorToUSB.Builder MonitorCopyErrorToUSBBuilder;
 	////////////////////////////////////////////////////////////////////
-	
+	Handler HandleKeyButton;
 	///////////////////////////VALUABLE/////////////////////////////////
 	public int MenuIndex;
 	
@@ -93,6 +108,29 @@ public class MainActivity extends Activity {
 	public Dialog MenuDialog = null;
 	
 	Process mProcess = null;
+	public static String isAvailableBKCU = "";
+	
+	// ++, 150401 cjg
+	//Content Provider
+	public static final String 	AUTHORITY    = "taeha.wheelloader.fseries_monitor.main";
+	
+	/** ContentProvider �젣怨� �겢�옒�뒪�뿉�꽌 諛쏆쓣 uri.getPathSegments()瑜� �벑濡앺빐 以��떎 
+	 * 	<< content://" + AUTHORITY + PATH_GET>> �떎�쓬遺��꽣 getPathSegments[0] = PATH_GET, 
+	 * [1], [2], [3]... �닚�쑝濡� �굹媛꾨떎.
+	 */
+	public static final String  PATH_GET = "/AUTH_GET";
+	public static final String  PATH_UPDATE = "/AUTH_UPDATE";
+	
+	/** CotentProvider �젒洹쇱쓣 �쐞�븳 ContentResolver 媛앹껜瑜� �깮�꽦�븷 �븣 �꽔�뼱 二쇰뒗 留ㅺ컻蹂��닔�뿉
+	 *  URI瑜� �궗�슜 �븳�떎. 
+	 */
+	public static final Uri 	CONTENT_URI  = 
+			Uri.parse("content://" + AUTHORITY + PATH_GET);
+	
+	public static final Uri 	CONTENT_URI2  = 
+			Uri.parse("content://" + AUTHORITY + PATH_UPDATE);
+	// --, 150401 cjg
+	
 	/////////////////////////////////////////////////////////////////////
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -103,11 +141,74 @@ public class MainActivity extends Activity {
 		InitFragment();
 		InitPopup();
 		InitValuable();
+		initContentProvider();
 		
 		showUpper();
 		showMain();
+		
+		// ++, 150326 cjg	
+		HandleKeyButton = new Handler() {
+			@Override
+			public void handleMessage(Message msg) {
+				if(MonitorCopyErrorToUSBBuilder.isConnectedUsb() == true){
+					showMonitorCopyFileToUSBPopup();
+				}else{
+					Toast.makeText(getApplicationContext(), "Please Connect USB to device.", 500).show();
+				}		
+			}
+		};
+		IntentFilter f = new IntentFilter();
+		f.addAction(Intent.ACTION_MEDIA_MOUNTED);
+		f.addAction(Intent.ACTION_MEDIA_EJECT);
+		f.addDataScheme("file");
+		registerReceiver(mUsbBroadcastReceiver, f);
+		// --, 150326 cjg
+	}
+	// ++, 150326 cjg
+	private BroadcastReceiver mUsbBroadcastReceiver = new BroadcastReceiver(){
+		public static final String TAG = "UsbBroadcastReceiver";
+		@Override
+		public void onReceive(Context context, Intent intent) {
+			// TODO Auto-generated method stub
+			String action = intent.getAction();
+			if(action.equals(Intent.ACTION_MEDIA_MOUNTED)){
+				Toast.makeText(getApplicationContext(), "USB is connected.", 500).show();
+				isDisConnected = false;
+			}else if(action.equals(Intent.ACTION_MEDIA_EJECT)){
+				Toast.makeText(getApplicationContext(), "USB is disconnected.", 500).show();
+				isDisConnected = true;
+			}
+		}
+	};
+	// --, 150326 cjg
+	// ++, 150326 cjg
+	public void initContentProvider(){
+		Log.i("PROVIDERT", "B Click Auth get Button!");
+		
+		// ContentResolver 媛앹껜 �뼸�뼱 �삤湲�
+		ContentResolver cr = getContentResolver();
+		// ContentProviderDataA �뼱�뵆由ъ��씠�뀡 insert() 硫붿꽌�뱶�뿉 �젒洹�
+		Uri uri = cr.insert(CONTENT_URI, new ContentValues());
+		
+		// ContentProviderDataA �뼱�뵆由ъ��씠�뀡 �뿉�꽌 由ы꽩諛쏆� Data媛� �뀑�똿 �븯湲�
+		List<String> authValues = uri.getPathSegments();
+		String serviceType = authValues.get(0);
+		String authkey = authValues.get(1);
+
+		Log.i("PROVIDERT", "B_Return_serviceType = " + serviceType);
+		Log.i("PROVIDERT", "B_Return_authkey = " + authkey);
+		isAvailableBKCU = authkey;
+		Log.d(TAG, "isAvailable BKCU : " + isAvailableBKCU);
+	}
+	// --, 150326 cjg
+	@Override
+	protected void onDestroy() {
+		// TODO Auto-generated method stub
+		super.onDestroy();
+		unregisterReceiver(mUsbBroadcastReceiver);
 	}
 
+	// --, 150326 cjg
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		// Inflate the menu; this adds items to the action bar if it is present.
@@ -144,11 +245,13 @@ public class MainActivity extends Activity {
 		_ClusterFragment = new ClusterFragment();
 		_MCUFragment = new MCUFragment();
 		_BKCUFragment = new BKCUFragment();
+			
 	}
 	
 	public void InitPopup(){
 		MonitorSTM32Builder = new UpdaetMonitorSTM32Popup.Builder(this);
 		MonitorUpdateQuestionBuilder = new UpdateQuestionMonitorSTM32Popup.Builder(this);
+		MonitorCopyErrorToUSBBuilder = new MonitorCopyErrorToUSB.Builder(this);
 	}
 	
 	public void InitValuable(){
@@ -237,6 +340,11 @@ public class MainActivity extends Activity {
 		public void KeyButtonCallBack(int Data) throws RemoteException {
 			// TODO Auto-generated method stub
 			Log.i(TAG,"KeyButton Callback : 0x" + Integer.toHexString(Data));
+			if(Data == CAN1CommManager.LONG_LEFT_RIGHT){
+				if(MenuIndex == INDEX_MONITOR_TOP){
+					HandleKeyButton.sendMessage(HandleKeyButton.obtainMessage(Data));
+				}
+			}
 			
 		}
 		
@@ -432,6 +540,27 @@ public class MainActivity extends Activity {
 		MenuDialog.show();		
 	}
 	
+	public void showMonitorCopyFileToUSBPopup(){
+
+		if(MenuDialog != null){
+			MenuDialog.dismiss();
+			MenuDialog = null;
+		}
+
+		MonitorSTM32Builder.setDismiss(new DialogInterface.OnDismissListener() {
+			
+			@Override
+			public void onDismiss(DialogInterface dialog) {
+				// TODO Auto-generated method stub
+				Log.d(TAG,"onDismiss");
+				
+
+			}
+		});
+		
+		MenuDialog = MonitorCopyErrorToUSBBuilder.create(MonitorCopyErrorToUSBBuilder);
+		MenuDialog.show();		
+	}
 	//////////////////////////////////////////////////////////////////////////////////////
 	
 	
@@ -460,16 +589,22 @@ public class MainActivity extends Activity {
 			
 		case INDEX_MONITOR_TOP:
 			showMain();
+			_UpperFragment.setButtonInvisible(View.INVISIBLE); // ++, -- 150326 cjg
 			break;
 			
 		case INDEX_CLUSTER_TOP:
 			showMain();
+			_UpperFragment.setButtonInvisible(View.INVISIBLE); // ++, -- 150326 cjg
 			break;
 			
 		case INDEX_MCU_TOP:
+			_UpperFragment.setButtonInvisible(View.INVISIBLE); // ++, -- 150326 cjg
 			showMain();
 			break;
-			
+		case INDEX_BKCU_TOP:
+			_UpperFragment.setButtonInvisible(View.INVISIBLE); // ++, -- 150326 cjg
+			showMain();
+			break;
 		case INDEX_MONITOR_ANDROID_OS:
 			showMonitor();
 			break;

@@ -14,6 +14,7 @@
     <string name="Monitor_Android_Boot">Monitor Boot</string>
     <string name="Monitor_Android_Kernel">Monitor Kernel</string>
     <string name="Monitor_Android_App">Monitor App</string>
+    <string name="Monitor_Copy_Errors_To_USB">Monior Copy Errors To USB</string>
     <string name="OK">OK</string>
     <string name="Exit">Exit</string>
     <string name="CANCEL">CANCEL</string>
@@ -28,4 +29,6 @@
     <string name="Update_File_Error">Update File Error</string>
     <string name="Correct_ID">Correct ID</string>
     <string name="Incorrect_ID">Incorrect ID</string>
+    <string name="Copy_To_USB">Copy to USB</string>
+    <string name="Copy_To_USB_Title">Copy Error Report</string>
 </resources>

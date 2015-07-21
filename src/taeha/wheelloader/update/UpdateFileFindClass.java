@@ -179,7 +179,13 @@ public class UpdateFileFindClass {
 		cVersion[0] = strFileName.charAt(VersionStartPosition+1);
 		cVersion[1] = strFileName.charAt(VersionStartPosition+3);
 		cVersion[2] = strFileName.charAt(VersionStartPosition+5);
-		cVersion[3] = strFileName.charAt(VersionStartPosition+7);
+		//++ cjg 150217
+		try{
+			cVersion[3] = strFileName.charAt(VersionStartPosition+7);
+		}catch(StringIndexOutOfBoundsException e){
+			cVersion[3] = '0';
+		}
+		
 		
 		for(int i = 0; i < 4; i++){
 			nVersion[i] = (int)cVersion[i] - 0x30;
@@ -502,8 +508,6 @@ public class UpdateFileFindClass {
 			return Length;
 		}
 	}
-	
-	
 	////////////////////////////////////////////////////////////////////////////////////////////////////////
 	
 	

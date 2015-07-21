@@ -42,6 +42,7 @@ public class MonitorFragment extends Fragment{
 	private static final int STATE_ANDROID_OS	 		= 1;
 	private static final int STATE_ANDROID_APP 			= 2;
 	private static final int STATE_STM32_FACTORYINIT	= 3;
+	private static final int STATE_ERRORREPORT_TO_USB   = 4;
 	/////////////////////////////////////////////////////////////////////
 	/////////////////////RESOURCE////////////////////////////////////////
 	// Fragment Root
@@ -61,6 +62,7 @@ public class MonitorFragment extends Fragment{
 	
 	UpdateFileFindClass UpdateFile;
 	
+	MonitorCopyErrorToUSB monitorCopyErrorToUSB;
 	/////////////////////////////////////////////////////////////////////	
 	
 	///////////////////ANIMATION/////////////////////////////////////////
@@ -96,8 +98,6 @@ public class MonitorFragment extends Fragment{
 					if(UpdateFile.GetMonitorSTM32FactoryInitVersion() != null)
 						ParentActivity.showMonitorFactoryInitUpdateQuestionPopup();
 					break;
-		
-
 				default:
 					
 					break;
@@ -121,7 +121,7 @@ public class MonitorFragment extends Fragment{
 		Map<String, String> mapOS = new HashMap<String, String>(2);
 		Map<String, String> mapApp = new HashMap<String, String>(2);
 		//Factory Init
-		Map<String, String> mapSTM32FactoryInit = new HashMap<String, String>(2);
+		Map<String, String> mapSTM32FactoryInit = new HashMap<String, String>(2); 
 		
 		mapSTM32.put("First Line", ParentActivity.getResources().getString(string.Monitor_STM32));
 		if(UpdateFile.GetMonitorSTM32Version() != null)
@@ -142,7 +142,6 @@ public class MonitorFragment extends Fragment{
         if(UpdateFile.GetMonitorSTM32FactoryInitVersion() != null)
         	mapSTM32FactoryInit.put("Second Line",UpdateFile.GetMonitorSTM32FactoryInitVersion());
         data.add(mapSTM32FactoryInit);
-        
         
         SimpleAdapter adapter = new SimpleAdapter(ParentActivity, data,
                 android.R.layout.simple_list_item_2, 
