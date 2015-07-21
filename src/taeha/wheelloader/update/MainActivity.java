@@ -34,7 +34,7 @@ public class MainActivity extends Activity {
 	
 	
 	public static final int VERSION_HIGH		= 2;
-	public static final int VERSION_LOW			= 3;
+	public static final int VERSION_LOW			= 4;
 	public static final int VERSION_SUB_HIGH	= 0;
 //	public static final int VERSION_SUB_LOW		= 0;
 	
@@ -57,6 +57,13 @@ public class MainActivity extends Activity {
 	// PDF Copy 복사 기능 추가
 	////2.3.0.0
 	// MCU Update 방법 변경.
+	////2.4.0.0
+	// Can Update 실패시 0x0040 제거
+	// 히든키 변경
+	// OS 업데이트 추가
+	// PDF 예외처리 추가
+	// Update 버전 3자리로  변경
+
 	////////////////////////////////////////////////////////////////////
 	
 	public static final int INDEX_MAIN_TOP								= 0X1100;
@@ -84,7 +91,7 @@ public class MainActivity extends Activity {
 	public static final int CMD_DUMMY		= 0xF5;
 	
 	public static boolean isDisConnected 				= true;
-	
+	public int countCopy = 0;
 	////////////////////////////////////////////////////////////////////
 	
 	///////////////////////////FRAGMENT/////////////////////////////////
@@ -101,7 +108,6 @@ public class MainActivity extends Activity {
 	UpdaetMonitorSTM32Popup.Builder MonitorSTM32Builder;
 	UpdateQuestionMonitorSTM32Popup.Builder MonitorUpdateQuestionBuilder;
 	MonitorCopyErrorToUSB.Builder MonitorCopyErrorToUSBBuilder;
-	MonitorCopyUSBtoPDF.Builder monitorCopyUSBtoPDFBuilder;
 	////////////////////////////////////////////////////////////////////
 	Handler HandleKeyButton;
 	///////////////////////////VALUABLE/////////////////////////////////
@@ -150,10 +156,14 @@ public class MainActivity extends Activity {
 		HandleKeyButton = new Handler() {
 			@Override
 			public void handleMessage(Message msg) {
-				if(msg.what == CAN1CommManager.LONG_LEFT_RIGHT){
+				if(msg.what == CAN1CommManager.LONG_8_9){
 					if(MonitorCopyErrorToUSBBuilder.isConnectedUsb() == true){
 						try{
-							showMonitorCopyFileToUSBPopup();
+							if(countCopy == 0){
+								showMonitorCopyFileToUSBPopup();
+								countCopy = 1;
+							}
+							
 						}catch(Exception e){
 							e.printStackTrace();
 							//Toast.makeText(getApplicationContext(), "Please Connect USB to device.", 50).show();
@@ -280,7 +290,6 @@ public class MainActivity extends Activity {
 		MonitorSTM32Builder = new UpdaetMonitorSTM32Popup.Builder(this);
 		MonitorUpdateQuestionBuilder = new UpdateQuestionMonitorSTM32Popup.Builder(this);
 		MonitorCopyErrorToUSBBuilder = new MonitorCopyErrorToUSB.Builder(this);
-		monitorCopyUSBtoPDFBuilder = new MonitorCopyUSBtoPDF.Builder(this);
 	}
 	
 	public void InitValuable(){
@@ -368,7 +377,7 @@ public class MainActivity extends Activity {
 		public void KeyButtonCallBack(int Data) throws RemoteException {
 			// TODO Auto-generated method stub
 			Log.i(TAG,"KeyButton Callback : 0x" + Integer.toHexString(Data));
-			if(Data == CAN1CommManager.LONG_LEFT_RIGHT){
+			if(Data == CAN1CommManager.LONG_8_9){
 				if(MenuIndex == INDEX_MONITOR_TOP){
 					HandleKeyButton.sendMessage(HandleKeyButton.obtainMessage(Data));
 				}
@@ -589,27 +598,6 @@ public class MainActivity extends Activity {
 		MenuDialog = MonitorCopyErrorToUSBBuilder.create(MonitorCopyErrorToUSBBuilder);
 		MenuDialog.show();		
 	}
-	
-	public void showMonitorCopyUSBToFilePopup(){
-
-		if(MenuDialog != null){
-			MenuDialog.dismiss();
-			MenuDialog = null;
-		}
-
-		monitorCopyUSBtoPDFBuilder.setDismiss(new DialogInterface.OnDismissListener() {
-			
-			@Override
-			public void onDismiss(DialogInterface dialog) {
-				// TODO Auto-generated method stub
-				Log.d(TAG,"onDismiss");
-				
-
-			}
-		});
-		MenuDialog = monitorCopyUSBtoPDFBuilder.create(monitorCopyUSBtoPDFBuilder);
-		MenuDialog.show();		
-	}	
 	//////////////////////////////////////////////////////////////////////////////////////
 	//////////////////////////////////////////////////////////////////////////////////////
 	
@@ -660,7 +648,9 @@ public class MainActivity extends Activity {
 			}
 			
 			break;
-		
+		case INDEX_MONITOR_ANDROID_OS:
+			showMonitor();
+			break;
 		default:
 			break;
 		}

@@ -263,7 +263,7 @@ public class MonitorOSFragment extends Fragment{
 				CAN1Comm.TxCMDToMCU(CAN1CommManager.CMD_OSUPDATE);
 				//ParentActivity.Reboot();
 				try {
-					CAN1Comm.UpdatefromJNI();
+					CAN1Comm.native_system_updates_Native();
 				} catch (NullPointerException e) {
 					// TODO: handle exception
 					Log.e(TAG,"NullPointerException");

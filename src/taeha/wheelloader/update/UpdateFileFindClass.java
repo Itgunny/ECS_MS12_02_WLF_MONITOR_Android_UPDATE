@@ -183,7 +183,36 @@ public class UpdateFileFindClass {
 				+ Integer.toString(nVersion[2])+ Integer.toString(nVersion[3]));
 		return (nVersion[0]*1000 + nVersion[1]*100 + nVersion[2]*10 + nVersion[3]);
 	}
-	
+	public int GetThreeVersion(String strRootPath, String strAppName, String strExtension, String strFileName){
+		int[] nVersion;
+		char[] cVersion;
+
+		int VersionStartPosition;
+		
+		nVersion = new int[3];
+		cVersion = new char[3];
+		
+		
+		VersionStartPosition = strRootPath.length() + strAppName.length();
+		
+
+		if(strFileName.length() < VersionStartPosition + strExtension.length() + 5){
+			return 0;
+		}
+
+		cVersion[0] = strFileName.charAt(VersionStartPosition+1);
+		cVersion[1] = strFileName.charAt(VersionStartPosition+3);
+		cVersion[2] = strFileName.charAt(VersionStartPosition+5);
+
+		
+		for(int i = 0; i < 3; i++){
+			nVersion[i] = (int)cVersion[i] - 0x30;
+		}
+		
+		Log.d(TAG,"Version : " + Integer.toString(nVersion[0])+ Integer.toString(nVersion[1])
+				+ Integer.toString(nVersion[2]));
+		return (nVersion[0]*1000 + nVersion[1]*100 + nVersion[2]*10);
+	}
 	//////////////////////////////////////// Monitor STM32 Install///////////////////////////////////////
 	public File GetMonitorSTM32UpdateFile(){
 		File f = GetLastVersionProgram(MONITOR_STM32_PATH,MONITOR_STM32_NAME,MONITOR_STM32_EXT);
@@ -328,7 +357,7 @@ public class UpdateFileFindClass {
 		File f = GetLastVersionProgram(MONITOR_MIRACAST_PATH,MONITOR_MIRACAST_NAME,MONITOR_MIRACAST_EXT);
 		if(f == null)
 			return null;
-		Version = GetVersion(MONITOR_MIRACAST_PATH,MONITOR_MIRACAST_NAME,MONITOR_MIRACAST_EXT,f.getPath());
+		Version = GetThreeVersion(MONITOR_MIRACAST_PATH,MONITOR_MIRACAST_NAME,MONITOR_MIRACAST_EXT,f.getPath());
 		
 		nVersion[0] = (Version / 1000) % 10;
 		nVersion[1] = (Version / 100) % 10;
@@ -357,20 +386,19 @@ public class UpdateFileFindClass {
 		int[] nVersion;
 		int Version;
 		String strVersion;
-		nVersion = new int[4];
+		nVersion = new int[3];
 		
 		File f = GetLastVersionProgram(MONITOR_UPDATE_PATH,MONITOR_UPDATE_NAME,MONITOR_UPDATE_EXT);
 		if(f == null)
 			return null;
-		Version = GetVersion(MONITOR_UPDATE_PATH,MONITOR_UPDATE_NAME,MONITOR_UPDATE_EXT,f.getPath());
-		Log.d(TAG, "Version : " + Version / 10);
+		Version = GetThreeVersion(MONITOR_UPDATE_PATH,MONITOR_UPDATE_NAME,MONITOR_UPDATE_EXT,f.getPath());
+		Log.d(TAG, "Version 1 : " + Version);
 		nVersion[0] = (Version / 1000) % 10; // 2
 		nVersion[1] = (Version / 100) % 10;  // 2
-		nVersion[2] = 0;   
-		nVersion[3] = 0;
-
+		nVersion[2] = (Version / 10) % 10;   
+		
 		strVersion = Integer.toString(nVersion[0]) + "." + Integer.toString(nVersion[1])
-				+ "." + Integer.toString(nVersion[2]) + "." + Integer.toString(nVersion[3]);
+				+ "." + Integer.toString(nVersion[2]);
 		
 		return strVersion;
 	}	

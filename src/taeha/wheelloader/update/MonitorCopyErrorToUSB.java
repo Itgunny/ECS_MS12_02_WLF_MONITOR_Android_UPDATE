@@ -6,6 +6,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
+import java.nio.channels.FileChannel;
 import java.util.Arrays;
 import java.util.List;
 
@@ -114,7 +115,7 @@ public class MonitorCopyErrorToUSB extends Dialog{
 			public CopyThread(MonitorCopyErrorToUSB _dialog, MonitorCopyErrorToUSB.Builder _builder) {
 				// TODO Auto-generated constructor stub
 				this.BuilderRef = new WeakReference<MonitorCopyErrorToUSB.Builder>(_builder);
-				//this.DialogRef = new WeakReference<MonitorCopyErrorToUSB>(_dialog);
+				this.DialogRef = new WeakReference<MonitorCopyErrorToUSB>(_dialog);
 				mPauseLock = new Object();
 				mPaused = false;
 				mFinished = false;
@@ -130,29 +131,41 @@ public class MonitorCopyErrorToUSB extends Dialog{
 						String inputFilePath = ROOT_PATH;
 						String outputFilePath = ROOT_PATH_USB;
 						List<File> dirList = getDirFileList(inputFilePath);
-						List<File> dirOutList = getDirFileList(outputFilePath);
-						progressCopyToUSB.setMax(dirList.size());
-						String fileName = dirList.get(nFileCount).getName();
-						fileCopy(ROOT_PATH + "/" + fileName, ROOT_PATH_USB + "/" + fileName);
-						Log.d(TAG, "i = " + nFileCount + " fileName = " + fileName);
-						nProgress = nFileCount;
+						File dir = new File(outputFilePath);
+						Log.d(TAG, ""+ dir.getAbsolutePath());
+						if(dir.exists()){
+						}else{
+							Log.d(TAG, "dir is not exist1");
+							dir.mkdirs();
+						}
+						try{
+							progressCopyToUSB.setMax(dirList.size());
+							String fileName = dirList.get(nFileCount).getName();
+							fileCopy(ROOT_PATH + "/" + fileName, ROOT_PATH_USB + "/" + fileName);
+							Log.d(TAG, "i = " + nFileCount + " fileName = " + fileName);
+							nProgress = nFileCount;
+							nFileCount++;
+							if(nFileCount == dirList.size()){
+								mFinished = true;
+								DialogRef.get().dismiss();
+								nFileCount = 0;
+							}else{
+								mFinished = false;
+								DialogRef.get().dismiss();
+							}
+						}catch(Exception e){
+							Log.d(TAG, "File is empty");
+							mFinished = true;
+							DialogRef.get().dismiss();
+							
+						}
 						ParentActivity.runOnUiThread(new Runnable() {
 							@Override
 							public void run() {
 								// TODO Auto-generated method stub
 								progressCopyToUSB.setProgress(nProgress + 1);
-								
 							}
 						});
-						nFileCount++;
-						if(nFileCount == dirList.size()){
-							mFinished = true;
-							DialogRef.get().dismiss();
-							nFileCount = 0;
-						}else{
-							mFinished = false;
-							DialogRef.get().dismiss();
-						}
 						synchronized (mPauseLock) {
 							while(mPaused){
 								try{
@@ -160,7 +173,7 @@ public class MonitorCopyErrorToUSB extends Dialog{
 								}	catch(InterruptedException e){
 									e.printStackTrace();
 									mFinished = false;
-									//DialogRef.get().dismiss();
+									DialogRef.get().dismiss();
 								}
 							}
 						}
@@ -216,14 +229,18 @@ public class MonitorCopyErrorToUSB extends Dialog{
 				FileInputStream fis = new FileInputStream(inputFilePath);
 				FileOutputStream fos = new FileOutputStream(outputFilePath);
 				
-				int data = 0;
-				Log.d(TAG," "+ inputFilePath + " " + outputFilePath);
-				while((data = fis.read()) != -1){
-					fos.write(data);
-				}
+				FileChannel fcin = fis.getChannel();
+				FileChannel fcout = fos.getChannel();
 				
-				fis.close();
+				long size = fcin.size();
+				fcin.transferTo(0, size, fcout);
+				Log.d(TAG," "+ inputFilePath + " " + outputFilePath);
+				
+				fcout.close();
+				fcin.close();
+				
 				fos.close();
+				fis.close();
 			} catch(IOException e){
 				e.printStackTrace();
 			}

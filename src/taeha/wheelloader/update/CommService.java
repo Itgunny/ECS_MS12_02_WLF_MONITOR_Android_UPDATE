@@ -83,7 +83,7 @@ public class CommService extends Service{
 	
 	private final int LONG_LEFT_RIGHT = 0X6C;
 	private final int LONG_LEFT_RIGHT_ENTER = 0x7C;
-
+	private final int LONG_8_9	 		= 0x010C0000;
 	
 	private static final int POWER_OFF = 0xF5;
 	
@@ -95,7 +95,7 @@ public class CommService extends Service{
 		try {
 			System.loadLibrary("can_serial_port");
 			System.loadLibrary("can_data_parsing");
-			System.loadLibrary("istrack");
+			System.load("/system/lib/libistrack.so");
 		} catch (Throwable t) {
 			// TODO: handle exception
 			Log.e(TAG,"Load Library Error");
@@ -104,7 +104,7 @@ public class CommService extends Service{
 	}
 	/////////////////////////////////////////////////////////////////////
 	//////////////////NATIVE METHOD/////////////////////////////////////
-	public native int UpdatefromJNI_Native();
+	public static native int native_system_updates();
 	public native FileDescriptor Open_UART1(String path, int baudrate, int flag);
 	public native void Close_UART1();				
 	public native int Write_UART1(byte[] Data, int size);

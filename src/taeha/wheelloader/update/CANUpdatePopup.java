@@ -253,11 +253,13 @@ public class CANUpdatePopup extends Dialog{
 				
 				if(Count >= TIMEOUT){
 					if(RetryCount == 0){
+						Log.d(TAG, "RetryCount"+RetryCount);
 						RetryCount++;
-						CAN1Comm.TxCANToMCU(0x40);
 						StartTimeoutTimer();
-						DisplayStatus("App DL Start");
+						//CAN1Comm.TxCANToMCU(0x40);
+						//DisplayStatus("App DL Start");
 					}else{
+						Log.d(TAG, "RetryCount"+RetryCount);
 						CancelTimeoutTimer();
 						return RETURN_FAIL_TIMEOUT;
 					}
@@ -505,34 +507,34 @@ public class CANUpdatePopup extends Dialog{
 					/////////////////////////////////Step 3. Send Application//////////////////////////////
 					ReturnValue = BuilderRef.get().SendApplication(BuilderRef.get().UpdateFile, BuilderRef.get().FirmwareInfo);
 					if(ReturnValue == RETURN_FAIL_TIMEOUT){
-						Log.e(TAG,"SendApplication Fail");
+						Log.e(TAG,"SendApplication Fail RETURN_FAIL_TIMEOUT");
 						BuilderRef.get().showToast(ParentActivity.getResources().getString(string.Update_Fail));
 						BuilderRef.get().DisplayWarningStatus(ParentActivity.getResources().getString(string.Update_Fail)+"\nDo Not Receive Request Packet");
 						DialogRef.get().dismiss();
 						return;
 					}else if(ReturnValue == RETURN_FAIL_EXIT){
-						Log.e(TAG,"SendApplication Fail");
+						Log.e(TAG,"SendApplication Fail RETURN_FAIL_EXIT");
 						BuilderRef.get().showToast(ParentActivity.getResources().getString(string.Update_Fail));
 						//BuilderRef.get().DisplayStatus(ParentActivity.getResources().getString(string.Update_Fail)+"\nSend Application Exit");
 						DialogRef.get().dismiss();
 						return;
 					}
 					else if(ReturnValue == RETURN_FAIL_NOFW){
-						Log.e(TAG,"SendApplication Fail");
+						Log.e(TAG,"SendApplication Fail RETURN_FAIL_NOFW");
 						BuilderRef.get().showToast(ParentActivity.getResources().getString(string.Update_Fail));
 						//BuilderRef.get().DisplayStatus(ParentActivity.getResources().getString(string.Update_Fail)+"\nSend Application No Firmware");
 						DialogRef.get().dismiss();
 						return;
 					}
 					else if(ReturnValue == RETURN_FAIL_CRCERROR){
-						Log.e(TAG,"SendApplication Fail");
+						Log.e(TAG,"SendApplication Fail RETURN_FAIL_CRCERROR");
 						BuilderRef.get().showToast(ParentActivity.getResources().getString(string.Update_Fail));
 						//BuilderRef.get().DisplayStatus(ParentActivity.getResources().getString(string.Update_Fail)+"\nSend Application No Firmware");
 						DialogRef.get().dismiss();
 						return;
 					}
 					else if(ReturnValue == RETURN_FAIL_INCORRECT_STATUS){
-						Log.e(TAG,"SendApplication Fail");
+						Log.e(TAG,"SendApplication Fail RETURN_FAIL_INCORRECT_STATUS");
 						BuilderRef.get().showToast(ParentActivity.getResources().getString(string.Update_Fail));
 						BuilderRef.get().DisplayWarningStatus(ParentActivity.getResources().getString(string.Update_Fail)+"\nSend Application Incorrect Status");
 						DialogRef.get().dismiss();

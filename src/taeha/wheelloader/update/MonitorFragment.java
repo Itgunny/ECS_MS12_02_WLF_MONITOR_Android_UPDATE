@@ -2,11 +2,15 @@ package taeha.wheelloader.update;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.lang.ref.WeakReference;
+import java.nio.channels.FileChannel;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -16,6 +20,8 @@ import taeha.wheelloader.update.R.string;
 
 import android.app.Activity;
 import android.app.Fragment;
+import android.content.Context;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Message;
 import android.util.AttributeSet;
@@ -33,6 +39,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 public class MonitorFragment extends Fragment{
+	
 	/////////////////CONSTANT////////////////////////////////////////////
 	private static final String TAG = "MonitorFragment";
 	
@@ -43,7 +50,8 @@ public class MonitorFragment extends Fragment{
 	private static final int STATE_ANDROID_UPDATE		= 4;
 	private static final int STATE_ADNROID_MIRACAST     = 5;
 	private static final int STATE_STM32_FACTORYINIT	= 6;
-	
+	public static String ROOT_PATH	= "/storage/emulated/legacy/Help_pdf";
+	public static String ROOT_PATH_USB = "/mnt/usb/UPDATE/Monitor/Help_pdf"; 
 	/////////////////////////////////////////////////////////////////////
 	/////////////////////RESOURCE////////////////////////////////////////
 	// Fragment Root
@@ -62,6 +70,7 @@ public class MonitorFragment extends Fragment{
 	ArrayAdapter<String> listAdapter;
 	
 	UpdateFileFindClass UpdateFile;
+
 	/////////////////////////////////////////////////////////////////////	
 	
 	///////////////////ANIMATION/////////////////////////////////////////
@@ -94,8 +103,21 @@ public class MonitorFragment extends Fragment{
 					break;
 				case STATE_PDF_TO_ANDROID:
 					if(ParentActivity.getisDisConnected() == false){
-						ParentActivity.showMonitorCopyUSBToFilePopup();
-						Toast.makeText(ParentActivity.getApplicationContext(), "Copy Completed", 50).show();
+						List<File> dirList = getDirFileList(ROOT_PATH_USB);
+						File dir = new File(ROOT_PATH);
+						if(dir.exists()){
+							dir.mkdirs();
+							Toast.makeText(ParentActivity.getApplicationContext(), "You have to input .pdf file.", 50).show();
+						}
+						try{
+							for(int i = 0; i < dirList.size(); i++){
+								String fileName = dirList.get(i).getName();
+								fileCopy(ROOT_PATH_USB + "/" + fileName, ROOT_PATH + "/" + fileName);
+								Toast.makeText(ParentActivity.getApplicationContext(), "Copy Sucess " + fileName, 50).show();
+							}	
+						}catch(Exception e){
+							Log.d(TAG, "exception");
+						}
 					} else{
 						Toast.makeText(ParentActivity.getApplicationContext(), "Please Connect USB into device.", 50).show();
 					}
@@ -139,6 +161,8 @@ public class MonitorFragment extends Fragment{
 		Map<String, String>	mapUpdateProgram = new HashMap<String, String>(2);
 		Map<String, String>	mapPDF = new HashMap<String, String>(2);
 		
+		Map<String, String>	mapUSB = new HashMap<String, String>(2);
+		
 		mapSTM32.put("First Line", ParentActivity.getResources().getString(string.Monitor_STM32));
 		if(UpdateFile.GetMonitorSTM32Version() != null)
 			mapSTM32.put("Second Line",UpdateFile.GetMonitorSTM32Version());
@@ -155,7 +179,7 @@ public class MonitorFragment extends Fragment{
         data.add(mapApp);
         
         mapPDF.put("First Line", ParentActivity.getResources().getString(string.Monitor_Copy_USB_TO_PDF));
-        mapOS.put("Second Line","");
+        mapPDF.put("Second Line","");
         data.add(mapPDF);
 
         mapUpdateProgram.put("First Line", ParentActivity.getResources().getString(string.Monitor_Android_Update));
@@ -163,18 +187,18 @@ public class MonitorFragment extends Fragment{
         	mapUpdateProgram.put("Second Line", UpdateFile.GetUpdateProgramVersion());
         }
         data.add(mapUpdateProgram);
-           
+          
         mapMiracast.put("First Line", ParentActivity.getResources().getString(string.Monitor_Android_Miracast));
         if(UpdateFile.GetMiracastVersion() != null){
         	mapMiracast.put("Second Line", UpdateFile.GetMiracastVersion());
         }
         data.add(mapMiracast);
-        
         //Factory Init
         mapSTM32FactoryInit.put("First Line", ParentActivity.getResources().getString(string.Monitor_STM32_Factory_Init));
         if(UpdateFile.GetMonitorSTM32FactoryInitVersion() != null)
         	mapSTM32FactoryInit.put("Second Line",UpdateFile.GetMonitorSTM32FactoryInitVersion());
         data.add(mapSTM32FactoryInit);
+        
         SimpleAdapter adapter = new SimpleAdapter(ParentActivity, data,
                 android.R.layout.simple_list_item_2, 
                 new String[] {"First Line", "Second Line" }, 
@@ -213,6 +237,13 @@ public class MonitorFragment extends Fragment{
 		// TODO Auto-generated method stub
 		Log.d(TAG, "onCreate");
 		super.onCreate(savedInstanceState);
+		if(Build.VERSION.SDK_INT <= Build.VERSION_CODES.ICE_CREAM_SANDWICH_MR1){
+			ROOT_PATH = "/mnt/sdcard/Help_pdf";
+			Log.d(TAG, ROOT_PATH);
+		}else{
+			ROOT_PATH = "/storage/emulated/legacy/Help_pdf";
+			Log.d(TAG, ROOT_PATH);
+		}
 	}
 
 	@Override
@@ -306,6 +337,60 @@ public class MonitorFragment extends Fragment{
 	public void StatusWarningDisplay(String str){
 		textViewStatus.setText(str);
 		textViewStatus.setTextColor(0xFFFF0000);
+	}
+	
+	public static List<File> getDirFileList(String dirPath){
+		List<File> dirFileList = null;
+		
+		File dir = new File(dirPath);
+
+		if(dir.exists()){ 
+			Log.d(TAG, ""+"dir is exist.");
+			File[] files = dir.listFiles();	
+			dirFileList = Arrays.asList(files);
+		}else{
+			Log.d(TAG, "" + "dir is not exist.");
+			dir.mkdir();
+			File[] files = dir.listFiles();
+			dirFileList = Arrays.asList(files);
+		}
+		return dirFileList;
+	}
+	public static void fileCopy(String inputFilePath, String outputFilePath){
+		try{
+			FileInputStream fis = new FileInputStream(inputFilePath);
+			FileOutputStream fos = new FileOutputStream(outputFilePath);
+			
+			FileChannel fcin = fis.getChannel();
+			FileChannel fcout = fos.getChannel();
+			
+			long size = fcin.size();
+			fcin.transferTo(0, size, fcout);
+			Log.d(TAG," "+ inputFilePath + " " + outputFilePath);
+			
+			fcout.close();
+			fcin.close();
+			
+			fos.close();
+			fis.close();
+		} catch(IOException e){
+			e.printStackTrace();
+		}
+	}
+	public static void fileRemove(String FilePath){
+		File file = new File(FilePath);
+		
+		File[] childFileList = file.listFiles();
+		if(childFileList != null){
+			for(File childFile : childFileList){
+				if(childFile.isDirectory()){
+					fileRemove(childFile.getAbsolutePath());
+				}else{
+					childFile.delete();
+				}
+			}	
+		}
+		
 	}
 	/////////////////////////////////////////////////////////////////////
 	public void TestADBShellCommand() {

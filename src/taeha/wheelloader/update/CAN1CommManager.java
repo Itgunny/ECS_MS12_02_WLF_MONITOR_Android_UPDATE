@@ -48,6 +48,7 @@ public class CAN1CommManager extends ICAN1CommManager.Stub{		// ttySAC1(Linux), 
 	public static final int LONG_MENU_ENTER 	= 0x01000011;	
 	public static final int LONG_LEFT_RIGHT 	= 0X0100000C;
 	public static final int LONG_LEFT_RIGHT_ENTER 		= 0x0100001C;
+	public static final int LONG_8_9	 		= 0x010C0000;
 	
 	static final RemoteCallbackList<ICAN1CommManagerCallback> callbacks = new RemoteCallbackList<ICAN1CommManagerCallback>();
 	
@@ -75,8 +76,8 @@ public class CAN1CommManager extends ICAN1CommManager.Stub{		// ttySAC1(Linux), 
 		Log.v(TAG,"CAN1CommManager");
 		this.service = _service;
 	}
-	public int UpdatefromJNI(){
-		return service.UpdatefromJNI_Native();
+	public int native_system_updates_Native(){
+		return service.native_system_updates();
 	};
 	///////////////////////////////////////////////////////////
 	
