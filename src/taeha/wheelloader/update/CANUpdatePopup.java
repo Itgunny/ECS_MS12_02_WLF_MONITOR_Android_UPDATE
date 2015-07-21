@@ -10,17 +10,12 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 import taeha.wheelloader.update.R.string;
-import taeha.wheelloader.update.UpdateQuestionMonitorSTM32Popup.Builder;
-
-
 import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
-import android.os.Handler;
 import android.os.Message;
-import android.sax.StartElementListener;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -51,7 +46,9 @@ public class CANUpdatePopup extends Dialog{
 	private static CAN1CommManager CAN1Comm;
 	private static MainActivity ParentActivity;
 	private static _Parent_CANUpdateFragment ParentFragment;
-
+	//++, 150716 cjg
+	private  static int TotalCount = 9;
+	//--, 150716 cjg
 	// Thread
 	protected static Thread threadUpdate = null;
 	
@@ -108,6 +105,7 @@ public class CANUpdatePopup extends Dialog{
 		
 		// Status
 		TextView textViewStatusProgram;
+		TextView textViewStatusNumber;
 		
 		// ImageButton
 		ImageButton imgbtnExit;
@@ -148,6 +146,7 @@ public class CANUpdatePopup extends Dialog{
 		
 			progressProgram = (ProgressBar)layout.findViewById(R.id.progressBar_popup_update_can_progress_program);
 			textViewStatusProgram = (TextView)layout.findViewById(R.id.textView_popup_update_can_progress_status);
+			textViewStatusNumber = (TextView)layout.findViewById(R.id.textView_popup_update_can_progress_status_number);
 			imgbtnExit = (ImageButton)layout.findViewById(R.id.imageButton_popup_update_can_progress_exit);
 			
 			
@@ -159,16 +158,16 @@ public class CANUpdatePopup extends Dialog{
 			FirmwareInfo = _firmwareinfo;
 			
 			UpdateProgramFlag = true;
-			
 			progressProgram.setMax(FirmwareInfo.NumberofSection * FirmwareInfo.NumberofPacket);
 			textViewStatusProgram.setText("");
+			textViewStatusNumber.setText("");
 			
 			CAN1Comm.Set_nRecAckNewFWNInfoFlag_61184_250_82(0);
 			CAN1Comm.Set_nRecvFWDLCompleteFlag_61184_250_80(0);
 				
 			threadUpdate = new Thread(new UpdateThread(dialog, builder));
 			threadUpdate.start();
-
+			
 			if(ExitButtonClickListener != null){
 				
 				imgbtnExit.setOnClickListener(new View.OnClickListener() {
@@ -194,7 +193,8 @@ public class CANUpdatePopup extends Dialog{
 		//////////////////////////
 		public void EnterDownloadMode(){
 			CAN1Comm.TxCANToMCU(0x41);
-			DisplayStatus("Enter DL Mode");
+			DisplayStatus("Enter DL Mode"); //++, --, 150716 cjg
+			DisplayStatusNumber("(" + 1 + " / " + TotalCount + ")");
 		}
 		
 		
@@ -203,11 +203,11 @@ public class CANUpdatePopup extends Dialog{
 			Log.d(TAG,"CheckApplication");
 			int AckNewFWInfo = 0;
 			SendNewFWInfo(_firmwareinfo);
-			DisplayStatus("Send New FW Info");
+			DisplayStatus("Send New FW Info"); //++, --, 150716 cjg
+			DisplayStatusNumber("(" + 2 + " / " + TotalCount + ")");
 			StartTimeoutTimer();
 			while(AckNewFWInfo == 0){
-				AckNewFWInfo = CAN1Comm.Get_nRecAckNewFWNInfoFlag_61184_250_82();
-				
+				AckNewFWInfo = CAN1Comm.Get_nRecAckNewFWNInfoFlag_61184_250_82();	
 				if(Count >= TIMEOUT){
 					CancelTimeoutTimer();
 					return RETURN_FAIL_TIMEOUT;
@@ -215,7 +215,8 @@ public class CANUpdatePopup extends Dialog{
 				if(UpdateProgramFlag == false)
 					return RETURN_FAIL_EXIT;
 			}
-			DisplayStatus("Ack New FW Info");
+			DisplayStatus("Ack New FW Info"); //++, --, 150716 cjg
+			DisplayStatusNumber("(" + 3 + " / " + TotalCount + ")");
 			CAN1Comm.Set_nRecAckNewFWNInfoFlag_61184_250_82(0);
 			CancelTimeoutTimer();
 			return RETURN_SUCCESS;
@@ -233,7 +234,8 @@ public class CANUpdatePopup extends Dialog{
 			
 			CAN1Comm.TxCANToMCU(0x40);
 			StartTimeoutTimer();
-			DisplayStatus("App DL Start");
+			DisplayStatus("App DL Start"); //++, --, 150716 cjg
+			DisplayStatusNumber("(" + 4 + " / " + TotalCount + ")");
 			while(DLComplete == 0){
 				DLComplete = CAN1Comm.Get_nRecvFWDLCompleteFlag_61184_250_80();
 				
@@ -247,6 +249,7 @@ public class CANUpdatePopup extends Dialog{
 
 					DisplayProgress((SectionIndex * _firmwareinfo.NumberofPacket) + PacketIndex);
 					DisplayStatus("Section : " + Integer.toString(SectionIndex) + ", Packet : " + Integer.toString(PacketIndex));
+					DisplayStatusNumber("(" + 5 + " / " + TotalCount + ")");
 					CancelTimeoutTimer();
 					StartTimeoutTimer();
 				}
@@ -298,12 +301,20 @@ public class CANUpdatePopup extends Dialog{
 		
 		public void CheckFWUpdateComplete(){
 			int UpdateComplete;
+			int oldUpdateStatus = 0;
 			int UpdateStatus;
 			int UpdateProgress_CRC;
-			
+			int countFlag = 0;
+			//++, 150716 cjg
+			progressProgram.setProgress(0);
+			progressProgram.setMax(100);
+			//--, 150716 cjg
+			DisplayStatusNumber("(" + 8 + " / " + TotalCount + ")");
 			while(UpdateProgramFlag == true){
 				UpdateComplete = CAN1Comm.Get_nRecvFWUpdateCompleteFlag_61184_250_112();
 				if(UpdateComplete == 1){
+					DisplayStatusNumber("(" + 9 + " / " + TotalCount + ")");
+					Log.d(TAG, "9");
 					if(CAN1Comm.Get_ResultFlashCRC_RX_FW_UPDATE_COMPLETE_61184_250_112() == RESULT_FLASH_CRC_OK){
 						DisplayStatus("FW Update Complete, CRC OK\nRestart Machine!!");
 					}else if(CAN1Comm.Get_ResultFlashCRC_RX_FW_UPDATE_COMPLETE_61184_250_112() == RESULT_FLASH_CRC_ERROR){
@@ -317,21 +328,26 @@ public class CANUpdatePopup extends Dialog{
 					UpdateProgress_CRC = CAN1Comm.Get_Progress_ResultFlashCRC_RX_FW_UPDATE_STATUS_61184_250_113();
 					switch (UpdateStatus) {
 					case FW_UPDATE_STATUS_FORMAT_UPD_MEMORY:
-						DisplayStatus("Format UPD region : " + Integer.toString(UpdateProgress_CRC));
+						DisplayProgress(UpdateProgress_CRC); //++, --,  150715 cjg 
+						DisplayStatus("Format UPD region : " + Integer.toString(UpdateProgress_CRC)); //++, --, 150716 cjg
+						//DisplayStatusNumber("(" + 10 + " / " + TotalCount + ")"); //++, --, 150717 cjg
 						break;
 					case FW_UPDATE_STATUS_FORMAT_CPU_MEMORY:
-						DisplayStatus("Format CPU region : " + Integer.toString(UpdateProgress_CRC));
+						DisplayProgress(UpdateProgress_CRC); //++, --,  150715 cjg
+						DisplayStatus("Format CPU region : " + Integer.toString(UpdateProgress_CRC)); //++, --, 150716 cjg
+						//DisplayStatusNumber("(" + 9 + " / " + TotalCount + ")");//++, --, 150717 cjg
 						break;
 					case FW_UPDATE_STATUS_COPY_UPD_CPU:
-						DisplayStatus("Copy UPD region to CPU region: " + Integer.toString(UpdateProgress_CRC));
-						break;
+						DisplayProgress(UpdateProgress_CRC); //++, --,  150715 cjg
+						DisplayStatus("Copy UPD region to CPU region: " + Integer.toString(UpdateProgress_CRC)); //++, --, 150716 cjg
+						//DisplayStatusNumber("(" + 8 + " / " + TotalCount + ")"); //++, --, 150717 cjg
+						break;	
 					default:
 						//DisplayStatus("Preparing the ECU Updates");
 						break;
 					}
 				}
 			}
-			
 			CAN1Comm.Set_nRecvFWUpdateCompleteFlag_61184_250_112(0);
 		}
 			
@@ -339,13 +355,15 @@ public class CANUpdatePopup extends Dialog{
 		/////////////////////////////
 		public void SendDownloadModeFinish(){			
 			CAN1Comm.TxCANToMCU(0x51);
-			DisplayStatus("Quit DL Mode");
+			DisplayStatus("Quit DL Mode"); //++, --, 150716 cjg
+			DisplayStatusNumber("(" + 6 + " / " + TotalCount + ")");
 		}
 		
 		////////////////////////////
 		public void EnterAppUpdate(){
 			CAN1Comm.TxCANToMCU(0x60);
-			DisplayStatus("Preparing the ECU Updates");
+			DisplayStatus("Preparing the ECU Updates"); //++, --, 150716 cjg
+			DisplayStatusNumber("(" + 7 + " / " + TotalCount + ")");
 		}
 		
 		////////////////////////////
@@ -454,6 +472,16 @@ public class CANUpdatePopup extends Dialog{
 				}
 			});
 		}
+		
+		public void DisplayStatusNumber(final String status){
+			ParentActivity.runOnUiThread(new Runnable() {
+				@Override
+				public void run() {
+					// TODO Auto-generated method stub
+					textViewStatusNumber.setText(status);
+				}
+			});
+		}
 		/////////////////////////////////////////////////////////
 		
 		/////////////////////////////////////Download Seq///////////////////////////////////////////////////////
@@ -549,7 +577,7 @@ public class CANUpdatePopup extends Dialog{
 					
 					/////////////////////////////////Step 6. Check Firmware Update Status/////////////////////////
 					BuilderRef.get().CheckFWUpdateComplete();
-					
+
 					/////////////////////////////////Step 7. Finish CAN Update////////////////////////////////////
 					BuilderRef.get().showToast(ParentActivity.getResources().getString(string.Update_Finish));
 					DialogRef.get().dismiss();
@@ -617,8 +645,6 @@ public class CANUpdatePopup extends Dialog{
 			}
 			
 		}
-			
-		
 		//////////////////////////////////////////////////////////////////////////////////////////////////
 		
 		public int MakeCrc16(byte[] data, int[] Crc16Table, int nLen)

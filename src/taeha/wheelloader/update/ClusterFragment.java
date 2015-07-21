@@ -1,5 +1,7 @@
 package taeha.wheelloader.update;
 
+import java.security.PublicKey;
+
 import taeha.wheelloader.update.R.string;
 import taeha.wheelloader.update._Parent_CANUpdateFragment.ReadThread;
 import android.content.DialogInterface;
@@ -12,6 +14,7 @@ import android.view.ViewGroup;
 public class ClusterFragment extends _Parent_CANUpdateFragment{
 	private static final String TAG = "ClusterFragment";
 	
+	public static final int ClusterTotalCount = 7;
 	CANUpdatePopup.Builder ClusterCANUpdateBuilder;
 	UpdateQuestionMonitorSTM32Popup.Builder UpdateQuestionBuilder;
 	
@@ -158,7 +161,6 @@ public class ClusterFragment extends _Parent_CANUpdateFragment{
 
 			}
 		});
-		
 		ParentActivity.MenuDialog = ClusterCANUpdateBuilder.create(ClusterCANUpdateBuilder,UpdateFile.GetClusterFirmwareUpdateFile(),FileFirmwareInfo);
 		ParentActivity.MenuDialog.show();		
 	}

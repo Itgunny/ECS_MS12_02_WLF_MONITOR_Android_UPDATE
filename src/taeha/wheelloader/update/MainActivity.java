@@ -34,7 +34,7 @@ public class MainActivity extends Activity {
 	
 	
 	public static final int VERSION_HIGH		= 2;
-	public static final int VERSION_LOW			= 5;
+	public static final int VERSION_LOW			= 6;
 	public static final int VERSION_SUB_HIGH	= 0;
 //	public static final int VERSION_SUB_LOW		= 0;
 	
@@ -70,6 +70,8 @@ public class MainActivity extends Activity {
 	// sync 추가(파일복사)
 	// Exit -> Cancel 변경
 	// Update 폴더 없을 경우 뻗는 현상 개선	
+	////2.6.0 15.07.15
+	// Can Update 관련 프로그레스바 수정.
 	////////////////////////////////////////////////////////////////////
 	
 	public static final int INDEX_MAIN_TOP								= 0X1100;

@@ -48,8 +48,17 @@
             android:layout_marginTop="10dp"
             android:textAppearance="?android:attr/textAppearanceLarge"
             android:textColor="#000000" />
-        
-        
+
+        <TextView
+            android:id="@+id/textView_popup_update_can_progress_status_number"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignBaseline="@+id/textView_popup_update_can_progress_program"
+            android:layout_alignBottom="@+id/textView_popup_update_can_progress_program"
+            android:layout_alignRight="@+id/progressBar_popup_update_can_progress_program"
+            android:text="status"
+            android:textAppearance="?android:attr/textAppearanceLarge"
+            android:textColor="#000000" />
 
     </RelativeLayout>
 

@@ -114,24 +114,25 @@ public class MonitorFragment extends Fragment{
 								String fileName = dirList.get(i).getName();
 								fileCopy(ROOT_PATH_USB + "/" + fileName, ROOT_PATH + "/" + fileName);
 								Toast.makeText(ParentActivity.getApplicationContext(), "Copy Sucess " + fileName, 50).show();
-								// ++, 150630 cjg	
-					        	Runtime runtime = Runtime.getRuntime();
-					        	Process process;
-					        	try{
-					        		String cmd = "sync";
-					        		process = runtime.exec(cmd);
-					        		Log.d(TAG, "sync");
-					        	}catch(Exception e){
-					        		e.fillInStackTrace();
-					        	}
-					        	// --, 150630 cjg
 							}	
+
 						}catch(Exception e){
 							Log.d(TAG, "exception");
 						}
 					} else{
 						Toast.makeText(ParentActivity.getApplicationContext(), "Please Connect USB into device.", 50).show();
 					}
+					// ++, 150630 cjg	
+		        	Runtime runtime = Runtime.getRuntime();
+		        	Process process;
+		        	try{
+		        		String cmd = "sync";
+		        		process = runtime.exec(cmd);
+		        		Log.d(TAG, "sync");
+		        	}catch(Exception e){
+		        		e.fillInStackTrace();
+		        	}
+		        	// --, 150630 cjg
 					break;
 				case STATE_ANDROID_UPDATE:
 					if(UpdateFile.GetUpdateProgramVersion() != null)

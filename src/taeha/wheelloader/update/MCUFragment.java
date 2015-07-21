@@ -124,7 +124,6 @@ public class MCUFragment extends _Parent_CANUpdateFragment{
 
 			}
 		});
-		
 		ParentActivity.MenuDialog = UpdateQuestionBuilder.create(ParentActivity.getResources().getString(string.Do_you_want_update));
 		ParentActivity.MenuDialog.show();		
 	}
@@ -156,7 +155,6 @@ public class MCUFragment extends _Parent_CANUpdateFragment{
 
 			}
 		});
-		
 		ParentActivity.MenuDialog = MCUCANUpdateBuilder.create(MCUCANUpdateBuilder,UpdateFile.GetMCUFirmwareUpdateFile(),FileFirmwareInfo);
 		ParentActivity.MenuDialog.show();		
 	}
