@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/RelativeLayout_custom_toast"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/popup_427x229" >
+
+    <RelativeLayout
+        android:id="@+id/RelativeLayout_popup_update_question_monitor_stm32_top"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" >
+
+
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:id="@+id/RelativeLayout_popup_update_question_monitor_stm32_mid"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/RelativeLayout_popup_update_question_monitor_stm32_top" >
+
+        <TextView
+            android:id="@+id/textView_popup_update_question_monitor_stm32_time"
+            android:layout_width="300dp"
+            android:layout_height="wrap_content"
+            android:layout_alignParentTop="true"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="30dp"
+            android:gravity="center"
+            android:text="@string/Do_you_want_update"
+            android:textAppearance="?android:attr/textAppearanceLarge"
+            android:textColor="#000000"
+            android:textSize="30sp"
+            android:textStyle="bold" />
+
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:id="@+id/RelativeLayout_popup_update_question_monitor_stm32_bottom"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/RelativeLayout_popup_update_question_monitor_stm32_mid" >
+
+        <ImageButton
+            android:id="@+id/imageButton_popup_update_question_monitor_stm32_ok"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentTop="true"
+            android:layout_marginLeft="30dp"
+            android:layout_marginTop="20dp"
+            android:background="@drawable/_selector_popup_btn_159x62"
+            android:src="@drawable/_selector_popup_btn_159x62" />
+
+        <ImageButton
+            android:id="@+id/imageButton_popup_update_question_monitor_stm32_cancel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            android:layout_alignParentTop="true"
+            android:layout_marginRight="30dp"
+            android:layout_marginTop="20dp"
+            android:background="@drawable/_selector_popup_btn_159x62"
+            android:src="@drawable/_selector_popup_btn_159x62" />
+
+        <TextView
+            android:id="@+id/textView_popup_update_question_monitor_stm32_ok"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignBottom="@+id/imageButton_popup_update_question_monitor_stm32_ok"
+            android:layout_alignLeft="@+id/imageButton_popup_update_question_monitor_stm32_ok"
+            android:layout_alignRight="@+id/imageButton_popup_update_question_monitor_stm32_ok"
+            android:layout_alignTop="@+id/imageButton_popup_update_question_monitor_stm32_ok"
+            android:gravity="center"
+            android:text="@string/OK"
+            android:textAppearance="?android:attr/textAppearanceLarge"
+            android:textColor="#000000"
+            android:textSize="30sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/textView_popup_update_question_monitor_stm32_cancel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignBottom="@+id/imageButton_popup_update_question_monitor_stm32_cancel"
+            android:layout_alignLeft="@+id/imageButton_popup_update_question_monitor_stm32_cancel"
+            android:layout_alignRight="@+id/imageButton_popup_update_question_monitor_stm32_cancel"
+            android:layout_alignTop="@+id/imageButton_popup_update_question_monitor_stm32_cancel"
+            android:gravity="center"
+            android:text="@string/CANCEL"
+            android:textAppearance="?android:attr/textAppearanceLarge"
+            android:textColor="#000000"
+            android:textSize="30sp"
+            android:textStyle="bold" />
+
+    </RelativeLayout>
+
+</RelativeLayout>

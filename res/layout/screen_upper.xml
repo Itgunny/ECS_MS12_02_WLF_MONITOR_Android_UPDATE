@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/RelativeLayout1"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical" >
+    
+    <TextView
+        android:id="@+id/textView_screen_upper_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:layout_centerVertical="true"
+        android:text="@string/Software_Update"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:textSize="40sp"
+        android:textStyle="italic" />
+    
+    <TextView
+        android:id="@+id/textView_screen_upper_version"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerVertical="true"
+        android:layout_marginLeft="20dp"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:textSize="20sp" />
+    
+    <ImageButton
+        android:id="@+id/imageButton_screen_upper_back"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentRight="true"
+        android:layout_alignTop="@+id/textView_screen_upper_title"
+        android:layout_toRightOf="@dimen/activity_horizontal_margin"
+        android:layout_x="609dp"
+        android:layout_y="2dp"
+        android:background="@drawable/_selector_menu_back_btn"
+        android:src="@drawable/_selector_menu_back_btn" />
+
+</RelativeLayout>

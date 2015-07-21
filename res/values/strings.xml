@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<resources>
+    <string name="app_name">Wheel_Loader_F_Series_Update</string>
+    <string name="action_settings">Settings</string>
+    <string name="hello_world">Hello world!</string>
+    <string name="Software_Update">Software Update</string>
+    <string name="Monitor">Monitor</string>
+    <string name="MCU">MCU</string>
+    <string name="Cluster">Cluster</string>
+    <string name="Monitor_STM32">Monitor Firmware</string>
+    <string name="Monitor_STM32_Factory_Init">Monitor Firmware Factory Init</string>
+    <string name="Monitor_Android_OS">Monitor OS</string>
+    <string name="Monitor_Android_Boot">Monitor Boot</string>
+    <string name="Monitor_Android_Kernel">Monitor Kernel</string>
+    <string name="Monitor_Android_App">Monitor App</string>
+    <string name="OK">OK</string>
+    <string name="Exit">Exit</string>
+    <string name="CANCEL">CANCEL</string>
+    <string name="Do_you_want_update">Do you want update?</string>
+    <string name="Do_you_want_update_factory_init">Do you want update factory init?</string>
+    <string name="Program">Program</string>
+    <string name="Verify">Verify</string>
+    <string name="Update_Finish">Update Finish</string>
+    <string name="Update_Fail">Update Fail</string>
+    <string name="Program_Fail">Program Fail</string>
+    <string name="Verify_Fail">Verify Fail</string>
+    <string name="Update_File_Error">Update File Error</string>
+    <string name="Correct_ID">Correct ID</string>
+    <string name="Incorrect_ID">Incorrect ID</string>
+</resources>

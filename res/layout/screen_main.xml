@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/RelativeLayout1"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical" >
+
+    <ListView
+        android:id="@+id/listView_screen_main"
+        android:layout_width="match_parent"
+        android:layout_height="293dp"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentTop="true" >
+    </ListView>
+
+    <TextView
+        android:id="@+id/textView_screen_main_status"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/listView_screen_main"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="20dp"
+        android:text="Do not try to turn off the machine"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:textColor="#ffff0000"
+        android:textSize="30sp" />
+
+</RelativeLayout>
