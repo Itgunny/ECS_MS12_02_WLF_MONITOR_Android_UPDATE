@@ -66,8 +66,10 @@ public class MainActivity extends Activity {
 	////2.4.0 15.06.23
 	// Icon 적용
 	// pdf 파일 복사 버그 수정
-	////2.4.0 15.06.30
+	////2.5.0 15.06.30
 	// sync 추가(파일복사)
+	// Exit -> Cancel 변경
+	// Update 폴더 없을 경우 뻗는 현상 개선	
 	////////////////////////////////////////////////////////////////////
 	
 	public static final int INDEX_MAIN_TOP								= 0X1100;

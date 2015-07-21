@@ -15,6 +15,7 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 public class MCUListFragment extends Fragment{
 	private static final String TAG = "MCUListFragment";
@@ -68,7 +69,7 @@ public class MCUListFragment extends Fragment{
 		UpdateFile = new UpdateFileFindClass(ParentActivity);
 		ArrayList<String> fileName = new ArrayList<String>();
 		File files = new File(UpdateFile.MCU_FIRMWARE_PATH);
-		
+		if(files.exists()){
 		if(files.listFiles().length > 0){
 			for(File file : files.listFiles()){
 				if(file.isFile()){
@@ -85,6 +86,9 @@ public class MCUListFragment extends Fragment{
 					}
 				}
 			}
+		}
+		}else{
+			Toast.makeText(ParentActivity, "You have to make a Update folder to USB.", Toast.LENGTH_SHORT).show();
 		}
 		
 		ArrayAdapter<String> adapter = new ArrayAdapter<String>(ParentActivity, android.R.layout.simple_list_item_1, 
