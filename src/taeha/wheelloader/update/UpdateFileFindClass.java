@@ -59,6 +59,10 @@ public class UpdateFileFindClass {
 	public static String MCU_FIRMWARE_PATH = "/mnt/usb/UPDATE/MCU/Firmware";
 	public static String MCU_FIRMWARE_NAME = "HL7xx-F_v";
 	public static String MCU_FIRMWARE_EXT = ".THM";
+	
+	public static String BKCU_FIRMWARE_PATH = "/mnt/usb/UPDATE/BKCU/Firmware";
+	public static String BKCU_FIRMWARE_NAME = "BKCU_v";
+	public static String BKCU_FIRMWARE_EXT = ".THM";
 
 	String strPath;
 	String strFileNameHead;
@@ -456,6 +460,11 @@ public class UpdateFileFindClass {
 	}
 	public File GetMCUFirmwareUpdateFile(){
 		File f = GetLastVersionProgram(MCU_FIRMWARE_PATH,MCU_FIRMWARE_NAME,MCU_FIRMWARE_EXT);
+		
+		return f;
+	}
+	public File GetBKCUFirmwareUpdateFile(){
+		File f = GetLastVersionProgram(BKCU_FIRMWARE_PATH,BKCU_FIRMWARE_NAME,BKCU_FIRMWARE_EXT);
 		
 		return f;
 	}

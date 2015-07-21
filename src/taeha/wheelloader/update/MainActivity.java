@@ -27,7 +27,7 @@ public class MainActivity extends Activity {
 	public static final int VERSION_HIGH		= 2;
 	public static final int VERSION_LOW			= 0;
 	public static final int VERSION_SUB_HIGH	= 0;
-	public static final int VERSION_SUB_LOW		= 3;
+	public static final int VERSION_SUB_LOW		= 4;
 	
 	////////////////////////////////////////////////////////////////////
 	////2.0.0.2
@@ -40,6 +40,8 @@ public class MainActivity extends Activity {
 	// CAN Update 문구 수정
 	// Bootloader Status 표시 추가
 	// OS Update 시 3초간 LCD Off CMD 추가
+	////2.0.0.4
+	// BKCU 업데이트 추가 
 	////////////////////////////////////////////////////////////////////
 	
 	public static final int INDEX_MAIN_TOP								= 0X1100;
@@ -58,6 +60,10 @@ public class MainActivity extends Activity {
 	public static final int INDEX_MCU_QUESTION							= 0X4110;
 	public static final int INDEX_MCU_UPDATE							= 0X4111;
 	
+	public static final int INDEX_BKCU_TOP								= 0X5000;
+	public static final int INDEX_BKCU_QUESTION							= 0X5110;
+	public static final int INDEX_BKCU_UPDATE							= 0X5111;
+	
 	public static final int CMD_DUMMY		= 0xF5;
 	
 	
@@ -70,6 +76,7 @@ public class MainActivity extends Activity {
 	MonitorOSFragment _MonitorOSFragment;
 	ClusterFragment _ClusterFragment;
 	MCUFragment _MCUFragment;
+	BKCUFragment _BKCUFragment;
 	////////////////////////////////////////////////////////////////////
 	///////////////////////////POPUP////////////////////////////////////
 	UpdaetMonitorSTM32Popup.Builder MonitorSTM32Builder;
@@ -136,6 +143,7 @@ public class MainActivity extends Activity {
 		_MonitorOSFragment = new MonitorOSFragment();
 		_ClusterFragment = new ClusterFragment();
 		_MCUFragment = new MCUFragment();
+		_BKCUFragment = new BKCUFragment();
 	}
 	
 	public void InitPopup(){
@@ -280,6 +288,11 @@ public class MainActivity extends Activity {
 	public void showMCU(){
 		android.app.FragmentTransaction transaction = getFragmentManager().beginTransaction();
 		transaction.replace(R.id.FrameLayout_fragment_body, _MCUFragment);
+		transaction.commit();
+	}
+	public void showBKCU(){
+		android.app.FragmentTransaction transaction = getFragmentManager().beginTransaction();
+		transaction.replace(R.id.FrameLayout_fragment_body, _BKCUFragment);
 		transaction.commit();
 	}
 	

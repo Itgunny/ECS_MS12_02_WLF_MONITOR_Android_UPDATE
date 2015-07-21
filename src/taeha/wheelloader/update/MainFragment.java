@@ -37,7 +37,7 @@ public class MainFragment extends Fragment{
 	private static final int STATE_MONIOR 	= 0;
 	private static final int STATE_MCU 		= 1;
 	private static final int STATE_CLUSTER 	= 2;
-	
+	private static final int STATE_BKCU 	= 3;
 	/////////////////////////////////////////////////////////////////////
 	/////////////////////RESOURCE////////////////////////////////////////
 	// Fragment Root
@@ -82,7 +82,9 @@ public class MainFragment extends Fragment{
 				case STATE_CLUSTER:
 					ParentActivity.showCluster();
 					break;
-				
+				case STATE_BKCU:
+					ParentActivity.showBKCU();
+					break;
 		
 
 				default:
@@ -106,6 +108,7 @@ public class MainFragment extends Fragment{
 		Map<String, String> mapMonitor = new HashMap<String, String>(2);
 		Map<String, String> mapMCU = new HashMap<String, String>(2);
 		Map<String, String> mapCluster = new HashMap<String, String>(2);
+		Map<String, String> mapBKCU = new HashMap<String, String>(2);
 		
 		mapMonitor.put("First Line", ParentActivity.getResources().getString(string.Monitor));
 		mapMonitor.put("Second Line","");
@@ -119,6 +122,9 @@ public class MainFragment extends Fragment{
         mapCluster.put("Second Line","");
         data.add(mapCluster);
         
+        mapBKCU.put("First Line", ParentActivity.getResources().getString(string.BKCU));
+        mapBKCU.put("Second Line","");
+        data.add(mapBKCU);
         
         SimpleAdapter adapter = new SimpleAdapter(ParentActivity, data,
                 android.R.layout.simple_list_item_2, 

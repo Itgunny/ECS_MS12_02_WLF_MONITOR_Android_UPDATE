@@ -41,7 +41,7 @@ public class CAN1CommManager extends ICAN1CommManager.Stub{		// ttySAC1(Linux), 
 	public static final int SA_MONITOR 	= 0x28;
 	public static final int SA_MCU		= 0x47;
 	public static final int SA_CLUSTER 	= 0x17;
-	
+	public static final int SA_BKCU		= 0x34;				
 	
 	
 	
