@@ -6,7 +6,8 @@ interface ICAN1CommManager
 	void CloseComport();
 
 	int TxCANToMCU(int PS) ;
-
+	int UpdatefromJNI();
+	
 	//int TxCMDToMCU(int CMD, int DAT);
 	
 	int TxUpdate(in byte[] Data, int size);

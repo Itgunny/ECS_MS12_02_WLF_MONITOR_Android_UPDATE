@@ -79,7 +79,7 @@ public class MCUFragment extends _Parent_CANUpdateFragment{
 		}
 		
 		
-		ParentActivity.MenuIndex = ParentActivity.INDEX_MCU_TOP;
+		ParentActivity.MenuIndex = ParentActivity.INDEX_MCU_SELECT;
 		textViewMachineTitle.setText(ParentActivity.getResources().getString(string.MCU));
 		return mRoot;
 

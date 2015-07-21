@@ -261,7 +261,18 @@ public class MonitorOSFragment extends Fragment{
 				// TODO Auto-generated method stub
 				Log.d(TAG,"setOKButton");
 				CAN1Comm.TxCMDToMCU(CAN1CommManager.CMD_OSUPDATE);
-				ParentActivity.Reboot();
+				//ParentActivity.Reboot();
+				try {
+					CAN1Comm.UpdatefromJNI();
+				} catch (NullPointerException e) {
+					// TODO: handle exception
+					Log.e(TAG,"NullPointerException");
+				}
+				catch (Throwable t) {
+					// TODO: handle exception
+					Log.e(TAG,"Load Library Error");
+				}	
+				
 				dialog.dismiss();
 			}
 		});

@@ -221,6 +221,7 @@ public class MonitorCopyErrorToUSB extends Dialog{
 				while((data = fis.read()) != -1){
 					fos.write(data);
 				}
+				
 				fis.close();
 				fos.close();
 			} catch(IOException e){

@@ -75,7 +75,9 @@ public class CAN1CommManager extends ICAN1CommManager.Stub{		// ttySAC1(Linux), 
 		Log.v(TAG,"CAN1CommManager");
 		this.service = _service;
 	}
-
+	public int UpdatefromJNI(){
+		return service.UpdatefromJNI_Native();
+	};
 	///////////////////////////////////////////////////////////
 	
 	//////////////////////Register Callback////////////////////

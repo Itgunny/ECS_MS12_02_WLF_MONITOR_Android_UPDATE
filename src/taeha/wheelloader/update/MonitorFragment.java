@@ -64,7 +64,6 @@ public class MonitorFragment extends Fragment{
 	UpdateFileFindClass UpdateFile;
 	/////////////////////////////////////////////////////////////////////	
 	
-	private static boolean isConnected = true;
 	///////////////////ANIMATION/////////////////////////////////////////
 
 	/////////////////////////////////////////////////////////////////////
@@ -94,13 +93,11 @@ public class MonitorFragment extends Fragment{
 						UpdateFile.MonitorAndroidAppUpdate();
 					break;
 				case STATE_PDF_TO_ANDROID:
-					if(ParentActivity.isDisConnected == false){
-						Log.d(TAG, "isDisConnected : " + ParentActivity.isDisConnected);
+					if(ParentActivity.getisDisConnected() == false){
 						ParentActivity.showMonitorCopyUSBToFilePopup();
 						Toast.makeText(ParentActivity.getApplicationContext(), "Copy Completed", 50).show();
 					} else{
-						Log.d(TAG, "isDisConnected : " + ParentActivity.isDisConnected);
-						Toast.makeText(ParentActivity.getApplicationContext(), "Please Connect USB to device.", 50).show();
+						Toast.makeText(ParentActivity.getApplicationContext(), "Please Connect USB into device.", 50).show();
 					}
 					break;
 				case STATE_ANDROID_UPDATE:
@@ -228,7 +225,6 @@ public class MonitorFragment extends Fragment{
 		InitResource();
 		InitValuables();
 		InitButtonListener();
-		isConnectedUsb();
 		ParentActivity.MenuIndex = ParentActivity.INDEX_MONITOR_TOP;
 		
 		return mRoot;
@@ -344,18 +340,4 @@ public class MonitorFragment extends Fragment{
 
 		}
 	}
-	public static boolean isConnectedUsb(){
-		File file = new File("/mnt/usb");
-		if(file != null){
-			if(file.length() > 0){
-				Log.d(TAG, "Connected");
-				isConnected = true;
-			}else{
-				Log.d(TAG, "disConnected");
-				isConnected = false;
-			}
-		}
-		return isConnected;
-	}
-	
 }

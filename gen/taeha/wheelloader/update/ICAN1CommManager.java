@@ -66,6 +66,14 @@ reply.writeNoException();
 reply.writeInt(_result);
 return true;
 }
+case TRANSACTION_UpdatefromJNI:
+{
+data.enforceInterface(DESCRIPTOR);
+int _result = this.UpdatefromJNI();
+reply.writeNoException();
+reply.writeInt(_result);
+return true;
+}
 case TRANSACTION_TxUpdate:
 {
 data.enforceInterface(DESCRIPTOR);
@@ -176,6 +184,23 @@ _data.recycle();
 }
 return _result;
 }
+@Override public int UpdatefromJNI() throws android.os.RemoteException
+{
+android.os.Parcel _data = android.os.Parcel.obtain();
+android.os.Parcel _reply = android.os.Parcel.obtain();
+int _result;
+try {
+_data.writeInterfaceToken(DESCRIPTOR);
+mRemote.transact(Stub.TRANSACTION_UpdatefromJNI, _data, _reply, 0);
+_reply.readException();
+_result = _reply.readInt();
+}
+finally {
+_reply.recycle();
+_data.recycle();
+}
+return _result;
+}
 //int TxCMDToMCU(int CMD, int DAT);
 
 @Override public int TxUpdate(byte[] Data, int size) throws android.os.RemoteException
@@ -256,14 +281,16 @@ _data.recycle();
 static final int TRANSACTION_OpenComport = (android.os.IBinder.FIRST_CALL_TRANSACTION + 0);
 static final int TRANSACTION_CloseComport = (android.os.IBinder.FIRST_CALL_TRANSACTION + 1);
 static final int TRANSACTION_TxCANToMCU = (android.os.IBinder.FIRST_CALL_TRANSACTION + 2);
-static final int TRANSACTION_TxUpdate = (android.os.IBinder.FIRST_CALL_TRANSACTION + 3);
-static final int TRANSACTION_UART3_UpdatePacketComm = (android.os.IBinder.FIRST_CALL_TRANSACTION + 4);
-static final int TRANSACTION_Callback_KeyButton = (android.os.IBinder.FIRST_CALL_TRANSACTION + 5);
-static final int TRANSACTION_Callback_UpdateResponse = (android.os.IBinder.FIRST_CALL_TRANSACTION + 6);
+static final int TRANSACTION_UpdatefromJNI = (android.os.IBinder.FIRST_CALL_TRANSACTION + 3);
+static final int TRANSACTION_TxUpdate = (android.os.IBinder.FIRST_CALL_TRANSACTION + 4);
+static final int TRANSACTION_UART3_UpdatePacketComm = (android.os.IBinder.FIRST_CALL_TRANSACTION + 5);
+static final int TRANSACTION_Callback_KeyButton = (android.os.IBinder.FIRST_CALL_TRANSACTION + 6);
+static final int TRANSACTION_Callback_UpdateResponse = (android.os.IBinder.FIRST_CALL_TRANSACTION + 7);
 }
 public void OpenComport() throws android.os.RemoteException;
 public void CloseComport() throws android.os.RemoteException;
 public int TxCANToMCU(int PS) throws android.os.RemoteException;
+public int UpdatefromJNI() throws android.os.RemoteException;
 //int TxCMDToMCU(int CMD, int DAT);
 
 public int TxUpdate(byte[] Data, int size) throws android.os.RemoteException;

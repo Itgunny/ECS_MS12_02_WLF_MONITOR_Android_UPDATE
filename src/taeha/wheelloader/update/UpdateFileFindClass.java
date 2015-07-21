@@ -45,27 +45,35 @@ public class UpdateFileFindClass {
 	public static String MONITOR_APP_EXT = ".apk";
 	
 	public static String MONITOR_STM32_PATH = "/mnt/usb/UPDATE/Monitor/Firmware";
-	public static String MONITOR_STM32_NAME = "WL9F_Monitor_APP_v";
+	public static String MONITOR_STM32_NAME = "WLF_Monitor_APP_v";
 	public static String MONITOR_STM32_EXT = ".bin";
-	public static String MONITOR_STM32_FACTORYINIT_NAME = "WL9F_Monitor_APP_FI_v";
 	
-	public static String CLUSTER_FIRMWARE_PATH = "/storage/usb/UPDATE/Cluster/Firmware";
-	public static String CLUSTER_FIRMWARE_NAME = "WL9F_Cluster_APP_v";
+	public static String MONITOR_STM32_FACTORYINIT_NAME = "WLF_Monitor_APP_FI_v";
+	
+	public static String CLUSTER_FIRMWARE_PATH = "/mnt/usb/UPDATE/Cluster/Firmware";
+	public static String CLUSTER_FIRMWARE_NAME = "WLF_Cluster_APP_v";
 	public static String CLUSTER_FIRMWARE_EXT = ".THM";
 	
-	public static String MCU_FIRMWARE_PATH = "/mnt/usb/UPDATE/MCU/Firmware";
-	public static String MCU_FIRMWARE_NAME = "HL7xx-F_v";
+//	public static String MCU_FIRMWARE_PATH = "/mnt/usb/UPDATE/MCU/Firmware";
+//	public static String MCU_FIRMWARE_NAME = "HL7xx-F_v";
+//	public static String MCU_FIRMWARE_EXT = ".THM";
+	
+	public static String MCU_FIRMWARE_PATH = "/mnt/usb/UPDATE";
+	public static String MCU_FIRMWARE_NAME = "HL9xx_v";
 	public static String MCU_FIRMWARE_EXT = ".THM";
 	
+	// ++, cjg 150601
 	public static String BKCU_FIRMWARE_PATH = "/mnt/usb/UPDATE/BKCU/Firmware";
 	public static String BKCU_FIRMWARE_NAME = "BKCU_v";
 	public static String BKCU_FIRMWARE_EXT = ".THM";
+	// --, cjg 150601
 	
 	// ++, cjg 150509
 	public static String MONITOR_UPDATE_PATH = "/mnt/usb/UPDATE/Monitor/Update";
 	public static String MONITOR_UPDATE_NAME = "Wheel_Loader_F_Series_Update_v";
 	public static String MONITOR_UPDATE_EXT = ".apk";
 	// --, cjg 150509
+	
 	// ++, cjg 150521
 	public static String MONITOR_MIRACAST_PATH = "/mnt/usb/UPDATE/Monitor/Miracast";
 	public static String MONITOR_MIRACAST_NAME = "PowerCast_v";
@@ -132,12 +140,10 @@ public class UpdateFileFindClass {
 						LastVersionIndex = i;
 					}
 				}
-				
 				return Program[LastVersionIndex];
 			}
 			
 		}
-
 		return null;
 	}
 	
@@ -191,9 +197,7 @@ public class UpdateFileFindClass {
 	}
 	
 	public boolean SendPacket(CAN1CommManager CAN1Comm, byte[] Data){
-		
 		CAN1Comm.TxUpdate(Data, 1030);
-		
 		return true;
 	}
 	
@@ -281,8 +285,8 @@ public class UpdateFileFindClass {
 		
 		nVersion[0] = (Version / 1000) % 10;
 		nVersion[1] = (Version / 100) % 10;
-		nVersion[2] = 0;
-		nVersion[3] = 0;
+		nVersion[2] = (Version / 10) % 10;
+		nVersion[3] = Version % 10;
 		
 		strVersion = Integer.toString(nVersion[0]) + "." + Integer.toString(nVersion[1])
 				+ "." + Integer.toString(nVersion[2]) + "." + Integer.toString(nVersion[3]);

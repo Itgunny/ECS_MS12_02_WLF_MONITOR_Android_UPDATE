@@ -29,6 +29,7 @@ import android.widget.ImageButton;
 import android.widget.ListView;
 import android.widget.SimpleAdapter;
 import android.widget.TextView;
+import android.widget.Toast;
 
 public class MainFragment extends Fragment{
 	/////////////////CONSTANT////////////////////////////////////////////
@@ -77,9 +78,15 @@ public class MainFragment extends Fragment{
 					ParentActivity._UpperFragment.setButtonInvisible(View.VISIBLE); // ++, -- 150326 cjg
 					break;
 				case STATE_MCU:
-					ParentActivity.showMCU();
-					ParentActivity._UpperFragment.setButtonInvisible(View.VISIBLE); // ++, -- 150326 cjg
+					// ++, 150601 cjg
+					if(ParentActivity.getisDisConnected() == false){
+						ParentActivity.showMCUList();
+						ParentActivity._UpperFragment.setButtonInvisible(View.VISIBLE); // ++, -- 150326 cjg
+					}else{
+						Toast.makeText(ParentActivity, "Please Connet USB into device.", Toast.LENGTH_SHORT).show();
+					}
 					break;
+					// ++, 150601 cjg
 				case STATE_CLUSTER:
 					ParentActivity.showCluster();
 					ParentActivity._UpperFragment.setButtonInvisible(View.VISIBLE); // ++, -- 150326 cjg
@@ -98,7 +105,7 @@ public class MainFragment extends Fragment{
 		listItem.setOnItemClickListener(mItemClickListener);
 		
 	}
-
+	
 	private void InitValuables(){
 		Log.d(TAG,"InitValuables");
 		

@@ -34,7 +34,7 @@ public class MainActivity extends Activity {
 	
 	
 	public static final int VERSION_HIGH		= 2;
-	public static final int VERSION_LOW			= 2;
+	public static final int VERSION_LOW			= 3;
 	public static final int VERSION_SUB_HIGH	= 0;
 //	public static final int VERSION_SUB_LOW		= 0;
 	
@@ -51,6 +51,12 @@ public class MainActivity extends Activity {
 	// OS Update 시 3초간 LCD Off CMD 추가
 	////2.0.0.4
 	// BKCU 업데이트 추가 
+	////2.2.0.0
+	// Miracast 업데이트 추가
+	// Update 프로그램 자체 업데이트 추가
+	// PDF Copy 복사 기능 추가
+	////2.3.0.0
+	// MCU Update 방법 변경.
 	////////////////////////////////////////////////////////////////////
 	
 	public static final int INDEX_MAIN_TOP								= 0X1100;
@@ -67,6 +73,7 @@ public class MainActivity extends Activity {
 	public static final int INDEX_CLUSTER_UPDATE						= 0X3111;
 	
 	public static final int INDEX_MCU_TOP								= 0X4000;
+	public static final int INDEX_MCU_SELECT							= 0X4100;
 	public static final int INDEX_MCU_QUESTION							= 0X4110;
 	public static final int INDEX_MCU_UPDATE							= 0X4111;
 	
@@ -87,6 +94,7 @@ public class MainActivity extends Activity {
 	MonitorOSFragment _MonitorOSFragment;
 	ClusterFragment _ClusterFragment;
 	MCUFragment _MCUFragment;
+	MCUListFragment _MCUListFragment; // ++, --, cjg 150601
 	BKCUFragment _BKCUFragment;
 	////////////////////////////////////////////////////////////////////
 	///////////////////////////POPUP////////////////////////////////////
@@ -112,16 +120,9 @@ public class MainActivity extends Activity {
 	//Content Provider
 	public static final String 	AUTHORITY    = "taeha.wheelloader.fseries_monitor.main";
 	
-	/** ContentProvider �젣怨� �겢�옒�뒪�뿉�꽌 諛쏆쓣 uri.getPathSegments()瑜� �벑濡앺빐 以��떎 
-	 * 	<< content://" + AUTHORITY + PATH_GET>> �떎�쓬遺��꽣 getPathSegments[0] = PATH_GET, 
-	 * [1], [2], [3]... �닚�쑝濡� �굹媛꾨떎.
-	 */
 	public static final String  PATH_GET = "/AUTH_GET";
 	public static final String  PATH_UPDATE = "/AUTH_UPDATE";
 	
-	/** CotentProvider �젒洹쇱쓣 �쐞�븳 ContentResolver 媛앹껜瑜� �깮�꽦�븷 �븣 �꽔�뼱 二쇰뒗 留ㅺ컻蹂��닔�뿉
-	 *  URI瑜� �궗�슜 �븳�떎. 
-	 */
 	public static final Uri 	CONTENT_URI  = 
 			Uri.parse("content://" + AUTHORITY + PATH_GET);
 	
@@ -180,31 +181,30 @@ public class MainActivity extends Activity {
 			if(action.equals(Intent.ACTION_MEDIA_MOUNTED)){
 				Toast.makeText(getApplicationContext(), "USB is connected.", 500).show();
 				isDisConnected = false;
-				
 			}else if(action.equals(Intent.ACTION_MEDIA_EJECT)){
 				Toast.makeText(getApplicationContext(), "USB is disconnected.", 500).show();
 				isDisConnected = true;
-				
 			}
 		}
 	};
-	public static boolean isConnectedUsb(){
+	public static void isConnectedUsb(){
 		File file = new File("/mnt/usb");
 		if(file != null){
 			if(file.length() > 0){
 				Log.d(TAG, "Connected");
 				isDisConnected = false;
-				return true;
 			}else{
 				Log.d(TAG, "disConnected");
 				isDisConnected = true;
-				return false;
 			}
-		}else{
-			return false;
 		}
 	}
 	// --, 150326 cjg
+	// ++, 150601 cjg
+	public boolean getisDisConnected(){
+		return isDisConnected;
+	}
+	// --, 150601 cjg
 	// ++, 150401 cjg
 	public void initContentProvider(){
 		Log.i("PROVIDERT", "B Click Auth get Button!");
@@ -271,6 +271,7 @@ public class MainActivity extends Activity {
 		_MonitorOSFragment = new MonitorOSFragment();
 		_ClusterFragment = new ClusterFragment();
 		_MCUFragment = new MCUFragment();
+		_MCUListFragment = new MCUListFragment();// ++, --, 150601 cjg
 		_BKCUFragment = new BKCUFragment();
 			
 	}
@@ -284,7 +285,6 @@ public class MainActivity extends Activity {
 	
 	public void InitValuable(){
 		MenuIndex = INDEX_MAIN_TOP;
-		
 	}
 	
 	
@@ -420,22 +420,25 @@ public class MainActivity extends Activity {
 		transaction.commit();
 	}
 	
-	public void showMCU(){
+	public void showMCUList(){
+		android.app.FragmentTransaction transaction = getFragmentManager().beginTransaction();
+		transaction.replace(R.id.FrameLayout_fragment_body, _MCUListFragment);
+		transaction.commit();
+	}
+	
+	public void showMCUSelect(){
 		android.app.FragmentTransaction transaction = getFragmentManager().beginTransaction();
 		transaction.replace(R.id.FrameLayout_fragment_body, _MCUFragment);
 		transaction.commit();
 	}
+	
 	public void showBKCU(){
 		android.app.FragmentTransaction transaction = getFragmentManager().beginTransaction();
 		transaction.replace(R.id.FrameLayout_fragment_body, _BKCUFragment);
 		transaction.commit();
 	}
-	
-	
 	//////////////////////////////////////////////////////////////////////////////////////
-
 	public void showMonitorUpdateQuestionPopup(){
-
 		if(MenuDialog != null){
 			MenuDialog.dismiss();
 			MenuDialog = null;
@@ -573,7 +576,7 @@ public class MainActivity extends Activity {
 			MenuDialog.dismiss();
 			MenuDialog = null;
 		}
-		MonitorSTM32Builder.setDismiss(new DialogInterface.OnDismissListener() {
+		MonitorCopyErrorToUSBBuilder.setDismiss(new DialogInterface.OnDismissListener() {
 			
 			@Override
 			public void onDismiss(DialogInterface dialog) {
@@ -604,7 +607,6 @@ public class MainActivity extends Activity {
 
 			}
 		});
-		
 		MenuDialog = monitorCopyUSBtoPDFBuilder.create(monitorCopyUSBtoPDFBuilder);
 		MenuDialog.show();		
 	}	
@@ -642,14 +644,23 @@ public class MainActivity extends Activity {
 			_UpperFragment.setButtonInvisible(View.INVISIBLE); // ++, -- 150326 cjg
 			showMain();
 			break;
+		
 		case INDEX_BKCU_TOP:
 			_UpperFragment.setButtonInvisible(View.INVISIBLE); // ++, -- 150326 cjg
 			showMain();
 			break;
-		case INDEX_MONITOR_ANDROID_OS:
-			showMonitor();
+			
+		case INDEX_MCU_SELECT:
+			 // ++, -- 150326 cjg
+			if(getisDisConnected() == true){
+				showMain();
+				_UpperFragment.setButtonInvisible(View.INVISIBLE);
+			}else{
+				showMCUList();
+			}
+			
 			break;
-
+		
 		default:
 			break;
 		}
@@ -665,7 +676,7 @@ public class MainActivity extends Activity {
 		}
 	}
 	
-	public void Reboot(){
+	/*public void Reboot(){
 		Log.d(TAG,"Reboot");
 
 		try {
@@ -679,7 +690,6 @@ public class MainActivity extends Activity {
             Log.d(TAG, "rooting X");
         }   
 	
-	}
-	
+	}*/
 
 }

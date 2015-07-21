@@ -16,6 +16,7 @@ import android.content.DialogInterface;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.media.MediaRecorder.OutputFormat;
+import android.os.Build;
 import android.os.Message;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -27,11 +28,12 @@ import android.widget.ProgressBar;
 public class MonitorCopyUSBtoPDF extends Dialog{
 	public final static String TAG			= "MonitorCopyUSBtoPDF";
 	
-	public final static String ROOT_PATH	= "/storage/emulated/legacy/Help_pdf";
-	public final static String ROOT_PATH_USB = "/mnt/usb/UPDATE/Monitor/Help_pdf"; 
+	public static String ROOT_PATH	= "/storage/emulated/legacy/Help_pdf";
+	public static String ROOT_PATH_USB = "/mnt/usb/UPDATE/Monitor/Help_pdf"; 
 	public static boolean pauseLock = false;
 	private static MainActivity ParentActivity;
 	private static boolean isConnected = false;
+	
 	@Override
 	public boolean onTouchEvent(MotionEvent event) {
 		// TODO Auto-generated method stub
@@ -40,11 +42,14 @@ public class MonitorCopyUSBtoPDF extends Dialog{
 	}
 	public MonitorCopyUSBtoPDF(Context context) {
 		super(context);
+
+		
 		// TODO Auto-generated constructor stub
 	}
 	public MonitorCopyUSBtoPDF(Context context, int theme) {
 		super(context,theme);
 		// TODO Auto-generated constructor stub
+
 	}
 	@Override
 	public void dismiss() {
@@ -97,6 +102,14 @@ public class MonitorCopyUSBtoPDF extends Dialog{
 			CopyThread = new Thread(new CopyThread(dialog, builder));
 			CopyThread.start();
 			
+			if(Build.VERSION.SDK_INT <= Build.VERSION_CODES.ICE_CREAM_SANDWICH_MR1){
+				ROOT_PATH = "/mnt/sdcard/Help_pdf";
+				Log.d(TAG, ROOT_PATH);
+			}else{
+				ROOT_PATH = "/storage/emulated/legacy/Help_pdf";
+				Log.d(TAG, ROOT_PATH);
+			}
+						
 			if(DismissListener != null){
 				DismissListener.onDismiss(dialog);
 			}
@@ -132,7 +145,10 @@ public class MonitorCopyUSBtoPDF extends Dialog{
 					String inputFilePath = ROOT_PATH_USB;
 					String outputFilePath = ROOT_PATH;
 					List<File> dirList = getDirFileList(inputFilePath);
-					List<File> diroutList = getDirFileList(outputFilePath);
+					File dir = new File(outputFilePath);
+					if(!dir.exists()){
+						dir.mkdir();
+					}
 					progressUSBToPDF.setMax(dirList.size());
 					String fileName = dirList.get(nFileCount).getName();
 					Log.d(TAG, "i = " + nFileCount + " fileName = " + fileName);
@@ -145,7 +161,6 @@ public class MonitorCopyUSBtoPDF extends Dialog{
 						public void run() {
 							// TODO Auto-generated method stub
 							progressUSBToPDF.setProgress(nProgress + 1);
-
 						}
 					});
 					nFileCount++;
@@ -157,7 +172,7 @@ public class MonitorCopyUSBtoPDF extends Dialog{
 
 					}else{
 						mFinished = false;
-						DialogRef.get().dismiss();
+						//DialogRef.get().dismiss();
 					}
 					synchronized (mPauseLock) {
 						while(mPaused){
