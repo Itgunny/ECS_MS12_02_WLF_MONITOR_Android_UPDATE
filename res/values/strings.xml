@@ -14,7 +14,10 @@
     <string name="Monitor_Android_Boot">Monitor Boot</string>
     <string name="Monitor_Android_Kernel">Monitor Kernel</string>
     <string name="Monitor_Android_App">Monitor App</string>
-    <string name="Monitor_Copy_Errors_To_USB">Monior Copy Errors To USB</string>
+    <string name="Monitor_Android_Update">Monitor Update - Update</string>
+    <string name="Monitor_Android_Miracast">Monitor Update Smart Terminal</string>
+    <string name="Monitor_Copy_Errors_To_USB">Monitor Copy Errors To USB</string>
+    <string name="Monitor_Copy_USB_TO_PDF">Monitor Update HELP(PDF)</string>
     <string name="OK">OK</string>
     <string name="Exit">Exit</string>
     <string name="CANCEL">CANCEL</string>
@@ -31,4 +34,6 @@
     <string name="Incorrect_ID">Incorrect ID</string>
     <string name="Copy_To_USB">Copy to USB</string>
     <string name="Copy_To_USB_Title">Copy Error Report</string>
+    <string name="USB_To_PDF">PDF to Android</string>
+    <string name="USB_To_PDF_Title">Copy PDF File</string>
 </resources>

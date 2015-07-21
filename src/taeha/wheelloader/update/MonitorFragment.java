@@ -1,6 +1,7 @@
 package taeha.wheelloader.update;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
@@ -15,10 +16,6 @@ import taeha.wheelloader.update.R.string;
 
 import android.app.Activity;
 import android.app.Fragment;
-import android.app.ListFragment;
-import android.graphics.Color;
-import android.graphics.Shader;
-import android.graphics.Shader.TileMode;
 import android.os.Bundle;
 import android.os.Message;
 import android.util.AttributeSet;
@@ -33,6 +30,7 @@ import android.widget.ImageButton;
 import android.widget.ListView;
 import android.widget.SimpleAdapter;
 import android.widget.TextView;
+import android.widget.Toast;
 
 public class MonitorFragment extends Fragment{
 	/////////////////CONSTANT////////////////////////////////////////////
@@ -41,8 +39,11 @@ public class MonitorFragment extends Fragment{
 	private static final int STATE_STM32 				= 0;
 	private static final int STATE_ANDROID_OS	 		= 1;
 	private static final int STATE_ANDROID_APP 			= 2;
-	private static final int STATE_STM32_FACTORYINIT	= 3;
-	private static final int STATE_ERRORREPORT_TO_USB   = 4;
+	private static final int STATE_PDF_TO_ANDROID		= 3;
+	private static final int STATE_ANDROID_UPDATE		= 4;
+	private static final int STATE_ADNROID_MIRACAST     = 5;
+	private static final int STATE_STM32_FACTORYINIT	= 6;
+	
 	/////////////////////////////////////////////////////////////////////
 	/////////////////////RESOURCE////////////////////////////////////////
 	// Fragment Root
@@ -61,10 +62,9 @@ public class MonitorFragment extends Fragment{
 	ArrayAdapter<String> listAdapter;
 	
 	UpdateFileFindClass UpdateFile;
-	
-	MonitorCopyErrorToUSB monitorCopyErrorToUSB;
 	/////////////////////////////////////////////////////////////////////	
 	
+	private static boolean isConnected = true;
 	///////////////////ANIMATION/////////////////////////////////////////
 
 	/////////////////////////////////////////////////////////////////////
@@ -85,7 +85,6 @@ public class MonitorFragment extends Fragment{
 				case STATE_STM32:
 					if(UpdateFile.GetMonitorSTM32Version() != null)
 						ParentActivity.showMonitorUpdateQuestionPopup();
-					
 					break;
 				case STATE_ANDROID_OS:
 					ParentActivity.showMonitorOS();
@@ -94,12 +93,29 @@ public class MonitorFragment extends Fragment{
 					if(UpdateFile.GetMonitorVersion() != null)
 						UpdateFile.MonitorAndroidAppUpdate();
 					break;
+				case STATE_PDF_TO_ANDROID:
+					if(ParentActivity.isDisConnected == false){
+						Log.d(TAG, "isDisConnected : " + ParentActivity.isDisConnected);
+						ParentActivity.showMonitorCopyUSBToFilePopup();
+						Toast.makeText(ParentActivity.getApplicationContext(), "Copy Completed", 50).show();
+					} else{
+						Log.d(TAG, "isDisConnected : " + ParentActivity.isDisConnected);
+						Toast.makeText(ParentActivity.getApplicationContext(), "Please Connect USB to device.", 50).show();
+					}
+					break;
+				case STATE_ANDROID_UPDATE:
+					if(UpdateFile.GetUpdateProgramVersion() != null)
+						UpdateFile.MonitorUpdateProgramUpdate();
+					break;
+				case STATE_ADNROID_MIRACAST:
+					if(UpdateFile.GetMiracastVersion() != null)
+						UpdateFile.MonitorMiracastAppUpdate();
+					break;
 				case STATE_STM32_FACTORYINIT:
 					if(UpdateFile.GetMonitorSTM32FactoryInitVersion() != null)
 						ParentActivity.showMonitorFactoryInitUpdateQuestionPopup();
 					break;
 				default:
-					
 					break;
 				}
 				
@@ -122,6 +138,9 @@ public class MonitorFragment extends Fragment{
 		Map<String, String> mapApp = new HashMap<String, String>(2);
 		//Factory Init
 		Map<String, String> mapSTM32FactoryInit = new HashMap<String, String>(2); 
+		Map<String, String>	mapMiracast = new HashMap<String, String>(2);
+		Map<String, String>	mapUpdateProgram = new HashMap<String, String>(2);
+		Map<String, String>	mapPDF = new HashMap<String, String>(2);
 		
 		mapSTM32.put("First Line", ParentActivity.getResources().getString(string.Monitor_STM32));
 		if(UpdateFile.GetMonitorSTM32Version() != null)
@@ -137,12 +156,28 @@ public class MonitorFragment extends Fragment{
         if(UpdateFile.GetMonitorVersion() != null)
         	mapApp.put("Second Line",UpdateFile.GetMonitorVersion());
         data.add(mapApp);
+        
+        mapPDF.put("First Line", ParentActivity.getResources().getString(string.Monitor_Copy_USB_TO_PDF));
+        mapOS.put("Second Line","");
+        data.add(mapPDF);
+
+        mapUpdateProgram.put("First Line", ParentActivity.getResources().getString(string.Monitor_Android_Update));
+        if(UpdateFile.GetUpdateProgramVersion() != null){
+        	mapUpdateProgram.put("Second Line", UpdateFile.GetUpdateProgramVersion());
+        }
+        data.add(mapUpdateProgram);
+           
+        mapMiracast.put("First Line", ParentActivity.getResources().getString(string.Monitor_Android_Miracast));
+        if(UpdateFile.GetMiracastVersion() != null){
+        	mapMiracast.put("Second Line", UpdateFile.GetMiracastVersion());
+        }
+        data.add(mapMiracast);
+        
         //Factory Init
         mapSTM32FactoryInit.put("First Line", ParentActivity.getResources().getString(string.Monitor_STM32_Factory_Init));
         if(UpdateFile.GetMonitorSTM32FactoryInitVersion() != null)
         	mapSTM32FactoryInit.put("Second Line",UpdateFile.GetMonitorSTM32FactoryInitVersion());
         data.add(mapSTM32FactoryInit);
-        
         SimpleAdapter adapter = new SimpleAdapter(ParentActivity, data,
                 android.R.layout.simple_list_item_2, 
                 new String[] {"First Line", "Second Line" }, 
@@ -193,7 +228,7 @@ public class MonitorFragment extends Fragment{
 		InitResource();
 		InitValuables();
 		InitButtonListener();
-		
+		isConnectedUsb();
 		ParentActivity.MenuIndex = ParentActivity.INDEX_MONITOR_TOP;
 		
 		return mRoot;
@@ -309,6 +344,18 @@ public class MonitorFragment extends Fragment{
 
 		}
 	}
-	
+	public static boolean isConnectedUsb(){
+		File file = new File("/mnt/usb");
+		if(file != null){
+			if(file.length() > 0){
+				Log.d(TAG, "Connected");
+				isConnected = true;
+			}else{
+				Log.d(TAG, "disConnected");
+				isConnected = false;
+			}
+		}
+		return isConnected;
+	}
 	
 }

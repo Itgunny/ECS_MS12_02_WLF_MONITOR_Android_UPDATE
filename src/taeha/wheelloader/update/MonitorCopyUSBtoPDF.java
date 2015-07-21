@@ -6,6 +6,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
+import java.nio.channels.FileChannel;
 import java.util.Arrays;
 import java.util.List;
 
@@ -14,6 +15,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
+import android.media.MediaRecorder.OutputFormat;
 import android.os.Message;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -22,24 +24,25 @@ import android.view.View;
 import android.view.ViewGroup.LayoutParams;
 import android.widget.ProgressBar;
 
-public class MonitorCopyErrorToUSB extends Dialog{
-	public final static String TAG			= "MonitorCopyErrorToUSB";
+public class MonitorCopyUSBtoPDF extends Dialog{
+	public final static String TAG			= "MonitorCopyUSBtoPDF";
 	
-	public final static String ROOT_PATH	= "/mnt/sdcard/Alarms";
-	public final static String ROOT_PATH_USB = "/mnt/usb/Alarms"; 
+	public final static String ROOT_PATH	= "/storage/emulated/legacy/Help_pdf";
+	public final static String ROOT_PATH_USB = "/mnt/usb/UPDATE/Monitor/Help_pdf"; 
 	public static boolean pauseLock = false;
 	private static MainActivity ParentActivity;
+	private static boolean isConnected = false;
 	@Override
 	public boolean onTouchEvent(MotionEvent event) {
 		// TODO Auto-generated method stub
 		return false;
 		//return super.onTouchEvent(event);
 	}
-	public MonitorCopyErrorToUSB(Context context) {
+	public MonitorCopyUSBtoPDF(Context context) {
 		super(context);
 		// TODO Auto-generated constructor stub
 	}
-	public MonitorCopyErrorToUSB(Context context, int theme) {
+	public MonitorCopyUSBtoPDF(Context context, int theme) {
 		super(context,theme);
 		// TODO Auto-generated constructor stub
 	}
@@ -52,10 +55,10 @@ public class MonitorCopyErrorToUSB extends Dialog{
 
 	public static class Builder{
 		private Context context;
-		MonitorCopyErrorToUSB dialog;
+		MonitorCopyUSBtoPDF dialog;
 		
 		// ProgressBar
-		static ProgressBar progressCopyToUSB;
+		static ProgressBar progressUSBToPDF;
 		
 		// Thread
 		protected static Thread CopyThread = null;
@@ -78,15 +81,15 @@ public class MonitorCopyErrorToUSB extends Dialog{
 			this.DismissListener = listener;
 			return this;
 		}
-		public MonitorCopyErrorToUSB create(MonitorCopyErrorToUSB.Builder builder){
+		public MonitorCopyUSBtoPDF create(MonitorCopyUSBtoPDF.Builder builder){
 			ParentActivity.MenuIndex = ParentActivity.INDEX_MONITOR_COPY_TO_USB;
 			LayoutInflater inflater = (LayoutInflater)context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 			
-			dialog = new MonitorCopyErrorToUSB(context, R.style.Dialog);
+			dialog = new MonitorCopyUSBtoPDF(context, R.style.Dialog);
 			
-			View layout = inflater.inflate(R.layout.popup_update_file_copytousb, null);
-			progressCopyToUSB = (ProgressBar)layout.findViewById(R.id.progressBar_popup_update_file_copytousb_progress);
-			progressCopyToUSB.setVisibility(View.VISIBLE);
+			View layout = inflater.inflate(R.layout.popup_update_file_pdfcopy, null);
+			progressUSBToPDF = (ProgressBar)layout.findViewById(R.id.progressBar_popup_update_file_pdfcopy_progress);
+			progressUSBToPDF.setVisibility(View.VISIBLE);
 			
 			dialog.addContentView(layout, new LayoutParams(427, 229));
 			dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
@@ -102,8 +105,8 @@ public class MonitorCopyErrorToUSB extends Dialog{
 		/////////////////////////////////////////Copy Seq/////////////////////////////////////////
 		// Copy Thread
 		public static class CopyThread implements Runnable{
-			private WeakReference<MonitorCopyErrorToUSB.Builder> BuilderRef = null;
-			private WeakReference<MonitorCopyErrorToUSB> DialogRef = null;
+			private WeakReference<MonitorCopyUSBtoPDF.Builder> BuilderRef = null;
+			private WeakReference<MonitorCopyUSBtoPDF> DialogRef = null;
 			private Object mPauseLock;
 			private boolean mPaused;
 			private boolean mFinished;
@@ -111,57 +114,59 @@ public class MonitorCopyErrorToUSB extends Dialog{
 			public Message msg = null;
 			
 
-			public CopyThread(MonitorCopyErrorToUSB _dialog, MonitorCopyErrorToUSB.Builder _builder) {
+			public CopyThread(MonitorCopyUSBtoPDF _dialog, MonitorCopyUSBtoPDF.Builder _builder) {
 				// TODO Auto-generated constructor stub
-				this.BuilderRef = new WeakReference<MonitorCopyErrorToUSB.Builder>(_builder);
-				//this.DialogRef = new WeakReference<MonitorCopyErrorToUSB>(_dialog);
+				this.BuilderRef = new WeakReference<MonitorCopyUSBtoPDF.Builder>(_builder);
+				this.DialogRef = new WeakReference<MonitorCopyUSBtoPDF>(_dialog);
 				mPauseLock = new Object();
 				mPaused = false;
 				mFinished = false;
 				msg = new Message();
-				fileRemove(ROOT_PATH_USB);
+				fileRemove(ROOT_PATH);
 			}
 			
 			@Override
 			public void run() {
 				// TODO Auto-generated method stub
 				while(!mFinished){
-					if(isConnectedUsb() == true){
-						String inputFilePath = ROOT_PATH;
-						String outputFilePath = ROOT_PATH_USB;
-						List<File> dirList = getDirFileList(inputFilePath);
-						List<File> dirOutList = getDirFileList(outputFilePath);
-						progressCopyToUSB.setMax(dirList.size());
-						String fileName = dirList.get(nFileCount).getName();
-						fileCopy(ROOT_PATH + "/" + fileName, ROOT_PATH_USB + "/" + fileName);
-						Log.d(TAG, "i = " + nFileCount + " fileName = " + fileName);
-						nProgress = nFileCount;
-						ParentActivity.runOnUiThread(new Runnable() {
-							@Override
-							public void run() {
-								// TODO Auto-generated method stub
-								progressCopyToUSB.setProgress(nProgress + 1);
-								
-							}
-						});
-						nFileCount++;
-						if(nFileCount == dirList.size()){
-							mFinished = true;
-							DialogRef.get().dismiss();
-							nFileCount = 0;
-						}else{
-							mFinished = false;
-							DialogRef.get().dismiss();
+					String inputFilePath = ROOT_PATH_USB;
+					String outputFilePath = ROOT_PATH;
+					List<File> dirList = getDirFileList(inputFilePath);
+					List<File> diroutList = getDirFileList(outputFilePath);
+					progressUSBToPDF.setMax(dirList.size());
+					String fileName = dirList.get(nFileCount).getName();
+					Log.d(TAG, "i = " + nFileCount + " fileName = " + fileName);
+					nProgress = nFileCount;
+					Log.d(TAG, "nFileCount = " + nFileCount);
+					fileCopy(inputFilePath + "/" + fileName, outputFilePath + "/" + fileName);
+					Log.d(TAG, "File Copy is Complete");
+					ParentActivity.runOnUiThread(new Runnable() {
+						@Override
+						public void run() {
+							// TODO Auto-generated method stub
+							progressUSBToPDF.setProgress(nProgress + 1);
+
 						}
-						synchronized (mPauseLock) {
-							while(mPaused){
-								try{
-									mPauseLock.wait();
-								}	catch(InterruptedException e){
-									e.printStackTrace();
-									mFinished = false;
-									//DialogRef.get().dismiss();
-								}
+					});
+					nFileCount++;
+					Log.d(TAG, "nFileCount : " + nFileCount + " dirList.size() : " + dirList.size());
+					if(nFileCount == dirList.size()){
+						mFinished = true;
+						DialogRef.get().dismiss();
+						nFileCount = 0;
+
+					}else{
+						mFinished = false;
+						DialogRef.get().dismiss();
+					}
+					synchronized (mPauseLock) {
+						while(mPaused){
+							try{
+								mPauseLock.wait();
+							}	catch(InterruptedException e){
+								e.printStackTrace();
+								mFinished = false;
+								//DialogRef.get().dismiss();
 							}
 						}
 					}
@@ -181,24 +186,9 @@ public class MonitorCopyErrorToUSB extends Dialog{
 				}
 			}
 		}
-		public static boolean isConnectedUsb(){
-			File file = new File("/mnt/usb");
-			if(file != null){
-				if(file.length() > 0){
-					Log.d(TAG, "Connected");
-					return true;
-				}else{
-					Log.d(TAG, "disConnected");
-					return false;
-				}
-			}
-			return false;
-		}
 		public static List<File> getDirFileList(String dirPath){
 			List<File> dirFileList = null;
-			
 			File dir = new File(dirPath);
-
 			if(dir.exists()){ 
 				Log.d(TAG, ""+"dir is exist.");
 				File[] files = dir.listFiles();	
@@ -216,13 +206,18 @@ public class MonitorCopyErrorToUSB extends Dialog{
 				FileInputStream fis = new FileInputStream(inputFilePath);
 				FileOutputStream fos = new FileOutputStream(outputFilePath);
 				
-				int data = 0;
+				FileChannel fcin = fis.getChannel();
+				FileChannel fcout = fos.getChannel();
+				
+				long size = fcin.size();
+				fcin.transferTo(0, size, fcout);
 				Log.d(TAG," "+ inputFilePath + " " + outputFilePath);
-				while((data = fis.read()) != -1){
-					fos.write(data);
-				}
-				fis.close();
+				
+				fcout.close();
+				fcin.close();
+				
 				fos.close();
+				fis.close();
 			} catch(IOException e){
 				e.printStackTrace();
 			}
@@ -240,7 +235,6 @@ public class MonitorCopyErrorToUSB extends Dialog{
 					}
 				}	
 			}
-			
 		}
 		public Context getContext(){
 			return context;

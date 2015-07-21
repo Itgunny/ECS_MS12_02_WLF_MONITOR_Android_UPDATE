@@ -1,5 +1,7 @@
 package taeha.wheelloader.update;
 
+import java.io.File;
+import java.io.IOException;
 import java.io.OutputStream;
 import java.util.List;
 
@@ -32,7 +34,7 @@ public class MainActivity extends Activity {
 	
 	
 	public static final int VERSION_HIGH		= 2;
-	public static final int VERSION_LOW			= 1;
+	public static final int VERSION_LOW			= 2;
 	public static final int VERSION_SUB_HIGH	= 0;
 //	public static final int VERSION_SUB_LOW		= 0;
 	
@@ -40,7 +42,7 @@ public class MainActivity extends Activity {
 	////2.0.0.2
 	//	Enter DW Mode 후 2초 딜레이 추가 (Cluster Serial Flash Erase Time)
 	////2.0.0.3
-	// Request 후 응답 없을 시 1회 재요청
+	// Requeset 후 응답 없을 시 1회 재요청
 	// CTS, ACK 응답 없을 시 4회 재요청
 	// Status Text 추가 
 	// CAN Update Popup 종료 시 Thread도 강제 종료
@@ -49,11 +51,6 @@ public class MainActivity extends Activity {
 	// OS Update 시 3초간 LCD Off CMD 추가
 	////2.0.0.4
 	// BKCU 업데이트 추가 
-	////2.1.0
-	// Monitor Update page에서 Left+Right Long키 입력 시 Error report copy
-	// BKCU CID 판별하여 표시
-	// Version 3자리일 경우 뻗는 현상 개선
-	// 메인 Back 버튼 제거
 	////////////////////////////////////////////////////////////////////
 	
 	public static final int INDEX_MAIN_TOP								= 0X1100;
@@ -96,6 +93,7 @@ public class MainActivity extends Activity {
 	UpdaetMonitorSTM32Popup.Builder MonitorSTM32Builder;
 	UpdateQuestionMonitorSTM32Popup.Builder MonitorUpdateQuestionBuilder;
 	MonitorCopyErrorToUSB.Builder MonitorCopyErrorToUSBBuilder;
+	MonitorCopyUSBtoPDF.Builder monitorCopyUSBtoPDFBuilder;
 	////////////////////////////////////////////////////////////////////
 	Handler HandleKeyButton;
 	///////////////////////////VALUABLE/////////////////////////////////
@@ -143,6 +141,7 @@ public class MainActivity extends Activity {
 		InitValuable();
 		initContentProvider();
 		
+		isConnectedUsb();
 		showUpper();
 		showMain();
 		
@@ -150,11 +149,18 @@ public class MainActivity extends Activity {
 		HandleKeyButton = new Handler() {
 			@Override
 			public void handleMessage(Message msg) {
-				if(MonitorCopyErrorToUSBBuilder.isConnectedUsb() == true){
-					showMonitorCopyFileToUSBPopup();
-				}else{
-					Toast.makeText(getApplicationContext(), "Please Connect USB to device.", 500).show();
-				}		
+				if(msg.what == CAN1CommManager.LONG_LEFT_RIGHT){
+					if(MonitorCopyErrorToUSBBuilder.isConnectedUsb() == true){
+						try{
+							showMonitorCopyFileToUSBPopup();
+						}catch(Exception e){
+							e.printStackTrace();
+							//Toast.makeText(getApplicationContext(), "Please Connect USB to device.", 50).show();
+						}
+					}else{
+						//Toast.makeText(getApplicationContext(), "Please Connect USB to device.", 50).show();
+					}
+				}
 			}
 		};
 		IntentFilter f = new IntentFilter();
@@ -174,14 +180,32 @@ public class MainActivity extends Activity {
 			if(action.equals(Intent.ACTION_MEDIA_MOUNTED)){
 				Toast.makeText(getApplicationContext(), "USB is connected.", 500).show();
 				isDisConnected = false;
+				
 			}else if(action.equals(Intent.ACTION_MEDIA_EJECT)){
 				Toast.makeText(getApplicationContext(), "USB is disconnected.", 500).show();
 				isDisConnected = true;
+				
 			}
 		}
 	};
+	public static boolean isConnectedUsb(){
+		File file = new File("/mnt/usb");
+		if(file != null){
+			if(file.length() > 0){
+				Log.d(TAG, "Connected");
+				isDisConnected = false;
+				return true;
+			}else{
+				Log.d(TAG, "disConnected");
+				isDisConnected = true;
+				return false;
+			}
+		}else{
+			return false;
+		}
+	}
 	// --, 150326 cjg
-	// ++, 150326 cjg
+	// ++, 150401 cjg
 	public void initContentProvider(){
 		Log.i("PROVIDERT", "B Click Auth get Button!");
 		
@@ -200,14 +224,17 @@ public class MainActivity extends Activity {
 		isAvailableBKCU = authkey;
 		Log.d(TAG, "isAvailable BKCU : " + isAvailableBKCU);
 	}
-	// --, 150326 cjg
+	// --, 150401 cjg
+	// ++, 150326 cjg
 	@Override
 	protected void onDestroy() {
 		// TODO Auto-generated method stub
 		super.onDestroy();
+		
+		// ++, 150326 cjg
 		unregisterReceiver(mUsbBroadcastReceiver);
+		// --, 150326 cjg
 	}
-
 	// --, 150326 cjg
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
@@ -252,6 +279,7 @@ public class MainActivity extends Activity {
 		MonitorSTM32Builder = new UpdaetMonitorSTM32Popup.Builder(this);
 		MonitorUpdateQuestionBuilder = new UpdateQuestionMonitorSTM32Popup.Builder(this);
 		MonitorCopyErrorToUSBBuilder = new MonitorCopyErrorToUSB.Builder(this);
+		monitorCopyUSBtoPDFBuilder = new MonitorCopyUSBtoPDF.Builder(this);
 	}
 	
 	public void InitValuable(){
@@ -345,7 +373,6 @@ public class MainActivity extends Activity {
 					HandleKeyButton.sendMessage(HandleKeyButton.obtainMessage(Data));
 				}
 			}
-			
 		}
 		
 		@Override
@@ -546,7 +573,6 @@ public class MainActivity extends Activity {
 			MenuDialog.dismiss();
 			MenuDialog = null;
 		}
-
 		MonitorSTM32Builder.setDismiss(new DialogInterface.OnDismissListener() {
 			
 			@Override
@@ -557,17 +583,32 @@ public class MainActivity extends Activity {
 
 			}
 		});
-		
 		MenuDialog = MonitorCopyErrorToUSBBuilder.create(MonitorCopyErrorToUSBBuilder);
 		MenuDialog.show();		
 	}
+	
+	public void showMonitorCopyUSBToFilePopup(){
+
+		if(MenuDialog != null){
+			MenuDialog.dismiss();
+			MenuDialog = null;
+		}
+
+		monitorCopyUSBtoPDFBuilder.setDismiss(new DialogInterface.OnDismissListener() {
+			
+			@Override
+			public void onDismiss(DialogInterface dialog) {
+				// TODO Auto-generated method stub
+				Log.d(TAG,"onDismiss");
+				
+
+			}
+		});
+		
+		MenuDialog = monitorCopyUSBtoPDFBuilder.create(monitorCopyUSBtoPDFBuilder);
+		MenuDialog.show();		
+	}	
 	//////////////////////////////////////////////////////////////////////////////////////
-	
-	
-	
-	
-	
-	
 	//////////////////////////////////////////////////////////////////////////////////////
 	
 	public void RecResponse(int response){

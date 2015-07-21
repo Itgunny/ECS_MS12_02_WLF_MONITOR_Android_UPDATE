@@ -8,21 +8,18 @@ import java.io.IOException;
 import java.io.InputStream;
 
 
+
+
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.provider.OpenableColumns;
+import android.text.method.MovementMethod;
 import android.util.Log;
 import android.widget.ProgressBar;
 
 public class UpdateFileFindClass {
 	public static final String TAG = "UpdateFileFindClass";
-	
-	private static final int STX = 0x02;
-	private static final int ETX = 0x03;
-	private static final int EOT = 0x04;
-	private static final int ACK = 0x06;
-	private static final int NAK = 0x15;
 
 	public static String ROOT_USB_PATH	= "/mnt/usb/";
 	public static String ROOT_MMC_PATH	= "/mnt/sdcard";
@@ -52,7 +49,7 @@ public class UpdateFileFindClass {
 	public static String MONITOR_STM32_EXT = ".bin";
 	public static String MONITOR_STM32_FACTORYINIT_NAME = "WL9F_Monitor_APP_FI_v";
 	
-	public static String CLUSTER_FIRMWARE_PATH = "/mnt/usb/UPDATE/Cluster/Firmware";
+	public static String CLUSTER_FIRMWARE_PATH = "/storage/usb/UPDATE/Cluster/Firmware";
 	public static String CLUSTER_FIRMWARE_NAME = "WL9F_Cluster_APP_v";
 	public static String CLUSTER_FIRMWARE_EXT = ".THM";
 	
@@ -63,43 +60,29 @@ public class UpdateFileFindClass {
 	public static String BKCU_FIRMWARE_PATH = "/mnt/usb/UPDATE/BKCU/Firmware";
 	public static String BKCU_FIRMWARE_NAME = "BKCU_v";
 	public static String BKCU_FIRMWARE_EXT = ".THM";
+	
+	// ++, cjg 150509
+	public static String MONITOR_UPDATE_PATH = "/mnt/usb/UPDATE/Monitor/Update";
+	public static String MONITOR_UPDATE_NAME = "Wheel_Loader_F_Series_Update_v";
+	public static String MONITOR_UPDATE_EXT = ".apk";
+	// --, cjg 150509
+	// ++, cjg 150521
+	public static String MONITOR_MIRACAST_PATH = "/mnt/usb/UPDATE/Monitor/Miracast";
+	public static String MONITOR_MIRACAST_NAME = "PowerCast_v";
+	public static String MONITOR_MIRACAST_EXT = ".apk";
+	// --, cjg 150521
+	
 
 	String strPath;
 	String strFileNameHead;
 	String strExtension;
 
 	Context context;
+	
 	public UpdateFileFindClass(Context _context) {
 		context = _context;
 	}
 	
-	public void MakeFilePath(){
-
-	}
-	
-	public void test(){
-		File f = GetLastVersionProgram(MONITOR_APP_PATH,MONITOR_APP_NAME,MONITOR_APP_EXT);
-		
-		Log.d(TAG,"f.getPath() : " + f.getPath());
-	}
-	
-	public void test2(){
-		File rootDir = new File("/mnt/usb");
-		File[] files = rootDir.listFiles();
-
-		if (files != null) {
-			for (int i = 0; i < files.length; i++) {
-				String str = files[i].getPath();
-				Log.d(TAG, "Path : " + str);
-				if (str.contains(MONITOR_APP_NAME) == true) {
-					if(str.endsWith(MONITOR_APP_EXT)){
-						Log.d(TAG, "Match Path : " + str);
-						//apkInstall(files[i]);
-					}
-				}
-			}
-		}
-	}
 	
 	public File GetLastVersionProgram(String strRootPath, String strAppName, String strExtension){
 	//public void GetLastVersionProgram(String strRootPath, String strAppName, String strExtension){
@@ -164,7 +147,6 @@ public class UpdateFileFindClass {
 
 		int VersionStartPosition;
 		
-		String str;
 		nVersion = new int[4];
 		cVersion = new char[4];
 		
@@ -195,6 +177,7 @@ public class UpdateFileFindClass {
 				+ Integer.toString(nVersion[2])+ Integer.toString(nVersion[3]));
 		return (nVersion[0]*1000 + nVersion[1]*100 + nVersion[2]*10 + nVersion[3]);
 	}
+	
 	//////////////////////////////////////// Monitor STM32 Install///////////////////////////////////////
 	public File GetMonitorSTM32UpdateFile(){
 		File f = GetLastVersionProgram(MONITOR_STM32_PATH,MONITOR_STM32_NAME,MONITOR_STM32_EXT);
@@ -298,8 +281,8 @@ public class UpdateFileFindClass {
 		
 		nVersion[0] = (Version / 1000) % 10;
 		nVersion[1] = (Version / 100) % 10;
-		nVersion[2] = (Version / 10) % 10;
-		nVersion[3] = Version % 10;
+		nVersion[2] = 0;
+		nVersion[3] = 0;
 		
 		strVersion = Integer.toString(nVersion[0]) + "." + Integer.toString(nVersion[1])
 				+ "." + Integer.toString(nVersion[2]) + "." + Integer.toString(nVersion[3]);
@@ -321,9 +304,86 @@ public class UpdateFileFindClass {
 
 		}
 	}
+	/////////////////////////////////////////////////////////////////////////////////////////////////////
 		
-	////////////////////////////////////////////////////////////////////////////////////////////////////////
 	
+	//////////////////////////////////////// Miracast Application Install/////////////////////////////////
+	public void MonitorMiracastAppUpdate(){
+		File f = GetLastVersionProgram(MONITOR_MIRACAST_PATH,MONITOR_MIRACAST_NAME,MONITOR_MIRACAST_EXT);
+		if(f == null)
+			return;
+		apkInstall(f);
+	}
+	
+	public String GetMiracastVersion(){
+		int[] nVersion;
+		int Version;
+		String strVersion;
+		nVersion = new int[4];
+		
+		File f = GetLastVersionProgram(MONITOR_MIRACAST_PATH,MONITOR_MIRACAST_NAME,MONITOR_MIRACAST_EXT);
+		if(f == null)
+			return null;
+		Version = GetVersion(MONITOR_MIRACAST_PATH,MONITOR_MIRACAST_NAME,MONITOR_MIRACAST_EXT,f.getPath());
+		
+		nVersion[0] = (Version / 1000) % 10;
+		nVersion[1] = (Version / 100) % 10;
+		nVersion[2] = (Version / 10) % 10;
+		nVersion[3] = Version % 10;
+		
+		strVersion = Integer.toString(nVersion[0]) + "." + Integer.toString(nVersion[1])
+				+ "." + Integer.toString(nVersion[2]) + "." + Integer.toString(nVersion[3]);
+		
+		return strVersion;
+	}	
+	////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////////////////////////////////////////
+		
+	
+	//////////////////////////////////////// Update Program Application Install/////////////////////////////////
+	
+	public void MonitorUpdateProgramUpdate(){
+		File f = GetLastVersionProgram(MONITOR_UPDATE_PATH,MONITOR_UPDATE_NAME,MONITOR_UPDATE_EXT);
+		if(f == null)
+			return;
+		UpdateProgrmaApkInstall(f);
+	}
+	
+	public String GetUpdateProgramVersion(){
+		int[] nVersion;
+		int Version;
+		String strVersion;
+		nVersion = new int[4];
+		
+		File f = GetLastVersionProgram(MONITOR_UPDATE_PATH,MONITOR_UPDATE_NAME,MONITOR_UPDATE_EXT);
+		if(f == null)
+			return null;
+		Version = GetVersion(MONITOR_UPDATE_PATH,MONITOR_UPDATE_NAME,MONITOR_UPDATE_EXT,f.getPath());
+		Log.d(TAG, "Version : " + Version / 10);
+		nVersion[0] = (Version / 1000) % 10; // 2
+		nVersion[1] = (Version / 100) % 10;  // 2
+		nVersion[2] = 0;   
+		nVersion[3] = 0;
+
+		strVersion = Integer.toString(nVersion[0]) + "." + Integer.toString(nVersion[1])
+				+ "." + Integer.toString(nVersion[2]) + "." + Integer.toString(nVersion[3]);
+		
+		return strVersion;
+	}	
+	public void UpdateProgrmaApkInstall(File apkfile) {
+		Uri apkUri = Uri.fromFile(apkfile);
+		try {
+			
+			Intent packageinstaller = new Intent(Intent.ACTION_VIEW);
+			packageinstaller.setDataAndType(apkUri,
+					"application/vnd.android.package-archive");
+			context.startActivity(packageinstaller);
+			System.exit(0);
+		} catch (Exception e) {
+
+		}
+	}
+	////////////////////////////////////////////////////////////////////////////////////////////////////////	
 	////////////////////////////////////OS//////////////////////////////////////////////////////////////////
 	public String GetMonitorBootVersion(){
 		int[] nVersion;
@@ -509,8 +569,4 @@ public class UpdateFileFindClass {
 		}
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////////////
-	
-	
-	
-
 }
