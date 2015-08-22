@@ -33,8 +33,8 @@ public class MainActivity extends Activity {
 	private static final String TAG = "MainActivity";
 	
 	
-	public static final int VERSION_HIGH		= 2;
-	public static final int VERSION_LOW			= 6;
+	public static final int VERSION_HIGH		= 3;
+	public static final int VERSION_LOW			= 0;
 	public static final int VERSION_SUB_HIGH	= 0;
 //	public static final int VERSION_SUB_LOW		= 0;
 	
@@ -72,6 +72,13 @@ public class MainActivity extends Activity {
 	// Update 폴더 없을 경우 뻗는 현상 개선	
 	////2.6.0 15.07.15
 	// Can Update 관련 프로그레스바 수정.
+	////3.0.0 15.08.22
+	// 1. CAN Update 1.3 적용
+	//  - UPD Format 추가
+	//	- 이전 버전 호환을 위해 UPD format 5초 time out 후 1회 재시도 -> pass 함
+	//	- Cancel 버튼 파일전송 시에만 Enable
+	//	- 사용자가 cancel 했을 경우 프로토콜 반영
+	// 2. Enter DL Mode 후 2초 delay 삭제
 	////////////////////////////////////////////////////////////////////
 	
 	public static final int INDEX_MAIN_TOP								= 0X1100;

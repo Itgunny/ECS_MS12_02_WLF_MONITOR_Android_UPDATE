@@ -9,12 +9,15 @@ import java.lang.ref.WeakReference;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import taeha.wheelloader.update.CANUpdatePopup.Builder.UpdateThread;
 import taeha.wheelloader.update.R.string;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
+import android.os.AsyncTask;
 import android.os.Message;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -42,15 +45,18 @@ public class CANUpdatePopup extends Dialog{
 	private static final int RESULT_FLASH_CRC_OK		 			= 0x41;
 	private static final int RESULT_FLASH_CRC_ERROR		 			= 0x42;
 	private static final int RESULT_FLASH_CRC_NOFW		 			= 0x43;
+	private static final int RESULT_CANCEL_BY_MASTER				= 0x51;
 	// CAN1CommManager
 	private static CAN1CommManager CAN1Comm;
 	private static MainActivity ParentActivity;
 	private static _Parent_CANUpdateFragment ParentFragment;
+
 	//++, 150716 cjg
-	private  static int TotalCount = 9;
+	private  static int TotalCount = 10;
 	//--, 150716 cjg
 	// Thread
 	protected static Thread threadUpdate = null;
+	protected static UpdateThread updateThread = null;
 	
 	protected static int TIMEOUT 			= 100;
 	
@@ -60,6 +66,7 @@ public class CANUpdatePopup extends Dialog{
 	protected static int RETURN_FAIL_CRCERROR					= 3;
 	protected static int RETURN_FAIL_NOFW 						= 4;
 	protected static int RETURN_FAIL_INCORRECT_STATUS 			= 5;
+	protected static int RETURN_CANCEL_BY_MASTER				= 6;
 	@Override
 	public boolean onTouchEvent(MotionEvent event) {
 		// TODO Auto-generated method stub
@@ -79,7 +86,9 @@ public class CANUpdatePopup extends Dialog{
 	public void dismiss() {
 		// TODO Auto-generated method stub
 		super.dismiss();	
-		threadUpdate.interrupt();
+		//updateThread.onCancelled();
+		//updateThread.cancel(true);
+		Thread.interrupted();
 		//ParentActivity.MenuIndex = ParentActivity.INDEX_MONITOR_TOP;
 	}
 
@@ -94,6 +103,7 @@ public class CANUpdatePopup extends Dialog{
 		private int Count = 0;
 
 		boolean UpdateProgramFlag = true;
+		boolean UPDFormatFlag = true;
 	
 		File UpdateFile;
 		FirmwareInfoClass FirmwareInfo;
@@ -109,6 +119,7 @@ public class CANUpdatePopup extends Dialog{
 		
 		// ImageButton
 		ImageButton imgbtnExit;
+		TextView textCancel;
 
 		private DialogInterface.OnDismissListener DismissListener;
 		private DialogInterface.OnClickListener ExitButtonClickListener;
@@ -148,14 +159,18 @@ public class CANUpdatePopup extends Dialog{
 			textViewStatusProgram = (TextView)layout.findViewById(R.id.textView_popup_update_can_progress_status);
 			textViewStatusNumber = (TextView)layout.findViewById(R.id.textView_popup_update_can_progress_status_number);
 			imgbtnExit = (ImageButton)layout.findViewById(R.id.imageButton_popup_update_can_progress_exit);
-			
+			imgbtnExit.setVisibility(View.INVISIBLE);
+			textCancel = (TextView)layout.findViewById(R.id.textView_popup_update_can_progress_exit);
+			textCancel.setVisibility(View.INVISIBLE);
 			
 			dialog.addContentView(layout, new LayoutParams(427,229));
-			dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));			
+			dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));	
+			
 			
 			CAN1Comm = CAN1CommManager.getInstance();
 			UpdateFile = _updatefile;
 			FirmwareInfo = _firmwareinfo;
+			
 			
 			UpdateProgramFlag = true;
 			progressProgram.setMax(FirmwareInfo.NumberofSection * FirmwareInfo.NumberofPacket);
@@ -164,7 +179,11 @@ public class CANUpdatePopup extends Dialog{
 			
 			CAN1Comm.Set_nRecAckNewFWNInfoFlag_61184_250_82(0);
 			CAN1Comm.Set_nRecvFWDLCompleteFlag_61184_250_80(0);
-				
+			
+			//++, 150819 cjg
+//			final UpdateThread updateThread = new UpdateThread(dialog, builder);
+//			
+//			updateThread.execute();
 			threadUpdate = new Thread(new UpdateThread(dialog, builder));
 			threadUpdate.start();
 			
@@ -178,7 +197,8 @@ public class CANUpdatePopup extends Dialog{
 						Log.d(TAG,"OKButtonClickListener");
 						ExitButtonClickListener.onClick(dialog, DialogInterface.BUTTON_POSITIVE);
 						CAN1Comm.Set_nRecAckNewFWNInfoFlag_61184_250_82(1);
-						CAN1Comm.Set_nRecvFWDLCompleteFlag_61184_250_80(1);
+						//CAN1Comm.Set_nRecvFWDLCompleteFlag_61184_250_80(1);
+						CAN1Comm.TxCANToMCU(0x46);
 						UpdateProgramFlag = false;
 					}
 				});
@@ -196,7 +216,56 @@ public class CANUpdatePopup extends Dialog{
 			DisplayStatus("Enter DL Mode"); //++, --, 150716 cjg
 			DisplayStatusNumber("(" + 1 + " / " + TotalCount + ")");
 		}
-		
+		/////////////////////////
+		public int UPDFormat(){
+			int FormatComplete = 0;
+			int FormatStatus;
+			int FormatProgress_CRC;
+			int RetryCount = 0;
+			progressProgram.setProgress(0);
+			progressProgram.setMax(100);
+			//UPD Format Start
+			CAN1Comm.TxCANToMCU(0x45);
+			DisplayStatus("UPD Format Start"); //++, --, 150716 cjg
+			DisplayStatusNumber("(" + 2 + " / " + TotalCount + ")");
+			StartTimeoutTimer();
+			while(FormatComplete == 0){
+				FormatComplete = CAN1Comm.Get_nRecvUPDFormatCompleteFlag_61184_250_85();
+				FormatStatus = CAN1Comm.Get_Status_RX_UPD_UPDATE_STATUS_61184_250_84();
+				FormatProgress_CRC = CAN1Comm.Get_Progress_RX_UPD_UPDATE_STATUS_61184_250_84();
+				//Log.d(TAG, "FormatStatus :" + FormatStatus + "Format P:" + FormatProgress_CRC);
+				if(FormatStatus == 0x01){
+					DisplayProgress(FormatProgress_CRC);
+					DisplayStatus("Format UPD region");
+					Count = 0;
+				}
+				if(Count >= TIMEOUT){
+					
+					CAN1Comm.Set_nRecvUPDFormatCompleteFlag_61184_250_85(0);
+					CAN1Comm.Set_Status_RX_UPD_UPDATE_STATUS_61184_250_84(0);
+					CAN1Comm.Set_Progress_RX_UPD_UPDATE_STATUS_61184_250_84(0);
+					
+					if(RetryCount++ >= 1)
+					{
+						Log.d(TAG, "UPDFormat : Retry");
+						Count = 0;
+						StartTimeoutTimer();					
+					}
+					else
+					{
+						Log.d(TAG, "UPDFormat : Pass");
+						CancelTimeoutTimer();
+						return RETURN_SUCCESS;
+					}
+				}
+			}
+			CAN1Comm.Set_nRecvUPDFormatCompleteFlag_61184_250_85(0);
+			CAN1Comm.Set_Status_RX_UPD_UPDATE_STATUS_61184_250_84(0);
+			CAN1Comm.Set_Progress_RX_UPD_UPDATE_STATUS_61184_250_84(0);
+			CancelTimeoutTimer();
+			return RETURN_SUCCESS;
+		}
+	
 		
 		//////////////////////////////
 		public int CheckApplication(FirmwareInfoClass _firmwareinfo){
@@ -204,10 +273,10 @@ public class CANUpdatePopup extends Dialog{
 			int AckNewFWInfo = 0;
 			SendNewFWInfo(_firmwareinfo);
 			DisplayStatus("Send New FW Info"); //++, --, 150716 cjg
-			DisplayStatusNumber("(" + 2 + " / " + TotalCount + ")");
+			DisplayStatusNumber("(" + 3 + " / " + TotalCount + ")");
 			StartTimeoutTimer();
 			while(AckNewFWInfo == 0){
-				AckNewFWInfo = CAN1Comm.Get_nRecAckNewFWNInfoFlag_61184_250_82();	
+				AckNewFWInfo = CAN1Comm.Get_nRecAckNewFWNInfoFlag_61184_250_82();
 				if(Count >= TIMEOUT){
 					CancelTimeoutTimer();
 					return RETURN_FAIL_TIMEOUT;
@@ -216,13 +285,15 @@ public class CANUpdatePopup extends Dialog{
 					return RETURN_FAIL_EXIT;
 			}
 			DisplayStatus("Ack New FW Info"); //++, --, 150716 cjg
-			DisplayStatusNumber("(" + 3 + " / " + TotalCount + ")");
+			DisplayStatusNumber("(" + 4 + " / " + TotalCount + ")");
 			CAN1Comm.Set_nRecAckNewFWNInfoFlag_61184_250_82(0);
 			CancelTimeoutTimer();
 			return RETURN_SUCCESS;
 		}
 		
 		public int SendApplication(File _updatefile, FirmwareInfoClass _firmwareinfo){
+			Log.d(TAG, "SendApplication");
+			
 			int DLComplete = 0;
 			int FWID;
 			int SectionIndex;
@@ -230,12 +301,13 @@ public class CANUpdatePopup extends Dialog{
 			int ResultFlashCRC;
 			int RetryCount;
 			RetryCount = 0;
+			DisplayCancelButton();
+			progressProgram.setMax(FirmwareInfo.NumberofSection * FirmwareInfo.NumberofPacket);
 			CAN1Comm.Set_nRecvRequestPacketMFlag_61184_250_83(0);
-			
 			CAN1Comm.TxCANToMCU(0x40);
 			StartTimeoutTimer();
 			DisplayStatus("App DL Start"); //++, --, 150716 cjg
-			DisplayStatusNumber("(" + 4 + " / " + TotalCount + ")");
+			DisplayStatusNumber("(" + 5 + " / " + TotalCount + ")");
 			while(DLComplete == 0){
 				DLComplete = CAN1Comm.Get_nRecvFWDLCompleteFlag_61184_250_80();
 				
@@ -249,7 +321,7 @@ public class CANUpdatePopup extends Dialog{
 
 					DisplayProgress((SectionIndex * _firmwareinfo.NumberofPacket) + PacketIndex);
 					DisplayStatus("Section : " + Integer.toString(SectionIndex) + ", Packet : " + Integer.toString(PacketIndex));
-					DisplayStatusNumber("(" + 5 + " / " + TotalCount + ")");
+					DisplayStatusNumber("(" + 6 + " / " + TotalCount + ")");
 					CancelTimeoutTimer();
 					StartTimeoutTimer();
 				}
@@ -268,8 +340,19 @@ public class CANUpdatePopup extends Dialog{
 					}
 					
 				}
-				if(UpdateProgramFlag == false)
-					return RETURN_FAIL_EXIT;
+				if(UpdateProgramFlag == false){
+					if(Count % 10 == 0)
+						CAN1Comm.TxCANToMCU(0x46);
+					
+					ResultFlashCRC = CAN1Comm.Get_ResultFlashCRC_RX_FW_N_DL_COMPLETE_61184_250_80();
+					Log.d(TAG, "ResulFlash : " + ResultFlashCRC);
+					if(ResultFlashCRC == RESULT_CANCEL_BY_MASTER){
+						Log.d(TAG, "Update Cancel!!!");
+						CAN1Comm.TxCANToMCU(0x51);
+						CAN1Comm.Set_ResultFlashCRC_RX_FW_N_DL_COMPLETE_61184_250_80(255);
+						return RETURN_FAIL_EXIT;
+					}
+				}
 			}
 			
 			CancelTimeoutTimer();
@@ -280,75 +363,83 @@ public class CANUpdatePopup extends Dialog{
 			if(ResultFlashCRC == RESULT_FLASH_CRC_OK){
 				Log.d(TAG,"ResultFlash  CRC OK");
 				DisplayStatus("FW DL Complete : CRC OK");
+				CAN1Comm.Set_ResultFlashCRC_RX_FW_N_DL_COMPLETE_61184_250_80(0);
 				return RETURN_SUCCESS;
 			}
 			else if(ResultFlashCRC == RESULT_FLASH_CRC_ERROR){
 				Log.e(TAG,"ResultFlash  CRC Error");
 				DisplayWarningStatus("FW DL Complete : CRC Error");
+				CAN1Comm.Set_ResultFlashCRC_RX_FW_N_DL_COMPLETE_61184_250_80(0);
 				return RETURN_FAIL_CRCERROR;
 			}else if(ResultFlashCRC == RESULT_FLASH_CRC_NOFW){
 				Log.e(TAG,"ResultFlash No F/W");
 				DisplayWarningStatus("FW DL Complete : No F/W");
+				CAN1Comm.Set_ResultFlashCRC_RX_FW_N_DL_COMPLETE_61184_250_80(0);
 				return RETURN_FAIL_NOFW;
 			}
 			else{
 				Log.e(TAG,"ResultFlash ???");
 				DisplayStatus("F/W DL Complete, ???");
+				CAN1Comm.Set_ResultFlashCRC_RX_FW_N_DL_COMPLETE_61184_250_80(0);
 				return RETURN_FAIL_INCORRECT_STATUS;
 			}
-	
 		}
 		
 		public void CheckFWUpdateComplete(){
 			int UpdateComplete;
-			int oldUpdateStatus = 0;
 			int UpdateStatus;
 			int UpdateProgress_CRC;
-			int countFlag = 0;
+			HideCancelButton();
 			//++, 150716 cjg
 			progressProgram.setProgress(0);
 			progressProgram.setMax(100);
 			//--, 150716 cjg
-			DisplayStatusNumber("(" + 8 + " / " + TotalCount + ")");
+			DisplayStatusNumber("(" + 9 + " / " + TotalCount + ")");
 			while(UpdateProgramFlag == true){
 				UpdateComplete = CAN1Comm.Get_nRecvFWUpdateCompleteFlag_61184_250_112();
 				if(UpdateComplete == 1){
-					DisplayStatusNumber("(" + 9 + " / " + TotalCount + ")");
-					Log.d(TAG, "9");
+					DisplayStatusNumber("(" + 10 + " / " + TotalCount + ")");
 					if(CAN1Comm.Get_ResultFlashCRC_RX_FW_UPDATE_COMPLETE_61184_250_112() == RESULT_FLASH_CRC_OK){
 						DisplayStatus("FW Update Complete, CRC OK\nRestart Machine!!");
+						DisplayFirwareInfoAfterUpdate(FirmwareInfo);
+						CAN1Comm.Set_Status_RX_FW_UPDATE_STATUS_61184_250_113(0);
+						CAN1Comm.Set_Progress_ResultFlashCRC_RX_FW_UPDATE_STATUS_61184_250_113(0);
 					}else if(CAN1Comm.Get_ResultFlashCRC_RX_FW_UPDATE_COMPLETE_61184_250_112() == RESULT_FLASH_CRC_ERROR){
 						DisplayStatus("FW Update Complete, CRC Error\nUpdate Fail");
+						CAN1Comm.Set_Status_RX_FW_UPDATE_STATUS_61184_250_113(0);
+						CAN1Comm.Set_Progress_ResultFlashCRC_RX_FW_UPDATE_STATUS_61184_250_113(0);
 					}else if(CAN1Comm.Get_ResultFlashCRC_RX_FW_UPDATE_COMPLETE_61184_250_112() == RESULT_FLASH_CRC_NOFW){
 						DisplayStatus("FW Update Complete, No F/W\nUpdate Fail");
+						CAN1Comm.Set_Status_RX_FW_UPDATE_STATUS_61184_250_113(0);
+						CAN1Comm.Set_Progress_ResultFlashCRC_RX_FW_UPDATE_STATUS_61184_250_113(0);
 					}
 					UpdateProgramFlag = false;
 				}else{
 					UpdateStatus = CAN1Comm.Get_Status_RX_FW_UPDATE_STATUS_61184_250_113();
+					//Log.d(TAG, "UpdateStatus :" + UpdateStatus);
 					UpdateProgress_CRC = CAN1Comm.Get_Progress_ResultFlashCRC_RX_FW_UPDATE_STATUS_61184_250_113();
 					switch (UpdateStatus) {
 					case FW_UPDATE_STATUS_FORMAT_UPD_MEMORY:
 						DisplayProgress(UpdateProgress_CRC); //++, --,  150715 cjg 
 						DisplayStatus("Format UPD region : " + Integer.toString(UpdateProgress_CRC)); //++, --, 150716 cjg
-						//DisplayStatusNumber("(" + 10 + " / " + TotalCount + ")"); //++, --, 150717 cjg
 						break;
 					case FW_UPDATE_STATUS_FORMAT_CPU_MEMORY:
 						DisplayProgress(UpdateProgress_CRC); //++, --,  150715 cjg
 						DisplayStatus("Format CPU region : " + Integer.toString(UpdateProgress_CRC)); //++, --, 150716 cjg
-						//DisplayStatusNumber("(" + 9 + " / " + TotalCount + ")");//++, --, 150717 cjg
 						break;
 					case FW_UPDATE_STATUS_COPY_UPD_CPU:
 						DisplayProgress(UpdateProgress_CRC); //++, --,  150715 cjg
 						DisplayStatus("Copy UPD region to CPU region: " + Integer.toString(UpdateProgress_CRC)); //++, --, 150716 cjg
-						//DisplayStatusNumber("(" + 8 + " / " + TotalCount + ")"); //++, --, 150717 cjg
 						break;	
 					default:
-						//DisplayStatus("Preparing the ECU Updates");
 						break;
 					}
+					
 				}
 			}
 			CAN1Comm.Set_nRecvFWUpdateCompleteFlag_61184_250_112(0);
+			CAN1Comm.Set_Status_RX_FW_UPDATE_STATUS_61184_250_113(0);
+			CAN1Comm.Set_Progress_ResultFlashCRC_RX_FW_UPDATE_STATUS_61184_250_113(0);
 		}
 			
 		
@@ -356,14 +447,14 @@ public class CANUpdatePopup extends Dialog{
 		public void SendDownloadModeFinish(){			
 			CAN1Comm.TxCANToMCU(0x51);
 			DisplayStatus("Quit DL Mode"); //++, --, 150716 cjg
-			DisplayStatusNumber("(" + 6 + " / " + TotalCount + ")");
+			DisplayStatusNumber("(" + 7 + " / " + TotalCount + ")");
 		}
 		
 		////////////////////////////
 		public void EnterAppUpdate(){
 			CAN1Comm.TxCANToMCU(0x60);
 			DisplayStatus("Preparing the ECU Updates"); //++, --, 150716 cjg
-			DisplayStatusNumber("(" + 7 + " / " + TotalCount + ")");
+			DisplayStatusNumber("(" + 8 + " / " + TotalCount + ")");
 		}
 		
 		////////////////////////////
@@ -438,7 +529,22 @@ public class CANUpdatePopup extends Dialog{
 			
 			CAN1Comm.TxCANToMCU(0x43);
 		}
-		
+		public void DisplayFirwareInfoAfterUpdate(final FirmwareInfoClass _firmwareinfo){
+			ParentActivity.runOnUiThread(new Runnable() {
+				@Override
+				public void run() {
+					// TODO Auto-generated method stub
+					ParentFragment.MachineSlaveIDDisplay(_firmwareinfo.SlaveID);
+					ParentFragment.MachineFWIDDisplay(_firmwareinfo.FWID);
+					ParentFragment.MachineFWNameDisplay(_firmwareinfo.FWName);
+					ParentFragment.MachineFWModelDisplay(_firmwareinfo.FWModel);
+					ParentFragment.MachineFWVersionDisplay(_firmwareinfo.FWVersion);
+					ParentFragment.MachineProtoVersionDisplay(_firmwareinfo.ProtoVer);
+					ParentFragment.MachineDateDisplay(_firmwareinfo.Date);
+					ParentFragment.MachineTimeDisplay(_firmwareinfo.Time);
+				}
+			});
+		}
 		public void DisplayProgress(final int progress){
 			ParentActivity.runOnUiThread(new Runnable() {
 				
@@ -482,6 +588,27 @@ public class CANUpdatePopup extends Dialog{
 				}
 			});
 		}
+		public void DisplayCancelButton(){
+			ParentActivity.runOnUiThread(new Runnable() {
+				@Override
+				public void run() {
+					// TODO Auto-generated method stub
+					imgbtnExit.setVisibility(View.VISIBLE);
+					textCancel.setVisibility(View.VISIBLE);
+				}
+			});
+		}
+		public void HideCancelButton(){
+			ParentActivity.runOnUiThread(new Runnable() {
+				@Override
+				public void run() {
+					// TODO Auto-generated method stub
+					imgbtnExit.setVisibility(View.INVISIBLE);
+					textCancel.setVisibility(View.INVISIBLE);
+				}
+			});
+		}
+
 		/////////////////////////////////////////////////////////
 		
 		/////////////////////////////////////Download Seq///////////////////////////////////////////////////////
@@ -505,7 +632,15 @@ public class CANUpdatePopup extends Dialog{
 					
 					/////////////////////////////////Step 1. Enter Download Mode////////////////////////////
 					BuilderRef.get().EnterDownloadMode();
-					Thread.sleep(2000);
+					//Thread.sleep(2000);
+					
+					/////////////////////////////////Add. UPD Format          //////////////////////////////
+					ReturnValue = BuilderRef.get().UPDFormat();
+					if(ReturnValue == RETURN_FAIL_TIMEOUT){
+						BuilderRef.get().DisplayWarningStatus(ParentActivity.getResources().getString(string.Update_Fail)+"\nUPD Format Failed.");
+						DialogRef.get().dismiss();
+						return;
+					}
 					/////////////////////////////////Step 2. Check Application//////////////////////////////
 					ReturnValue = BuilderRef.get().CheckApplication(BuilderRef.get().FirmwareInfo);
 					if(ReturnValue == RETURN_FAIL_TIMEOUT){
@@ -542,8 +677,9 @@ public class CANUpdatePopup extends Dialog{
 						return;
 					}else if(ReturnValue == RETURN_FAIL_EXIT){
 						Log.e(TAG,"SendApplication Fail RETURN_FAIL_EXIT");
+
 						BuilderRef.get().showToast(ParentActivity.getResources().getString(string.Update_Fail));
-						//BuilderRef.get().DisplayStatus(ParentActivity.getResources().getString(string.Update_Fail)+"\nSend Application Exit");
+						BuilderRef.get().DisplayWarningStatus(ParentActivity.getResources().getString(string.Update_Fail)+"\tCancel by Master");
 						DialogRef.get().dismiss();
 						return;
 					}
@@ -560,6 +696,12 @@ public class CANUpdatePopup extends Dialog{
 						//BuilderRef.get().DisplayStatus(ParentActivity.getResources().getString(string.Update_Fail)+"\nSend Application No Firmware");
 						DialogRef.get().dismiss();
 						return;
+					}
+					else if(ReturnValue == RETURN_CANCEL_BY_MASTER){
+						Log.e(TAG,"Canceled by Master");
+						BuilderRef.get().showToast(ParentActivity.getResources().getString(string.Update_Fail));
+						//BuilderRef.get().DisplayStatus(ParentActivity.getResources().getString(string.Update_Fail)+"\nSend Application No Firmware");
+						DialogRef.get().dismiss();
 					}
 					else if(ReturnValue == RETURN_FAIL_INCORRECT_STATUS){
 						Log.e(TAG,"SendApplication Fail RETURN_FAIL_INCORRECT_STATUS");
@@ -585,7 +727,7 @@ public class CANUpdatePopup extends Dialog{
 
 				catch(RuntimeException ee){
 					Log.e(TAG,"RuntimeException");
-				} catch (InterruptedException e) {
+				} catch (Exception e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
 					Log.e(TAG,"InterruptedException");
@@ -594,10 +736,130 @@ public class CANUpdatePopup extends Dialog{
 			}
 		
 		}
+		// Update Thread
+		/*public static class UpdateThread extends AsyncTask<Void, Void, Void> {
+			private WeakReference<CANUpdatePopup.Builder> BuilderRef = null;
+			private WeakReference<CANUpdatePopup> DialogRef = null;
+			public Message msg = null;
+			public UpdateThread(CANUpdatePopup _dialog, CANUpdatePopup.Builder _bulder){
+				this.BuilderRef = new WeakReference<CANUpdatePopup.Builder>(_bulder);
+				this.DialogRef = new WeakReference<CANUpdatePopup>(_dialog);
+				msg = new Message();
+			}
+			@Override
+			protected void onPreExecute() {
+				// TODO Auto-generated method stub
+				super.onPreExecute();
+			}
+			@Override
+			protected Void doInBackground(Void... params) {
+				// TODO Auto-generated method stub
+				try{	
+					Log.d(TAG,"doInBackground");
+					int ReturnValue;
+					Log.d(TAG,"UpdateThread");
+					
+					/////////////////////////////////Step 1. Enter Download Mode////////////////////////////
+					BuilderRef.get().EnterDownloadMode();
+					Thread.sleep(2000);
+					/////////////////////////////////Step 2. Check Application//////////////////////////////
+					ReturnValue = BuilderRef.get().CheckApplication(BuilderRef.get().FirmwareInfo);
+					if(ReturnValue == RETURN_FAIL_TIMEOUT){
+						Log.e(TAG,"CheckApplication Fail 1");
+						ReturnValue = BuilderRef.get().CheckApplication(BuilderRef.get().FirmwareInfo);
+						if(ReturnValue == RETURN_FAIL_TIMEOUT){
+							Log.e(TAG,"CheckApplication Fail 2 TimeOut");
+							BuilderRef.get().showToast(ParentActivity.getResources().getString(string.Update_Fail));
+							BuilderRef.get().DisplayWarningStatus(ParentActivity.getResources().getString(string.Update_Fail)+"\nDo Not Receive Ack new F/W Info");
+							DialogRef.get().dismiss();
+						}else if(ReturnValue == RETURN_FAIL_EXIT){
+							Log.e(TAG,"CheckApplication Fail Exit");
+							BuilderRef.get().showToast(ParentActivity.getResources().getString(string.Update_Fail));
+						//	BuilderRef.get().DisplayStatus(ParentActivity.getResources().getString(string.Update_Fail)+"\nSend New F/W Info Exit");
+							DialogRef.get().dismiss();
+						}
+					}else if(ReturnValue == RETURN_FAIL_EXIT){
+						Log.e(TAG,"CheckApplication Fail Exit");
+						BuilderRef.get().showToast(ParentActivity.getResources().getString(string.Update_Fail));
+					//	BuilderRef.get().DisplayStatus(ParentActivity.getResources().getString(string.Update_Fail)+"\nSend New F/W Info Exit");
+						DialogRef.get().dismiss();
+					}
+					
+					/////////////////////////////////Step 3. Send Application//////////////////////////////
+					ReturnValue = BuilderRef.get().SendApplication(BuilderRef.get().UpdateFile, BuilderRef.get().FirmwareInfo);
+					if(ReturnValue == RETURN_FAIL_TIMEOUT){
+						Log.e(TAG,"SendApplication Fail RETURN_FAIL_TIMEOUT");
+						BuilderRef.get().showToast(ParentActivity.getResources().getString(string.Update_Fail));
+						BuilderRef.get().DisplayWarningStatus(ParentActivity.getResources().getString(string.Update_Fail)+"\nDo Not Receive Request Packet");
+						DialogRef.get().dismiss();
+					}else if(ReturnValue == RETURN_FAIL_EXIT){
+						Log.e(TAG,"SendApplication Fail RETURN_FAIL_EXIT");
+						BuilderRef.get().showToast(ParentActivity.getResources().getString(string.Update_Fail));
+						//BuilderRef.get().DisplayStatus(ParentActivity.getResources().getString(string.Update_Fail)+"\nSend Application Exit");
+						DialogRef.get().dismiss();
+					}
+					else if(ReturnValue == RETURN_FAIL_NOFW){
+						Log.e(TAG,"SendApplication Fail RETURN_FAIL_NOFW");
+						BuilderRef.get().showToast(ParentActivity.getResources().getString(string.Update_Fail));
+						//BuilderRef.get().DisplayStatus(ParentActivity.getResources().getString(string.Update_Fail)+"\nSend Application No Firmware");
+						DialogRef.get().dismiss();
+					}
+					else if(ReturnValue == RETURN_FAIL_CRCERROR){
+						Log.e(TAG,"SendApplication Fail RETURN_FAIL_CRCERROR");
+						BuilderRef.get().showToast(ParentActivity.getResources().getString(string.Update_Fail));
+						//BuilderRef.get().DisplayStatus(ParentActivity.getResources().getString(string.Update_Fail)+"\nSend Application No Firmware");
+						DialogRef.get().dismiss();
+					}
+					else if(ReturnValue == RETURN_FAIL_INCORRECT_STATUS){
+						Log.e(TAG,"SendApplication Fail RETURN_FAIL_INCORRECT_STATUS");
+						BuilderRef.get().showToast(ParentActivity.getResources().getString(string.Update_Fail));
+						BuilderRef.get().DisplayWarningStatus(ParentActivity.getResources().getString(string.Update_Fail)+"\nSend Application Incorrect Status");
+						DialogRef.get().dismiss();
+						
+					}
+					
+					/////////////////////////////////Step 4. Send Download Mode Finish////////////////////////////
+					BuilderRef.get().SendDownloadModeFinish();
+					
+					/////////////////////////////////Step 5. Send Enter Application Update////////////////////////
+					BuilderRef.get().EnterAppUpdate();
+					
+					/////////////////////////////////Step 6. Check Firmware Update Status/////////////////////////
+					BuilderRef.get().CheckFWUpdateComplete();
+
+					/////////////////////////////////Step 7. Finish CAN Update////////////////////////////////////
+					BuilderRef.get().showToast(ParentActivity.getResources().getString(string.Update_Finish));
+					DialogRef.get().dismiss();
+					updateThread.cancel(true);
+				}
+
+				catch(RuntimeException ee){
+					Log.e(TAG,"RuntimeException");
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+					Log.e(TAG,"InterruptedException");
+				}
+				return null;
+			}
+
+			@Override
+			protected void onCancelled() {
+				Log.d(TAG,"onCancelled");
+				// TODO Auto-generated method stub
+				super.onCancelled();
+			}
+			
+			@Override
+			protected void onPostExecute(Void result) {
+				// TODO Auto-generated method stub
+				Log.d(TAG,"onPostExecute");
+				super.onPostExecute(result);
+			}
+		}*/
 		
 		public void showToast(final String str){
 			ParentActivity.runOnUiThread(new Runnable() {
-				
 				@Override
 				public void run() {
 					// TODO Auto-generated method stub

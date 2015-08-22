@@ -24,8 +24,11 @@ static void timer_handler( int sig, siginfo_t *si, void *uc )
     {
     	//__android_log_print(ANDROID_LOG_INFO, "Timer","Timer1\n");
     	SendDataFromRingBuffer();
-    	CheckCTSData_MCU();
-    	CheckAckData_MCU();
+    	if(UpdateCancel == 0)
+    	{
+    		CheckCTSData_MCU();
+    		CheckAckData_MCU();
+    	}
     	//sleep(0);
     	//timer_delete(*tidp);		// Timer Kill
     }
@@ -294,6 +297,7 @@ void CheckCTSData_MCU()
     static int CTSCount = 0;
 	if(nCTSFlag_MCU == 1)
 	{
+		__android_log_print(ANDROID_LOG_INFO, "CheckCTSData_MCU", "nCTSFlag_MCU:UpdateCancel=%d\n", UpdateCancel);
 		Send_RTSData(&RTSData[0],nRTSDataLength,TargetSourceAddress);
 		nCTSFlag_MCU = 0;
 		nRTSFlag_MCU = 0;
@@ -302,6 +306,7 @@ void CheckCTSData_MCU()
 	}
 	if(nRTSFlag_MCU == 1)
 	{
+		__android_log_print(ANDROID_LOG_INFO, "CheckCTSData_MCU", "nRTSFlag_MCU:UpdateCancel=%d\n", UpdateCancel);
 		if(nCTSFlag_MCU == 0)
 		{
 			CTSCount++;
@@ -362,7 +367,7 @@ void CheckAckData_MCU()
 }
 
 void InitNewProtoclValuable() {
-
+	UpdateCancel = 0;
 
 	memset((unsigned char*) &RX_RES_RTC, 0xFF, sizeof(RX_RES_RTC));
 	memset((unsigned char*) &RX_RES_Version, 0xFF, sizeof(RX_RES_Version));
@@ -402,7 +407,10 @@ void InitNewProtoclValuable() {
 	memset((unsigned char*) &TX_FW_UPDATE_START_61184_250_96, 0xFF, sizeof(TX_FW_UPDATE_START_61184_250_96));
 	memset((unsigned char*) &TX_FW_UPDATE_STATUS_61184_250_113, 0xFF, sizeof(TX_FW_UPDATE_STATUS_61184_250_113));
 	memset((unsigned char*) &TX_FW_UPDATE_COMPLETE_61184_250_112, 0xFF, sizeof(TX_FW_UPDATE_COMPLETE_61184_250_112));
-
+	memset((unsigned char*) &TX_UPD_UPDATE_START_61184_250_69, 0xFF, sizeof(TX_UPD_UPDATE_START_61184_250_69));
+	memset((unsigned char*) &TX_UPD_UPDATE_STATUS_61184_250_84, 0xFF, sizeof(TX_UPD_UPDATE_STATUS_61184_250_84));
+	memset((unsigned char*) &TX_UPD_UPDATE_COMPLETE_61184_250_85, 0xFF, sizeof(TX_UPD_UPDATE_COMPLETE_61184_250_85));
+	memset((unsigned char*) &TX_APP_N_DL_CANCEL_61184_250_70, 0xFF, sizeof(TX_APP_N_DL_CANCEL_61184_250_70));
 
 	memset((unsigned char*) &TX_SEND_BOOTLOADER_STATUS_61184_250_17, 0xFF, sizeof(TX_SEND_BOOTLOADER_STATUS_61184_250_17));
 	memset((unsigned char*) &RX_REQUEST_SLAVE_INFO_61184_250_33, 0xFF, sizeof(RX_REQUEST_SLAVE_INFO_61184_250_33));
@@ -420,6 +428,10 @@ void InitNewProtoclValuable() {
 	memset((unsigned char*) &RX_FW_UPDATE_START_61184_250_96, 0xFF, sizeof(RX_FW_UPDATE_START_61184_250_96));
 	memset((unsigned char*) &RX_FW_UPDATE_STATUS_61184_250_113, 0xFF, sizeof(RX_FW_UPDATE_STATUS_61184_250_113));
 	memset((unsigned char*) &RX_FW_UPDATE_COMPLETE_61184_250_112, 0xFF, sizeof(RX_FW_UPDATE_COMPLETE_61184_250_112));
+	memset((unsigned char*) &RX_UPD_UPDATE_START_61184_250_69, 0xFF, sizeof(RX_UPD_UPDATE_START_61184_250_69));
+	memset((unsigned char*) &RX_UPD_UPDATE_STATUS_61184_250_84, 0xFF, sizeof(RX_UPD_UPDATE_STATUS_61184_250_84));
+	memset((unsigned char*) &RX_UPD_UPDATE_COMPLETE_61184_250_85, 0xFF, sizeof(RX_UPD_UPDATE_COMPLETE_61184_250_85));
+	memset((unsigned char*) &RX_APP_N_DL_CANCEL_61184_250_70, 0xFF, sizeof(RX_APP_N_DL_CANCEL_61184_250_70));
 
 	TX_SEND_BOOTLOADER_STATUS_61184_250_17.MessageType = 0XFE;			//SM
 	TX_REQUEST_SLAVE_INFO_61184_250_33.MessageType = 0xFE;		//MS
@@ -437,6 +449,11 @@ void InitNewProtoclValuable() {
 	TX_FW_UPDATE_START_61184_250_96.MessageType = 0xFE;			//MS
 	TX_FW_UPDATE_STATUS_61184_250_113.MessageType = 0xFE;				//SM
 	TX_FW_UPDATE_COMPLETE_61184_250_112.MessageType = 0xFE;				//SM
+	TX_UPD_UPDATE_START_61184_250_69.MessageType = 0xFE;
+	TX_UPD_UPDATE_STATUS_61184_250_84.MessageType = 0xFE;
+	TX_UPD_UPDATE_COMPLETE_61184_250_85.MessageType = 0xFE;
+	TX_APP_N_DL_CANCEL_61184_250_70.MessageType = 0xFE;
+
 
 	TX_SEND_BOOTLOADER_STATUS_61184_250_17.Command = 17;		//SM
 	TX_REQUEST_SLAVE_INFO_61184_250_33.Command = 33;		//MS
@@ -445,7 +462,7 @@ void InitNewProtoclValuable() {
 	TX_SEND_FW_N_INFO_61184_250_48.Command = 48;				//SM
 	TX_ENTER_DL_MODE_61184_250_65.Command = 65;				//MS
 	TX_SEND_NEW_FW_N_INFO_61184_250_66.Command = 66;		//MS
-	TX_ACK_NEW_FW_N_INFOR_61184_250_82.Command =				//SM
+	TX_ACK_NEW_FW_N_INFOR_61184_250_82.Command = 82;			//SM
 	TX_APP_N_DL_START_61184_250_64.Command = 64;			//MS
 	TX_REQUEST_PACKET_M_61184_250_83.Command = 83;				//SM
 	TX_SEND_PACKET_M_61184_250_67.Command = 67;				//MS
@@ -454,8 +471,10 @@ void InitNewProtoclValuable() {
 	TX_FW_UPDATE_START_61184_250_96.Command = 96;			//MS
 	TX_FW_UPDATE_STATUS_61184_250_113.Command = 113;			//SM
 	TX_FW_UPDATE_COMPLETE_61184_250_112.Command = 112;			//SM
-
-
+	TX_UPD_UPDATE_START_61184_250_69.Command = 69;
+	TX_UPD_UPDATE_STATUS_61184_250_84.Command = 84;
+	TX_UPD_UPDATE_COMPLETE_61184_250_85.Command = 85;
+	TX_APP_N_DL_CANCEL_61184_250_70.Command = 70;
 
 	nPF = 0;
 	nPS = 0;
@@ -495,6 +514,7 @@ void InitNewProtoclValuable() {
 	nRecvFWDLCompleteFlag_61184_250_80 = 0;
 	nRecvFWUpdateCompleteFlag_61184_250_112 = 0;
 	nRecvSendBootloaderStatusFlag_61184_250_17 = 0;
+	nRecvUPDFormatCompleteFlag_61184_250_85 = 0;
 
 	nLength_61184_250_66 = FIRMWAREINFO_SIZE;
 	nLength_61184_250_81 = FIRMWAREINFO_SIZE;
@@ -564,8 +584,15 @@ void UART1_SeperateData_Default(int Priority, int PF, int PS, unsigned char* Dat
 						memcpy((unsigned char*) &RX_FW_UPDATE_COMPLETE_61184_250_112, &Data[7], 8);
 						nRecvFWUpdateCompleteFlag_61184_250_112 = 1;
 						break;
+					case 84:    //0x54
+						memcpy((unsigned char*) &RX_UPD_UPDATE_STATUS_61184_250_84, &Data[7], 8);
+						break;
+					case 85:   //0x55
+						memcpy((unsigned char*) &RX_UPD_UPDATE_COMPLETE_61184_250_85, &Data[7], 8);
+						nRecvUPDFormatCompleteFlag_61184_250_85 = 1;
+						__android_log_print(ANDROID_LOG_INFO, "NATIVE","UPD Format Complete");
+						break;
 					default:
-
 						break;
 					}
 				break;
@@ -1785,6 +1812,7 @@ jint _UART1_TxComm(JNIEnv *env, jobject this, jint PS) {
 //				memcpy(&RTSData[0], (unsigned char*) &TX_ENTER_DL_MODE_61184_250_65, sizeof(TX_ENTER_DL_MODE_61184_250_65));
 //				Send_RTS(0x1C,0xEF,0x00,TargetSourceAddress,SA_CANUPDATE,nRTSDataLength);
 				MakeCANDataSingle(0x18,0xEF,TargetSourceAddress,SA_CANUPDATE,(unsigned char*)&TX_ENTER_DL_MODE_61184_250_65);
+				UpdateCancel = 0;	// Update 시작이므로 0으로 초기화
 				break;
 			case 66:	// 0x42
 				nRTSDataLength = nLength_61184_250_66;
@@ -1799,18 +1827,25 @@ jint _UART1_TxComm(JNIEnv *env, jobject this, jint PS) {
 				memcpy(&RTSData[0], (unsigned char*) &TX_SEND_PACKET_M_61184_250_67, sizeof(TX_SEND_PACKET_M_61184_250_67));
 				Send_RTS(0x1C,0xEF,0x00,TargetSourceAddress,SA_CANUPDATE,nRTSDataLength);
 				break;
+
 			case 81:	// 0x51
 //				nRTSDataLength = nLength_61184_250_81;
 //				memcpy(&RTSData[0], (unsigned char*) &TX_QUIT_DL_MODE_61184_250_81, sizeof(TX_QUIT_DL_MODE_61184_250_81));
 //				Send_RTS(0x1C,0xEF,0x00,TargetSourceAddress,SA_CANUPDATE,nRTSDataLength);
 				MakeCANDataSingle(0x18,0xEF,TargetSourceAddress,SA_CANUPDATE,(unsigned char*)&TX_QUIT_DL_MODE_61184_250_81);
 				break;
+			case 69:  // 0x45
+				MakeCANDataSingle(0x18,0xEF,TargetSourceAddress,SA_CANUPDATE,(unsigned char*)&TX_UPD_UPDATE_START_61184_250_69);
+				break;
+			case 70:  // 0x46
+				MakeCANDataSingle(0x18,0xEF,TargetSourceAddress,SA_CANUPDATE,(unsigned char*)&TX_APP_N_DL_CANCEL_61184_250_70);
+				UpdateCancel = 1;	// Update 취소되었으므로 CheckCTS,ACK문 삭제
+				break;
 			case 96:	// 0x60
 				MakeCANDataSingle(0x18,0xEF,TargetSourceAddress,SA_CANUPDATE,(unsigned char*)&TX_FW_UPDATE_START_61184_250_96);
 				break;
 
 		}
-
 	return result;
 }
 

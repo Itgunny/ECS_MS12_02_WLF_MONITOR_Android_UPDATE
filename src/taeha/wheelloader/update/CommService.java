@@ -251,7 +251,20 @@ public class CommService extends Service{
 	public native int Get_FirmwareInformation_NumberofSectioninaFile_RX_FW_UPDATE_COMPLETE_61184_250_112();
 	public native int Get_FirmwareInformation_NumberofPacketinaSection_RX_FW_UPDATE_COMPLETE_61184_250_112();
 	public native int Get_FirmwareInformation_AppStartAddress_RX_FW_UPDATE_COMPLETE_61184_250_112();
-
+	//++, 150820 cjg
+	public native int Get_Status_RX_UPD_UPDATE_STATUS_61184_250_84();
+	public native int Get_Progress_RX_UPD_UPDATE_STATUS_61184_250_84();
+	public native int Get_nRecvUPDFormatCompleteFlag_61184_250_85();
+	public native void Set_nRecvUPDFormatCompleteFlag_61184_250_85(int Data);
+	
+	public native void Set_Status_RX_UPD_UPDATE_STATUS_61184_250_84(int Data);
+	public native void Set_Progress_RX_UPD_UPDATE_STATUS_61184_250_84(int Data);
+	
+	public native void Set_Status_RX_FW_UPDATE_STATUS_61184_250_113(int Data);
+	public native void Set_Progress_ResultFlashCRC_RX_FW_UPDATE_STATUS_61184_250_113(int Data);
+	public native void Set_ResultFlashCRC_RX_FW_N_DL_COMPLETE_61184_250_80(int Data);
+	
+	//--, 150820 cjg
 	///////////////USER DEFINE METHOD///////////////////////////////////////
 	// Open Comport
 	public void InitComport(){

@@ -270,6 +270,7 @@ typedef struct
 //
 //	FIRMWARE_INFORMATION_CRC FirmwareInformationCRC;
 }__attribute__((packed))  ENTER_DL_MODE_61184_250_65;
+
 typedef struct
 {
 	unsigned char		MessageType;
@@ -282,6 +283,7 @@ typedef struct
 
 	FIRMWARE_INFORMATION_CRC FirmwareInformationCRC;
 }__attribute__((packed))  SEND_NEW_FW_N_INFO_61184_250_66;
+
 typedef struct
 {
 	unsigned char		MessageType;
@@ -387,3 +389,48 @@ typedef struct
 
 	FIRMWARE_INFORMATION	FirmwareInformation;
 }__attribute__((packed))  FW_UPDATE_COMPLETE_61184_250_112;
+typedef struct
+{
+	unsigned char		MessageType;
+
+	unsigned short		Command;
+
+	unsigned short		Reserved;
+
+	unsigned char		DM[3];
+
+//	FIRMWARE_INFORMATION	FirmwareInformation;
+//
+//	FIRMWARE_INFORMATION_CRC FirmwareInformationCRC;
+}__attribute__((packed))  UPD_UPDATE_START_61184_250_69;
+typedef struct
+{
+	unsigned char 		MessageType;
+
+	unsigned short		Command;
+
+	unsigned char		Reserved;
+
+	unsigned char		Status;
+
+	unsigned char		Progress_Update_Status;
+}__attribute__((packed)) UPD_UPDATE_STATUS_61184_250_84;
+typedef struct
+{
+	unsigned char		MessageType;
+
+	unsigned short		Command;
+
+
+}__attribute__((packed))  UPD_UPDATE_COMPLETE_61184_250_85;
+typedef struct
+{
+	unsigned char		MessageType;
+
+	unsigned short		Command;
+
+	unsigned short		Reserved;
+
+	unsigned char		DM[3];
+
+}__attribute__((packed))  APP_N_DL_CANCEL_61184_250_70;

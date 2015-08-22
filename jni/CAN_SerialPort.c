@@ -91,6 +91,18 @@ void	Set_nRecvFWUpdateCompleteFlag_61184_250_112(JNIEnv * env, jobject this, int
 
 }
 
+// ++ 150820, cjg
+void	Set_nRecvUPDFormatCompleteFlag_61184_250_85(JNIEnv * env, jobject this, int Data)
+{
+	nRecvUPDFormatCompleteFlag_61184_250_85 = Data;
+
+}
+jint	Get_nRecvUPDFormatCompleteFlag_61184_250_85(JNIEnv * env, jobject this)
+{
+	return nRecvUPDFormatCompleteFlag_61184_250_85;
+}
+// -- 150820, cjg
+
 ////////////////////////////////////CAN Structure//////////////////////////////////////////////////////////////////
 
 void	Set_FWID_TX_REQUEST_FW_N_INFO_61184_250_32(JNIEnv * env, jobject this, int Data)
@@ -356,6 +368,8 @@ void	Set_PacketCRC_TX_SEND_PACKET_M_61184_250_67(JNIEnv * env, jobject this, int
 {
 	TX_SEND_PACKET_M_61184_250_67.PacketCRC= Data;
 }
+
+
 //void	Set_FirmwareInformation_SlaveID_TX_QUIT_DL_MODE_61184_250_81(JNIEnv * env, jobject this, int Data)
 //{
 //	TX_QUIT_DL_MODE_61184_250_81.FirmwareInformation.SlaveID= Data;
@@ -793,8 +807,37 @@ jint	Get_FirmwareInformation_AppStartAddress_RX_FW_UPDATE_COMPLETE_61184_250_112
 	return RX_FW_UPDATE_COMPLETE_61184_250_112.FirmwareInformation.AppStartAddress;
 }
 
+jint	Get_Status_RX_UPD_UPDATE_STATUS_61184_250_84(JNIEnv * env, jobject this)
+{
+	return RX_UPD_UPDATE_STATUS_61184_250_84.Status;
+}
+jint	Get_Progress_RX_UPD_UPDATE_STATUS_61184_250_84(JNIEnv * env, jobject this)
+{
+	return RX_UPD_UPDATE_STATUS_61184_250_84.Progress_Update_Status;
+}
 
+void	Set_Status_RX_UPD_UPDATE_STATUS_61184_250_84(JNIEnv * env, jobject this, int Data)
+{
+	RX_UPD_UPDATE_STATUS_61184_250_84.Status = Data;
+}
 
+void	Set_Progress_RX_UPD_UPDATE_STATUS_61184_250_84(JNIEnv * env, jobject this, int Data)
+{
+	RX_UPD_UPDATE_STATUS_61184_250_84.Progress_Update_Status = Data;
+}
+
+void	Set_Status_RX_FW_UPDATE_STATUS_61184_250_113(JNIEnv * env, jobject this, int Data)
+{
+	RX_FW_UPDATE_STATUS_61184_250_113.Status = Data;
+}
+void	Set_Progress_ResultFlashCRC_RX_FW_UPDATE_STATUS_61184_250_113(JNIEnv * env, jobject this, int Data)
+{
+	RX_FW_UPDATE_STATUS_61184_250_113.Progress_ResultFlashCRC = Data;
+}
+void	Set_ResultFlashCRC_RX_FW_N_DL_COMPLETE_61184_250_80(JNIEnv * env, jobject this, int Data)
+{
+	RX_FW_N_DL_COMPLETE_61184_250_80.ResultFlashCRC = Data;
+}
 
 
 
@@ -828,7 +871,12 @@ static JNINativeMethod methods[] = {
 		{"Set_nRecvRequestPacketMFlag_61184_250_83", "(I)V", (void*)Set_nRecvRequestPacketMFlag_61184_250_83},
 		{"Set_nRecvFWDLCompleteFlag_61184_250_80", "(I)V", (void*)Set_nRecvFWDLCompleteFlag_61184_250_80},
 		{"Set_nRecvFWUpdateCompleteFlag_61184_250_112", "(I)V", (void*)Set_nRecvFWUpdateCompleteFlag_61184_250_112},
-
+		{"Set_nRecvUPDFormatCompleteFlag_61184_250_85", "(I)V", (void*)Set_nRecvUPDFormatCompleteFlag_61184_250_85},
+		{"Set_Status_RX_UPD_UPDATE_STATUS_61184_250_84", "(I)V", (void*)Set_Status_RX_UPD_UPDATE_STATUS_61184_250_84},
+		{"Set_Progress_RX_UPD_UPDATE_STATUS_61184_250_84", "(I)V", (void*)Set_Progress_RX_UPD_UPDATE_STATUS_61184_250_84},
+		{"Set_Status_RX_FW_UPDATE_STATUS_61184_250_113", "(I)V", (void*)Set_Status_RX_FW_UPDATE_STATUS_61184_250_113},
+		{"Set_Progress_ResultFlashCRC_RX_FW_UPDATE_STATUS_61184_250_113", "(I)V", (void*)Set_Progress_ResultFlashCRC_RX_FW_UPDATE_STATUS_61184_250_113},
+		{"Set_ResultFlashCRC_RX_FW_N_DL_COMPLETE_61184_250_80", "(I)V", (void*)Set_ResultFlashCRC_RX_FW_N_DL_COMPLETE_61184_250_80},
 
 		///////////////////////////////////////Set///////////////////////////////////////////////
 		{"Set_FWID_TX_REQUEST_FW_N_INFO_61184_250_32", "(I)V", (void*)Set_FWID_TX_REQUEST_FW_N_INFO_61184_250_32},
@@ -950,6 +998,9 @@ static JNINativeMethod methods[] = {
 		{"Get_FirmwareInformation_NumberofSectioninaFile_RX_FW_UPDATE_COMPLETE_61184_250_112", "()I", (void*)*Get_FirmwareInformation_NumberofSectioninaFile_RX_FW_UPDATE_COMPLETE_61184_250_112},
 		{"Get_FirmwareInformation_NumberofPacketinaSection_RX_FW_UPDATE_COMPLETE_61184_250_112", "()I", (void*)*Get_FirmwareInformation_NumberofPacketinaSection_RX_FW_UPDATE_COMPLETE_61184_250_112},
 		{"Get_FirmwareInformation_AppStartAddress_RX_FW_UPDATE_COMPLETE_61184_250_112", "()I", (void*)*Get_FirmwareInformation_AppStartAddress_RX_FW_UPDATE_COMPLETE_61184_250_112},
+		{"Get_Status_RX_UPD_UPDATE_STATUS_61184_250_84", "()I", (void*)*Get_Status_RX_UPD_UPDATE_STATUS_61184_250_84},
+		{"Get_Progress_RX_UPD_UPDATE_STATUS_61184_250_84", "()I", (void*)*Get_Progress_RX_UPD_UPDATE_STATUS_61184_250_84},
+		{"Get_nRecvUPDFormatCompleteFlag_61184_250_85", "()I", (void*)*Get_nRecvUPDFormatCompleteFlag_61184_250_85}
 
 };
 

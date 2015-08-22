@@ -147,7 +147,7 @@ public class _Parent_CANUpdateFragment extends Fragment{
 		MachineFirmwareInfo = new FirmwareInfoClass();
 		FileFirmwareInfo = new FirmwareInfoClass();;
 		
-		ThreadSleepTime = 50;
+		ThreadSleepTime = 500;
 		CAN1Comm = CAN1CommManager.getInstance();	
 		
 		RetryCount = 0;
@@ -310,8 +310,8 @@ public class _Parent_CANUpdateFragment extends Fragment{
 				while(!fragmentRef.get().threadRead.currentThread().isInterrupted())
 				{
 					fragmentRef.get().GetDataFromNative();
+					Thread.sleep(fragmentRef.get().GetThreadSleepTime());
 					fragmentRef.get().DisplayUI();
-					Thread.sleep(fragmentRef.get().GetThreadSleepTime());		
 				}
 			}
 			catch(InterruptedException ie){

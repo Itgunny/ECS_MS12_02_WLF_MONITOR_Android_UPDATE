@@ -242,6 +242,19 @@ public class CAN1CommManager extends ICAN1CommManager.Stub{		// ttySAC1(Linux), 
 		service.Set_nRecvFWUpdateCompleteFlag_61184_250_112(Data);
 	}
 	
+	public  int Get_nRecvUPDFormatCompleteFlag_61184_250_85(){ 
+		return service.Get_nRecvUPDFormatCompleteFlag_61184_250_85();
+	}	
+	public  void Set_nRecvUPDFormatCompleteFlag_61184_250_85(int Data)
+	{ 
+		service.Set_nRecvUPDFormatCompleteFlag_61184_250_85(Data);
+	}
+	public  void Set_Status_RX_UPD_UPDATE_STATUS_61184_250_84(int Data){service.Set_Status_RX_UPD_UPDATE_STATUS_61184_250_84(Data);}
+	public  void Set_Progress_RX_UPD_UPDATE_STATUS_61184_250_84(int Data){service.Set_Progress_RX_UPD_UPDATE_STATUS_61184_250_84(Data);}
+	
+	public  void Set_Status_RX_FW_UPDATE_STATUS_61184_250_113(int Data){service.Set_Status_RX_FW_UPDATE_STATUS_61184_250_113(Data);}
+	public  void Set_Progress_ResultFlashCRC_RX_FW_UPDATE_STATUS_61184_250_113(int Data){service.Set_Progress_ResultFlashCRC_RX_FW_UPDATE_STATUS_61184_250_113(Data);}
+	public  void Set_ResultFlashCRC_RX_FW_N_DL_COMPLETE_61184_250_80(int Data){ service.Set_ResultFlashCRC_RX_FW_N_DL_COMPLETE_61184_250_80(Data);}
 	///////////////////////////////////////////////////////////
 	
 	///////////////////////////Set////////////////////////////
@@ -362,6 +375,11 @@ public class CAN1CommManager extends ICAN1CommManager.Stub{		// ttySAC1(Linux), 
 	public  int Get_FirmwareInformation_NumberofSectioninaFile_RX_FW_UPDATE_COMPLETE_61184_250_112(){ return service.Get_FirmwareInformation_NumberofSectioninaFile_RX_FW_UPDATE_COMPLETE_61184_250_112();}
 	public  int Get_FirmwareInformation_NumberofPacketinaSection_RX_FW_UPDATE_COMPLETE_61184_250_112(){ return service.Get_FirmwareInformation_NumberofPacketinaSection_RX_FW_UPDATE_COMPLETE_61184_250_112();}
 	public  int Get_FirmwareInformation_AppStartAddress_RX_FW_UPDATE_COMPLETE_61184_250_112(){ return service.Get_FirmwareInformation_AppStartAddress_RX_FW_UPDATE_COMPLETE_61184_250_112();}
+	
+	public 	int Get_Status_RX_UPD_UPDATE_STATUS_61184_250_84(){ return service.Get_Status_RX_UPD_UPDATE_STATUS_61184_250_84();}
+	public 	int Get_Progress_RX_UPD_UPDATE_STATUS_61184_250_84(){ return service.Get_Progress_RX_UPD_UPDATE_STATUS_61184_250_84();}
+	
+
 	
 	////////////////////////////////////////////////////////////////////
 	// CALLBACK METHOD
