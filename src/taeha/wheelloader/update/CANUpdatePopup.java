@@ -26,6 +26,7 @@ import android.view.View;
 import android.view.ViewGroup.LayoutParams;
 import android.widget.ImageButton;
 import android.widget.ProgressBar;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -119,7 +120,8 @@ public class CANUpdatePopup extends Dialog{
 		
 		// ImageButton
 		ImageButton imgbtnExit;
-		TextView textCancel;
+		TextView textWarning;
+		RelativeLayout layoutCancel;
 
 		private DialogInterface.OnDismissListener DismissListener;
 		private DialogInterface.OnClickListener ExitButtonClickListener;
@@ -159,9 +161,10 @@ public class CANUpdatePopup extends Dialog{
 			textViewStatusProgram = (TextView)layout.findViewById(R.id.textView_popup_update_can_progress_status);
 			textViewStatusNumber = (TextView)layout.findViewById(R.id.textView_popup_update_can_progress_status_number);
 			imgbtnExit = (ImageButton)layout.findViewById(R.id.imageButton_popup_update_can_progress_exit);
-			imgbtnExit.setVisibility(View.INVISIBLE);
-			textCancel = (TextView)layout.findViewById(R.id.textView_popup_update_can_progress_exit);
-			textCancel.setVisibility(View.INVISIBLE);
+			textWarning = (TextView)layout.findViewById(R.id.textView_popup_update_can_progress_warning);
+			textWarning.setVisibility(View.INVISIBLE);
+			layoutCancel = (RelativeLayout)layout.findViewById(R.id.RelativeLayout_popup_update_can_progress_bottom);
+			layoutCancel.setVisibility(View.INVISIBLE);
 			
 			dialog.addContentView(layout, new LayoutParams(427,229));
 			dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));	
@@ -593,8 +596,8 @@ public class CANUpdatePopup extends Dialog{
 				@Override
 				public void run() {
 					// TODO Auto-generated method stub
-					imgbtnExit.setVisibility(View.VISIBLE);
-					textCancel.setVisibility(View.VISIBLE);
+					layoutCancel.setVisibility(View.VISIBLE);
+					textWarning.setVisibility(View.INVISIBLE);
 				}
 			});
 		}
@@ -603,8 +606,8 @@ public class CANUpdatePopup extends Dialog{
 				@Override
 				public void run() {
 					// TODO Auto-generated method stub
-					imgbtnExit.setVisibility(View.INVISIBLE);
-					textCancel.setVisibility(View.INVISIBLE);
+					layoutCancel.setVisibility(View.INVISIBLE);
+					textWarning.setVisibility(View.VISIBLE);
 				}
 			});
 		}

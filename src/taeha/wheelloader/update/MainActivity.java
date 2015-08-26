@@ -79,6 +79,7 @@ public class MainActivity extends Activity {
 	//	- Cancel 버튼 파일전송 시에만 Enable
 	//	- 사용자가 cancel 했을 경우 프로토콜 반영
 	// 2. Enter DL Mode 후 2초 delay 삭제
+	// 3. 파일 복사 후 Format 및 Copy 할 때 "Do not try to turn off the machine" 메시지 추가
 	////////////////////////////////////////////////////////////////////
 	
 	public static final int INDEX_MAIN_TOP								= 0X1100;
