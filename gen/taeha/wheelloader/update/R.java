@@ -52,13 +52,13 @@ public final class R {
         public static final int RelativeLayout_popup_update_question_monitor_stm32_top=0x7f090021;
         public static final int RelativeLayout_screen_cluster_file=0x7f09003a;
         public static final int RelativeLayout_screen_cluster_machine=0x7f090029;
-        public static final int action_settings=0x7f09005e;
+        public static final int action_settings=0x7f09005f;
         public static final int button_screen_cluster_update=0x7f09004b;
         public static final int button_screen_monitor_os_update=0x7f09005a;
         public static final int imageButton_popup_update_can_progress_exit=0x7f09000b;
         public static final int imageButton_popup_update_question_monitor_stm32_cancel=0x7f090026;
         public static final int imageButton_popup_update_question_monitor_stm32_ok=0x7f090025;
-        public static final int imageButton_screen_upper_back=0x7f09005d;
+        public static final int imageButton_screen_upper_back=0x7f09005e;
         public static final int imageView_screen_cluster_file_fwid=0x7f09003c;
         public static final int imageView_screen_cluster_file_fwmodel=0x7f09003e;
         public static final int imageView_screen_cluster_file_fwname=0x7f09003d;
@@ -126,6 +126,7 @@ public final class R {
         public static final int textView_screen_monitor_os_kernel=0x7f090057;
         public static final int textView_screen_monitor_os_ramdisk=0x7f090059;
         public static final int textView_screen_monitor_os_system=0x7f090058;
+        public static final int textView_screen_upper_Model=0x7f09005d;
         public static final int textView_screen_upper_title=0x7f09005b;
         public static final int textView_screen_upper_version=0x7f09005c;
     }

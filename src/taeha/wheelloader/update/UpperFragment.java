@@ -2,12 +2,8 @@ package taeha.wheelloader.update;
 
 import java.lang.ref.WeakReference;
 
-
 import android.app.Activity;
 import android.app.Fragment;
-import android.graphics.Color;
-import android.graphics.Shader;
-import android.graphics.Shader.TileMode;
 import android.os.Bundle;
 import android.os.Message;
 import android.util.AttributeSet;
@@ -15,7 +11,6 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.TextView;
 
@@ -27,13 +22,19 @@ public class UpperFragment extends Fragment{
 	// Fragment Root
 	private View mRoot;
 	
+	// Thread
+	protected Thread threadRead = null;
+	
+	// Thread Sleep Time
+	private static int ThreadSleepTime;
+	
 	// ImageButton 
 	ImageButton imgbtnBack;
 	
 	// TextView
 	TextView textViewTitle;
 	TextView textViewVersion;
-
+	TextView textViewModel;
 	/////////////////////////////////////////////////////////////////////
 	
 	/////////////////////VALUABLE////////////////////////////////////////
@@ -51,12 +52,10 @@ public class UpperFragment extends Fragment{
 	private void InitResource(){
 		// ImageButton
 		imgbtnBack = (ImageButton)mRoot.findViewById(R.id.imageButton_screen_upper_back);
-
-		
 		// TextView
 		textViewTitle = (TextView)mRoot.findViewById(R.id.textView_screen_upper_title);
 		textViewVersion = (TextView)mRoot.findViewById(R.id.textView_screen_upper_version);
-		
+		textViewModel = (TextView)mRoot.findViewById(R.id.textView_screen_upper_Model);
 
 	}
 	private void InitButtonListener(){
@@ -69,7 +68,6 @@ public class UpperFragment extends Fragment{
 				ParentActivity.onClickBack();
 			}
 		});
-		
 	}
 
 	private void InitValuables(){
@@ -79,6 +77,14 @@ public class UpperFragment extends Fragment{
 				+ Integer.toString(ParentActivity.VERSION_SUB_HIGH);
 		// --, 150401 cjg
 		SetVersion(strVersion);
+
+		ThreadSleepTime = 500;
+	}
+	protected void SetThreadSleepTime(int Time){
+		ThreadSleepTime = Time;
+	}
+	protected int GetThreadSleepTime(){
+		return ThreadSleepTime;
 	}
 	////////////////////////////////////////////////////////////////////
 	
@@ -119,10 +125,16 @@ public class UpperFragment extends Fragment{
 		Log.d(TAG, "onCreateView");
 		mRoot = inflater.inflate(R.layout.screen_upper, null);
 		
+
 		InitResource();
 		InitValuables();
 		InitButtonListener();
 		setButtonInvisible(View.INVISIBLE);
+		
+		
+		threadRead = new Thread(new ReadThread(this));
+		threadRead.start();
+		
 		return mRoot;
 
 	}
@@ -148,6 +160,7 @@ public class UpperFragment extends Fragment{
 		// TODO Auto-generated method stub
 		Log.d(TAG, "onDestroyView");
 		super.onDestroyView();
+		threadRead.interrupt();
 	}
 
 	@Override
@@ -193,6 +206,60 @@ public class UpperFragment extends Fragment{
 		super.onStop();
 	}
 	/////////////////////////////////////////////////////////////////////
+	private void DisplayUI(){
+		ParentActivity.runOnUiThread(new Runnable() {
+			@Override
+			public void run() {
+				// TODO Auto-generated method stub
+				UpdateUI();
+			}
+		});
+	}
+	
+	// Read Thread
+	public static class ReadThread implements Runnable {
+		private WeakReference<UpperFragment> fragmentRef = null;
+		public Message msg = null;
+		public ReadThread(UpperFragment fragment){
+			this.fragmentRef = new WeakReference<UpperFragment>(fragment);
+			msg = new Message();
+		}
+	
+		@Override
+		public void run() {
+			try{
+				while(!fragmentRef.get().threadRead.currentThread().isInterrupted())
+				{
+					fragmentRef.get().DisplayUI();
+					Thread.sleep(1000);
+				}
+			}
+			catch(InterruptedException ie){
+				Log.e(TAG,"InterruptedException");
+			}	
+			catch(RuntimeException ee){
+				Log.e(TAG,"RuntimeException");
+			}
+		}
+	
+	}
+	
+	
+	public void UpdateUI(){
+		MachineFWModelDisplay(ParentActivity.FWModel);
+	}
+	////////////////////////////////////////////////////////////////////
+	public void MachineFWModelDisplay(byte[] _FWModel){
+		String str;
+		str = new String(_FWModel,0,_FWModel.length);
+		
+		if(_FWModel[0] != 0 && _FWModel[0] != 0xff)
+		{
+			textViewModel.setText(str);
+			threadRead.interrupt();
+		}
+		
+	}
 	public void SetTitle(String title){
 		textViewTitle.setText(title);
 	}

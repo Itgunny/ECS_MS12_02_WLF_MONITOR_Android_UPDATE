@@ -3,6 +3,7 @@ package taeha.wheelloader.update;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.lang.ref.WeakReference;
 import java.util.List;
 
 import taeha.wheelloader.update.R.string;
@@ -31,13 +32,13 @@ import android.widget.Toast;
 public class MainActivity extends Activity {
 	/////////////////////////////CONSTANT////////////////////////////////
 	private static final String TAG = "MainActivity";
-	
-	
+
+
 	public static final int VERSION_HIGH		= 3;
 	public static final int VERSION_LOW			= 0;
 	public static final int VERSION_SUB_HIGH	= 0;
-//	public static final int VERSION_SUB_LOW		= 0;
-	
+	//	public static final int VERSION_SUB_LOW		= 0;
+
 	////////////////////////////////////////////////////////////////////
 	////2.0.0.2
 	//	Enter DW Mode 후 2초 딜레이 추가 (Cluster Serial Flash Erase Time)
@@ -79,37 +80,38 @@ public class MainActivity extends Activity {
 	//	- Cancel 버튼 파일전송 시에만 Enable
 	//	- 사용자가 cancel 했을 경우 프로토콜 반영
 	// 2. Enter DL Mode 후 2초 delay 삭제
-	// 3. 파일 복사 후 Format 및 Copy 할 때 "Do not try to turn off the machine" 메시지 추가
+	// 3. 파일 복사 후 Format 및 Copy 할 때 "Do not try to turn off the machine" 메시지 추가(HHI 임혁준씨 요청)
+	// 4. MCU F/W Info 요청하여 F/W Model 우측 상단 항시 표기(HHI 임혁준씨 요청)
 	////////////////////////////////////////////////////////////////////
-	
+
 	public static final int INDEX_MAIN_TOP								= 0X1100;
-	
+
 	public static final int INDEX_MONITOR_TOP							= 0X2100;
 	public static final int INDEX_MONITOR_STM32_QUESTION				= 0X2110;
 	public static final int INDEX_MONITOR_STM32_UPDATE					= 0X2111;
 	public static final int INDEX_MONITOR_ANDROID_OS					= 0X2200;
 	public static final int INDEX_MONITOR_ANDROID_OS_QUESTION			= 0X2210;
 	public static final int INDEX_MONITOR_COPY_TO_USB					= 0X2220;
-	
+
 	public static final int INDEX_CLUSTER_TOP							= 0X3000;
 	public static final int INDEX_CLUSTER_QUESTION						= 0X3110;
 	public static final int INDEX_CLUSTER_UPDATE						= 0X3111;
-	
+
 	public static final int INDEX_MCU_TOP								= 0X4000;
 	public static final int INDEX_MCU_SELECT							= 0X4100;
 	public static final int INDEX_MCU_QUESTION							= 0X4110;
 	public static final int INDEX_MCU_UPDATE							= 0X4111;
-	
+
 	public static final int INDEX_BKCU_TOP								= 0X5000;
 	public static final int INDEX_BKCU_QUESTION							= 0X5110;
 	public static final int INDEX_BKCU_UPDATE							= 0X5111;
-	
+
 	public static final int CMD_DUMMY		= 0xF5;
-	
+
 	public static boolean isDisConnected 				= true;
 	public int countCopy = 0;
 	////////////////////////////////////////////////////////////////////
-	
+
 	///////////////////////////FRAGMENT/////////////////////////////////
 	UpperFragment _UpperFragment;
 	MainFragment _MainFragment;
@@ -128,46 +130,54 @@ public class MainActivity extends Activity {
 	Handler HandleKeyButton;
 	///////////////////////////VALUABLE/////////////////////////////////
 	public int MenuIndex;
-	
+
 	// CAN1CommManager
-	public static CAN1CommManager CAN1Comm;
+	public static CAN1CommManager CAN1Comm = null;
 	
+	// Thread
+	private Thread threadRead = null;
+	
+
 	// DialogFlag
 	public Dialog MenuDialog = null;
-	
+
 	Process mProcess = null;
 	public static String isAvailableBKCU = "";
-	
+
 	// ++, 150401 cjg
 	//Content Provider
 	public static final String 	AUTHORITY    = "taeha.wheelloader.fseries_monitor.main";
-	
+
 	public static final String  PATH_GET = "/AUTH_GET";
 	public static final String  PATH_UPDATE = "/AUTH_UPDATE";
-	
+
 	public static final Uri 	CONTENT_URI  = 
 			Uri.parse("content://" + AUTHORITY + PATH_GET);
-	
+
 	public static final Uri 	CONTENT_URI2  = 
 			Uri.parse("content://" + AUTHORITY + PATH_UPDATE);
 	// --, 150401 cjg
 	
+	byte []FWModel = new byte[20];
+	public String strFMModel;
+	int RetryCount;
+
 	/////////////////////////////////////////////////////////////////////
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
-		
+
 		InitResource();
 		InitFragment();
 		InitPopup();
 		InitValuable();
 		initContentProvider();
-		
+
 		isConnectedUsb();
 		showUpper();
 		showMain();
-		
+
 		// ++, 150326 cjg	
 		HandleKeyButton = new Handler() {
 			@Override
@@ -179,18 +189,18 @@ public class MainActivity extends Activity {
 								showMonitorCopyFileToUSBPopup();
 								countCopy = 1;
 								// ++, 150630 cjg	
-					        	Runtime runtime = Runtime.getRuntime();
-					        	Process process;
-					        	try{
-					        		String cmd = "sync";
-					        		process = runtime.exec(cmd);
-					        		Log.d(TAG, "sync");
-					        	}catch(Exception e){
-					        		e.fillInStackTrace();
-					        	}
-					        	// --, 150630 cjg	
+								Runtime runtime = Runtime.getRuntime();
+								Process process;
+								try{
+									String cmd = "sync";
+									process = runtime.exec(cmd);
+									Log.d(TAG, "sync");
+								}catch(Exception e){
+									e.fillInStackTrace();
+								}
+								// --, 150630 cjg	
 							}
-							
+
 						}catch(Exception e){
 							e.printStackTrace();
 							//Toast.makeText(getApplicationContext(), "Please Connect USB to device.", 50).show();
@@ -244,22 +254,25 @@ public class MainActivity extends Activity {
 	// --, 150601 cjg
 	// ++, 150401 cjg
 	public void initContentProvider(){
-		Log.i("PROVIDERT", "B Click Auth get Button!");
-		
-		// ContentResolver 媛앹�?�뼸�뼱 �삤湲�
-		ContentResolver cr = getContentResolver();
-		// ContentProviderDataA �뼱�뵆?�ъ��씠��?insert() 硫붿꽌�뱶��?�젒洹�
-		Uri uri = cr.insert(CONTENT_URI, new ContentValues());
-		
-		// ContentProviderDataA �뼱�뵆?�ъ��씠��?�뿉�꽌 ?�ы꽩諛쏆�?Data媛� �뀑�??�븯湲�
-		List<String> authValues = uri.getPathSegments();
-		String serviceType = authValues.get(0);
-		String authkey = authValues.get(1);
-
-		Log.i("PROVIDERT", "B_Return_serviceType = " + serviceType);
-		Log.i("PROVIDERT", "B_Return_authkey = " + authkey);
-		isAvailableBKCU = authkey;
-		Log.d(TAG, "isAvailable BKCU : " + isAvailableBKCU);
+		try{
+			Log.i("PROVIDERT", "B Click Auth get Button!");
+			// ContentResolver 媛앹�?�뼸�뼱 �삤湲�
+			ContentResolver cr = getContentResolver();
+			// ContentProviderDataA �뼱�뵆?�ъ��씠��?insert() 硫붿꽌�뱶��?�젒洹�
+			Uri uri = cr.insert(CONTENT_URI, new ContentValues());
+	
+			// ContentProviderDataA �뼱�뵆?�ъ��씠��?�뿉�꽌 ?�ы꽩諛쏆�?Data媛� �뀑�??�븯湲�
+			List<String> authValues = uri.getPathSegments();
+			String serviceType = authValues.get(0);
+			String authkey = authValues.get(1);
+	
+			Log.i("PROVIDERT", "B_Return_serviceType = " + serviceType);
+			Log.i("PROVIDERT", "B_Return_authkey = " + authkey);
+			isAvailableBKCU = authkey;
+			Log.d(TAG, "isAvailable BKCU : " + isAvailableBKCU);
+		}catch(NullPointerException e){
+			Log.e(TAG, "NullPointerException initContentProvider");
+		}
 	}
 	// --, 150401 cjg
 	// ++, 150326 cjg
@@ -267,7 +280,7 @@ public class MainActivity extends Activity {
 	protected void onDestroy() {
 		// TODO Auto-generated method stub
 		super.onDestroy();
-		
+
 		// ++, 150326 cjg
 		unregisterReceiver(mUsbBroadcastReceiver);
 		// --, 150326 cjg
@@ -279,16 +292,17 @@ public class MainActivity extends Activity {
 		getMenuInflater().inflate(R.menu.main, menu);
 		return true;
 	}
-	
+
 	@Override
 	protected void onResume() {
 		// TODO Auto-generated method stub
 		super.onResume();
 		StartCommService();
+		threadRead = new Thread(new ReadThread(this));
 		SetSU();
 	}
 
-	
+
 	@Override
 	protected void onPause() {
 		// TODO Auto-generated method stub
@@ -298,9 +312,9 @@ public class MainActivity extends Activity {
 	}
 
 	public void InitResource(){
-		
+
 	}
-	
+
 	public void InitFragment(){
 		_UpperFragment = new UpperFragment();
 		_MainFragment = new MainFragment();
@@ -310,20 +324,22 @@ public class MainActivity extends Activity {
 		_MCUFragment = new MCUFragment();
 		_MCUListFragment = new MCUListFragment();// ++, --, 150601 cjg
 		_BKCUFragment = new BKCUFragment();
-			
+
 	}
-	
+
 	public void InitPopup(){
 		MonitorSTM32Builder = new UpdaetMonitorSTM32Popup.Builder(this);
 		MonitorUpdateQuestionBuilder = new UpdateQuestionMonitorSTM32Popup.Builder(this);
 		MonitorCopyErrorToUSBBuilder = new MonitorCopyErrorToUSB.Builder(this);
 	}
-	
+
 	public void InitValuable(){
 		MenuIndex = INDEX_MAIN_TOP;
+		strFMModel = "";
+		RetryCount = 0;
 	}
-	
-	
+
+
 	//////////////////////////////////COMM.///////////////////////////////////////
 	// Communication Service Start
 	private void StartCommService() {
@@ -332,9 +348,9 @@ public class MainActivity extends Activity {
 		// Loacal Service
 		startService(intent);
 		bindService(new Intent(CommService.class.getName()),serConn,Context.BIND_AUTO_CREATE);
-		
+
 	}
-	
+
 	// Communication Service Stop
 	private void stopCommService(){
 		Log.v(TAG,"Stop Comm Service");
@@ -345,15 +361,16 @@ public class MainActivity extends Activity {
 		else{
 			Log.v(TAG,"stopService was unsuccessful");
 		}
-		
+
 		try {
 			CAN1Comm.unregisterCallback(mCallback);
 		} catch (RemoteException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		threadRead.interrupt();
 	}
-	
+
 	private ServiceConnection serConn = new ServiceConnection(){
 
 		@Override
@@ -363,11 +380,11 @@ public class MainActivity extends Activity {
 			boolean temp = true;
 			int CNT = 0;
 			Log.v(TAG,"onServiceConnected() called");
-			
+
 			CAN1Comm = CAN1CommManager.getInstance();
 			CAN1Comm.TxCMDToMCU(CAN1Comm.CMD_STARTCAN);
-			
-			
+
+
 			try {
 				Success = CAN1Comm.registerCallback(mCallback);
 				for(int i = 0; i < 10; i++){
@@ -383,23 +400,24 @@ public class MainActivity extends Activity {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-	
-	
+			
+			threadRead.start();
+
 		}
-	
+
 		@Override
 		public void onServiceDisconnected(ComponentName name) {
 			// TODO Auto-generated method stub
 			Log.v(TAG,"onServiceDisconnected() called");
-			
+
 			StartCommService();
 		}
-	
+
 	};
-	
+
 	// Service Callback
 	ICAN1CommManagerCallback mCallback = new ICAN1CommManagerCallback.Stub() {
-		
+
 		@Override
 		public void KeyButtonCallBack(int Data) throws RemoteException {
 			// TODO Auto-generated method stub
@@ -410,7 +428,7 @@ public class MainActivity extends Activity {
 				}
 			}
 		}
-		
+
 		@Override
 		public void CallbackFunc(int Data) throws RemoteException {
 			// TODO Auto-generated method stub
@@ -425,19 +443,71 @@ public class MainActivity extends Activity {
 		}
 	};
 	//////////////////////////////////////////////////////////////////////////////
-	
+	/////////////////////////////////////////////////////////////////////
+	// Thread Class
+		public  class ReadThread implements Runnable {
+			private WeakReference<MainActivity> activityRef = null;
+			public Message msg = null;
+			public ReadThread(MainActivity activity){
+				this.activityRef = new WeakReference<MainActivity>(activity);
+				msg = new Message();
+			}
+
+			
+			@Override
+			public void run() {
+				try{
+					while(!activityRef.get().threadRead.currentThread().isInterrupted())
+					{
+						activityRef.get().SetDataFromNative();
+						Thread.sleep(1000);
+						activityRef.get().GetDataFromNative();
+					}
+				}
+				catch(InterruptedException ie){
+					Log.e(TAG,"InterruptedException");
+				}		
+				catch(RuntimeException ee){
+					Log.e(TAG,"RuntimeException");
+				}
+			}
+		}
+
+
+		public void SetDataFromNative(){
+			if(strFMModel == "" && RetryCount < 5)
+			{
+				CAN1Comm.Set_TargetSourceAddress(CAN1CommManager.SA_MCU);
+				CAN1Comm.Set_FWID_TX_REQUEST_FW_N_INFO_61184_250_32(0);
+				CAN1Comm.TxCANToMCU(0x20);
+				RetryCount++;
+			}
+		}
+		
+		public void GetDataFromNative(){
+			if(CAN1Comm.Get_nRecvFWInfoFlag_61184_250_48() == 1){
+				CAN1Comm.Set_nRecvFWInfoFlag_61184_250_48(0);
+				FWModel = CAN1Comm.Get_FirmwareInformation_FWModel_RX_SEND_FW_N_INFO_61184_250_48();
+				strFMModel = new String(FWModel,0,FWModel.length);
+				Log.d(TAG, "strFMModel"+strFMModel+"Length"+strFMModel.length());
+				if(FWModel[0] == 0xff || FWModel[0] == 0)
+					strFMModel = "";
+			}
+		}
+
+	/////////////////////////////////////////////////////////////////////
 	public void showUpper(){
 		android.app.FragmentTransaction transaction = getFragmentManager().beginTransaction();
 		transaction.replace(R.id.FrameLayout_fragment_upper, _UpperFragment);
 		transaction.commit();
 	}
-	
+
 	public void showMain(){
 		android.app.FragmentTransaction transaction = getFragmentManager().beginTransaction();
 		transaction.replace(R.id.FrameLayout_fragment_body, _MainFragment);
 		transaction.commit();
 	}
-	
+
 	public void showMonitor(){
 		android.app.FragmentTransaction transaction = getFragmentManager().beginTransaction();
 		transaction.replace(R.id.FrameLayout_fragment_body, _MonitorFragment);
@@ -448,26 +518,26 @@ public class MainActivity extends Activity {
 		transaction.replace(R.id.FrameLayout_fragment_body, _MonitorOSFragment);
 		transaction.commit();
 	}
-	
-	
+
+
 	public void showCluster(){
 		android.app.FragmentTransaction transaction = getFragmentManager().beginTransaction();
 		transaction.replace(R.id.FrameLayout_fragment_body, _ClusterFragment);
 		transaction.commit();
 	}
-	
+
 	public void showMCUList(){
 		android.app.FragmentTransaction transaction = getFragmentManager().beginTransaction();
 		transaction.replace(R.id.FrameLayout_fragment_body, _MCUListFragment);
 		transaction.commit();
 	}
-	
+
 	public void showMCUSelect(){
 		android.app.FragmentTransaction transaction = getFragmentManager().beginTransaction();
 		transaction.replace(R.id.FrameLayout_fragment_body, _MCUFragment);
 		transaction.commit();
 	}
-	
+
 	public void showBKCU(){
 		android.app.FragmentTransaction transaction = getFragmentManager().beginTransaction();
 		transaction.replace(R.id.FrameLayout_fragment_body, _BKCUFragment);
@@ -479,41 +549,41 @@ public class MainActivity extends Activity {
 			MenuDialog.dismiss();
 			MenuDialog = null;
 		}
-		
+
 
 		MonitorUpdateQuestionBuilder.setOKButton(new DialogInterface.OnClickListener() {
-			
+
 			@Override
 			public void onClick(DialogInterface dialog, int which) {
 				// TODO Auto-generated method stub
 				Log.d(TAG,"setOKButton");
-				
+
 				dialog.dismiss();
 				showMonitorSTM32UpdatePopup();
 			}
 		});
 		MonitorUpdateQuestionBuilder.setCancelButton(new DialogInterface.OnClickListener() {
-			
+
 			@Override
 			public void onClick(DialogInterface dialog, int which) {
 				// TODO Auto-generated method stub
 				Log.d(TAG,"setCancelButton");				
 				dialog.dismiss();
-				
-				
+
+
 			}
 		});
 		MonitorUpdateQuestionBuilder.setDismiss(new DialogInterface.OnDismissListener() {
-			
+
 			@Override
 			public void onDismiss(DialogInterface dialog) {
 				// TODO Auto-generated method stub
 				Log.d(TAG,"onDismiss");
-				
+
 
 			}
 		});
-		
+
 		MenuDialog = MonitorUpdateQuestionBuilder.create(getResources().getString(string.Do_you_want_update));
 		MenuDialog.show();		
 	}
@@ -523,45 +593,45 @@ public class MainActivity extends Activity {
 			MenuDialog.dismiss();
 			MenuDialog = null;
 		}
-		
+
 
 		MonitorUpdateQuestionBuilder.setOKButton(new DialogInterface.OnClickListener() {
-			
+
 			@Override
 			public void onClick(DialogInterface dialog, int which) {
 				// TODO Auto-generated method stub
 				Log.d(TAG,"setOKButton");
-				
+
 				dialog.dismiss();
 				showMonitorSTM32FactoryInitUpdatePopup();
 			}
 		});
 		MonitorUpdateQuestionBuilder.setCancelButton(new DialogInterface.OnClickListener() {
-			
+
 			@Override
 			public void onClick(DialogInterface dialog, int which) {
 				// TODO Auto-generated method stub
 				Log.d(TAG,"setCancelButton");				
 				dialog.dismiss();
-				
-				
+
+
 			}
 		});
 		MonitorUpdateQuestionBuilder.setDismiss(new DialogInterface.OnDismissListener() {
-			
+
 			@Override
 			public void onDismiss(DialogInterface dialog) {
 				// TODO Auto-generated method stub
 				Log.d(TAG,"onDismiss");
-				
+
 
 			}
 		});
-		
+
 		MenuDialog = MonitorUpdateQuestionBuilder.create(getResources().getString(string.Do_you_want_update_factory_init));
 		MenuDialog.show();		
 	}
-	
+
 	public void showMonitorSTM32UpdatePopup(){
 
 		if(MenuDialog != null){
@@ -570,20 +640,20 @@ public class MainActivity extends Activity {
 		}
 
 		MonitorSTM32Builder.setDismiss(new DialogInterface.OnDismissListener() {
-			
+
 			@Override
 			public void onDismiss(DialogInterface dialog) {
 				// TODO Auto-generated method stub
 				Log.d(TAG,"onDismiss");
-				
+
 
 			}
 		});
-		
+
 		MenuDialog = MonitorSTM32Builder.create(MonitorSTM32Builder,0);
 		MenuDialog.show();		
 	}
-	
+
 	public void showMonitorSTM32FactoryInitUpdatePopup(){
 
 		if(MenuDialog != null){
@@ -592,20 +662,20 @@ public class MainActivity extends Activity {
 		}
 
 		MonitorSTM32Builder.setDismiss(new DialogInterface.OnDismissListener() {
-			
+
 			@Override
 			public void onDismiss(DialogInterface dialog) {
 				// TODO Auto-generated method stub
 				Log.d(TAG,"onDismiss");
-				
+
 
 			}
 		});
-		
+
 		MenuDialog = MonitorSTM32Builder.create(MonitorSTM32Builder,1);
 		MenuDialog.show();		
 	}
-	
+
 	public void showMonitorCopyFileToUSBPopup(){
 
 		if(MenuDialog != null){
@@ -613,12 +683,12 @@ public class MainActivity extends Activity {
 			MenuDialog = null;
 		}
 		MonitorCopyErrorToUSBBuilder.setDismiss(new DialogInterface.OnDismissListener() {
-			
+
 			@Override
 			public void onDismiss(DialogInterface dialog) {
 				// TODO Auto-generated method stub
 				Log.d(TAG,"onDismiss");
-				
+
 
 			}
 		});
@@ -627,7 +697,7 @@ public class MainActivity extends Activity {
 	}
 	//////////////////////////////////////////////////////////////////////////////////////
 	//////////////////////////////////////////////////////////////////////////////////////
-	
+
 	public void RecResponse(int response){
 		switch (MenuIndex) {
 		case INDEX_MONITOR_STM32_UPDATE:
@@ -638,42 +708,42 @@ public class MainActivity extends Activity {
 			break;
 		}
 	}
-	
+
 	public void onClickBack(){
 		switch (MenuIndex) {
 		case INDEX_MAIN_TOP:
 			//finish();
 			break;
-			
+
 		case INDEX_MONITOR_TOP:
 			showMain();
 			_UpperFragment.setButtonInvisible(View.INVISIBLE); // ++, -- 150326 cjg
 			break;
-			
+
 		case INDEX_CLUSTER_TOP:
 			showMain();
 			_UpperFragment.setButtonInvisible(View.INVISIBLE); // ++, -- 150326 cjg
 			break;
-			
+
 		case INDEX_MCU_TOP:
 			_UpperFragment.setButtonInvisible(View.INVISIBLE); // ++, -- 150326 cjg
 			showMain();
 			break;
-		
+
 		case INDEX_BKCU_TOP:
 			_UpperFragment.setButtonInvisible(View.INVISIBLE); // ++, -- 150326 cjg
 			showMain();
 			break;
-			
+
 		case INDEX_MCU_SELECT:
-			 // ++, -- 150326 cjg
+			// ++, -- 150326 cjg
 			if(getisDisConnected() == true){
 				showMain();
 				_UpperFragment.setButtonInvisible(View.INVISIBLE);
 			}else{
 				showMCUList();
 			}
-			
+
 			break;
 		case INDEX_MONITOR_ANDROID_OS:
 			showMonitor();
@@ -682,17 +752,17 @@ public class MainActivity extends Activity {
 			break;
 		}
 	}
-	
+
 	public void SetSU(){
 		try{
 			mProcess =  Runtime.getRuntime().exec("su");
 			Log.d(TAG,"Su");
-			
+
 		}catch(Exception e){
 			Log.e(TAG,"Su Exception");
 		}
 	}
-	
+
 	/*public void Reboot(){
 		Log.d(TAG,"Reboot");
 
@@ -706,7 +776,7 @@ public class MainActivity extends Activity {
         } catch ( Exception e) {
             Log.d(TAG, "rooting X");
         }   
-	
+
 	}*/
 
 }
