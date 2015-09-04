@@ -41,7 +41,8 @@ public class CAN1CommManager extends ICAN1CommManager.Stub{		// ttySAC1(Linux), 
 	public static final int SA_MONITOR 	= 0x28;
 	public static final int SA_MCU		= 0x47;
 	public static final int SA_CLUSTER 	= 0x17;
-	public static final int SA_BKCU		= 0x34;				
+	public static final int SA_BKCU		= 0x34;
+	public static final int SA_RMCU		= 0x4A;			
 	
 	public static final int LONG_MENU_LEFT 		= 0x01000005;
 	public static final int LONG_MENU_RIGHT 	= 0x01000009;
@@ -178,7 +179,7 @@ public class CAN1CommManager extends ICAN1CommManager.Stub{		// ttySAC1(Linux), 
 		// TODO Auto-generated method stub
 		return service.UART3_UpdatePacketComm(Index, CRC, EOTFlag, arr);
 	}
-
+	///////////////////////////////////
 	public  void Set_nRecvSendBootloaderStatusFlag_61184_250_17(int Data)
 	{ 
 		service.Set_nRecvSendBootloaderStatusFlag_61184_250_17(Data);
@@ -193,6 +194,10 @@ public class CAN1CommManager extends ICAN1CommManager.Stub{		// ttySAC1(Linux), 
 	}
 	public  int Get_MultiPacketErrFlag(){ 
 		return service.Get_MultiPacketErrFlag();
+	}
+	public  int Get_TargetSourceAddress()
+	{ 
+		return service.Get_TargetSourceAddress();
 	}
 	public  void Set_TargetSourceAddress(int Data)
 	{ 
@@ -379,6 +384,8 @@ public class CAN1CommManager extends ICAN1CommManager.Stub{		// ttySAC1(Linux), 
 	public 	int Get_Status_RX_UPD_UPDATE_STATUS_61184_250_84(){ return service.Get_Status_RX_UPD_UPDATE_STATUS_61184_250_84();}
 	public 	int Get_Progress_RX_UPD_UPDATE_STATUS_61184_250_84(){ return service.Get_Progress_RX_UPD_UPDATE_STATUS_61184_250_84();}
 	
+	public int Get_CheckBKCUComm(){ return service.Get_CheckBKCUComm();}
+	public int Get_CheckRMCUComm(){ return service.Get_CheckRMCUComm();}
 
 	
 	////////////////////////////////////////////////////////////////////

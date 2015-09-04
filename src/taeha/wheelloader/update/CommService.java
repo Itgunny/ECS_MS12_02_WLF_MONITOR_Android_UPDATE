@@ -115,11 +115,12 @@ public class CommService extends Service{
 	public native int Write_UART3(byte[] Data, int size);
 	public native int UART3_TxComm(int CMD, int DAT1, int DAT2, int DAT3, int DAT4, int DAT5, int DAT6, int DAT7, int DAT8);
 	public native int UART3_UpdatePacketComm(int Index, int CRC, int EOTFlag, byte[] arr);
-
+	////////////////////////////////////
 	public native void Set_nRecvSendBootloaderStatusFlag_61184_250_17(int Data);
 	public native int Get_nRecvSendBootloaderStatusFlag_61184_250_17();
 	public native void Set_MultiPacketErrFlag(int Data);
 	public native int Get_MultiPacketErrFlag();
+	public native int Get_TargetSourceAddress();
 	public native void Set_TargetSourceAddress(int Data);
 	public native void Set_nLength_61184_250_66(int Data);
 	public native void Set_nLength_61184_250_81(int Data);
@@ -263,8 +264,10 @@ public class CommService extends Service{
 	public native void Set_Status_RX_FW_UPDATE_STATUS_61184_250_113(int Data);
 	public native void Set_Progress_ResultFlashCRC_RX_FW_UPDATE_STATUS_61184_250_113(int Data);
 	public native void Set_ResultFlashCRC_RX_FW_N_DL_COMPLETE_61184_250_80(int Data);
-	
 	//--, 150820 cjg
+	public native int Get_CheckBKCUComm();
+	public native int Get_CheckRMCUComm();
+	
 	///////////////USER DEFINE METHOD///////////////////////////////////////
 	// Open Comport
 	public void InitComport(){

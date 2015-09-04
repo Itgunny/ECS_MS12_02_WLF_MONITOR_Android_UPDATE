@@ -79,7 +79,10 @@ public class UpdateFileFindClass {
 	public static String MONITOR_MIRACAST_NAME = "PowerCast_v";
 	public static String MONITOR_MIRACAST_EXT = ".apk";
 	// --, cjg 150521
-	
+
+	public static String RMCU_FIRMWARE_PATH = "/mnt/usb/UPDATE/RMCU";
+	public static String RMCU_FIRMWARE_NAME = "RMCU_v";
+	public static String RMCU_FIRMWARE_EXT = ".THM";
 
 	String strPath;
 	String strFileNameHead;
@@ -563,6 +566,11 @@ public class UpdateFileFindClass {
 	}
 	public File GetBKCUFirmwareUpdateFile(){
 		File f = GetLastVersionProgram(BKCU_FIRMWARE_PATH,BKCU_FIRMWARE_NAME,BKCU_FIRMWARE_EXT);
+		
+		return f;
+	}
+	public File GetRMCUFirmwareUpdateFile(){
+		File f = GetLastVersionProgram(RMCU_FIRMWARE_PATH,RMCU_FIRMWARE_NAME,RMCU_FIRMWARE_EXT);
 		
 		return f;
 	}

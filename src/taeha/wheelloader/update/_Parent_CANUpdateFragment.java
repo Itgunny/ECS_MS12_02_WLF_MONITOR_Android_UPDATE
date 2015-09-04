@@ -1,6 +1,7 @@
 package taeha.wheelloader.update;
 
 import java.io.File;
+import java.io.FileFilter;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -341,6 +342,12 @@ public class _Parent_CANUpdateFragment extends Fragment{
 		MachineFirmwareInfo.AppstartAddress = CAN1Comm.Get_FirmwareInformation_AppStartAddress_RX_SEND_FW_N_INFO_61184_250_48();
 		
 		BootloaderStatus = CAN1Comm.Get_ResultCPUCRC_RX_SEND_BOOTLOADER_STATUS_61184_250_17();
+		
+		if(CAN1Comm.Get_CheckBKCUComm()==1)
+			ParentActivity.CheckBKCU = true;
+		
+		if(CAN1Comm.Get_CheckRMCUComm()==1)
+			ParentActivity.CheckRMCU = true;
 	}
 	
 	public void UpdateUI(){
@@ -588,7 +595,10 @@ public class _Parent_CANUpdateFragment extends Fragment{
 		FileFirmwareInfo.NumberofPacket = (FileFWInfo[66] & 0xFF) + ((FileFWInfo[67] & 0xFF) << 8);
 		FileFirmwareInfo.AppstartAddress = (FileFWInfo[68] & 0xFF) + ((FileFWInfo[69] & 0xFF)<< 8) + ((FileFWInfo[70] & 0xFF) << 16) + ((FileFWInfo[71] & 0xFF) << 24);
 
-		
+		Log.d(TAG, "SectionUnitSize"+FileFirmwareInfo.SectionUnitSize);
+		Log.d(TAG, "PacketUnitSize"+FileFirmwareInfo.PacketUnitSize);
+		Log.d(TAG, "NumberofSection"+FileFirmwareInfo.NumberofSection);
+		Log.d(TAG, "NumberofPacket"+FileFirmwareInfo.NumberofPacket);
 		FileAppSectionCRCData = new byte[FileFirmwareInfo.NumberofSection * 2];
 		
 		try {

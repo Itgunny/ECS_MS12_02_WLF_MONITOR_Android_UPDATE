@@ -1,24 +1,18 @@
 package taeha.wheelloader.update;
 
 import java.io.File;
-import java.io.IOException;
-import java.io.OutputStream;
 import java.lang.ref.WeakReference;
-import java.util.List;
 
 import taeha.wheelloader.update.R.string;
 import android.app.Activity;
 import android.app.Dialog;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
-import android.content.ContentResolver;
-import android.content.ContentValues;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
-import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
@@ -35,7 +29,7 @@ public class MainActivity extends Activity {
 
 
 	public static final int VERSION_HIGH		= 3;
-	public static final int VERSION_LOW			= 0;
+	public static final int VERSION_LOW			= 1;
 	public static final int VERSION_SUB_HIGH	= 0;
 	//	public static final int VERSION_SUB_LOW		= 0;
 
@@ -82,6 +76,12 @@ public class MainActivity extends Activity {
 	// 2. Enter DL Mode 후 2초 delay 삭제
 	// 3. 파일 복사 후 Format 및 Copy 할 때 "Do not try to turn off the machine" 메시지 추가(HHI 임혁준씨 요청)
 	// 4. MCU F/W Info 요청하여 F/W Model 우측 상단 항시 표기(HHI 임혁준씨 요청)
+	////3.1.0 15.09.03
+	// 1. CAN UPDATE RMCU 추가
+	// 2. Main List에 RMCU, BKCU 패킷 확인해서 Display(공유 데이터로 확인하는 부분 삭제)
+	// 3. List 높이 293 -> 320으로 변경
+	// 4. SendPacket부분 1024 고정 -> 1024 이하 되게 수정
+	// 5. BKCU File 읽는 부분, 초기 시작부분 수정
 	////////////////////////////////////////////////////////////////////
 
 	public static final int INDEX_MAIN_TOP								= 0X1100;
@@ -106,6 +106,10 @@ public class MainActivity extends Activity {
 	public static final int INDEX_BKCU_QUESTION							= 0X5110;
 	public static final int INDEX_BKCU_UPDATE							= 0X5111;
 
+	public static final int INDEX_RMCU_TOP								= 0x6000;
+	public static final int INDEX_RMCU_QUESTION							= 0x6110;
+	public static final int INDEX_RMCU_UPDATE							= 0x6111;
+
 	public static final int CMD_DUMMY		= 0xF5;
 
 	public static boolean isDisConnected 				= true;
@@ -113,14 +117,15 @@ public class MainActivity extends Activity {
 	////////////////////////////////////////////////////////////////////
 
 	///////////////////////////FRAGMENT/////////////////////////////////
-	UpperFragment _UpperFragment;
-	MainFragment _MainFragment;
-	MonitorFragment _MonitorFragment;
-	MonitorOSFragment _MonitorOSFragment;
-	ClusterFragment _ClusterFragment;
-	MCUFragment _MCUFragment;
-	MCUListFragment _MCUListFragment; // ++, --, cjg 150601
-	BKCUFragment _BKCUFragment;
+	UpperFragment 		_UpperFragment;
+	MainFragment 		_MainFragment;
+	MonitorFragment 	_MonitorFragment;
+	MonitorOSFragment 	_MonitorOSFragment;
+	ClusterFragment 	_ClusterFragment;
+	MCUFragment 		_MCUFragment;
+	MCUListFragment 	_MCUListFragment; // ++, --, cjg 150601
+	BKCUFragment 		_BKCUFragment;
+	RMCUFragment		_RMCUFragment;
 	////////////////////////////////////////////////////////////////////
 	///////////////////////////POPUP////////////////////////////////////
 	UpdaetMonitorSTM32Popup.Builder MonitorSTM32Builder;
@@ -136,31 +141,18 @@ public class MainActivity extends Activity {
 	
 	// Thread
 	private Thread threadRead = null;
-	
 
 	// DialogFlag
 	public Dialog MenuDialog = null;
 
 	Process mProcess = null;
-	public static String isAvailableBKCU = "";
-
-	// ++, 150401 cjg
-	//Content Provider
-	public static final String 	AUTHORITY    = "taeha.wheelloader.fseries_monitor.main";
-
-	public static final String  PATH_GET = "/AUTH_GET";
-	public static final String  PATH_UPDATE = "/AUTH_UPDATE";
-
-	public static final Uri 	CONTENT_URI  = 
-			Uri.parse("content://" + AUTHORITY + PATH_GET);
-
-	public static final Uri 	CONTENT_URI2  = 
-			Uri.parse("content://" + AUTHORITY + PATH_UPDATE);
-	// --, 150401 cjg
 	
 	byte []FWModel = new byte[20];
 	public String strFMModel;
 	int RetryCount;
+	
+	public boolean CheckBKCU=false;
+	public boolean CheckRMCU=false;
 
 	/////////////////////////////////////////////////////////////////////
 	@Override
@@ -172,7 +164,6 @@ public class MainActivity extends Activity {
 		InitFragment();
 		InitPopup();
 		InitValuable();
-		initContentProvider();
 
 		isConnectedUsb();
 		showUpper();
@@ -252,29 +243,7 @@ public class MainActivity extends Activity {
 		return isDisConnected;
 	}
 	// --, 150601 cjg
-	// ++, 150401 cjg
-	public void initContentProvider(){
-		try{
-			Log.i("PROVIDERT", "B Click Auth get Button!");
-			// ContentResolver 媛앹�?�뼸�뼱 �삤湲�
-			ContentResolver cr = getContentResolver();
-			// ContentProviderDataA �뼱�뵆?�ъ��씠��?insert() 硫붿꽌�뱶��?�젒洹�
-			Uri uri = cr.insert(CONTENT_URI, new ContentValues());
-	
-			// ContentProviderDataA �뼱�뵆?�ъ��씠��?�뿉�꽌 ?�ы꽩諛쏆�?Data媛� �뀑�??�븯湲�
-			List<String> authValues = uri.getPathSegments();
-			String serviceType = authValues.get(0);
-			String authkey = authValues.get(1);
-	
-			Log.i("PROVIDERT", "B_Return_serviceType = " + serviceType);
-			Log.i("PROVIDERT", "B_Return_authkey = " + authkey);
-			isAvailableBKCU = authkey;
-			Log.d(TAG, "isAvailable BKCU : " + isAvailableBKCU);
-		}catch(NullPointerException e){
-			Log.e(TAG, "NullPointerException initContentProvider");
-		}
-	}
-	// --, 150401 cjg
+
 	// ++, 150326 cjg
 	@Override
 	protected void onDestroy() {
@@ -324,7 +293,7 @@ public class MainActivity extends Activity {
 		_MCUFragment = new MCUFragment();
 		_MCUListFragment = new MCUListFragment();// ++, --, 150601 cjg
 		_BKCUFragment = new BKCUFragment();
-
+		_RMCUFragment = new RMCUFragment();
 	}
 
 	public void InitPopup(){
@@ -337,6 +306,8 @@ public class MainActivity extends Activity {
 		MenuIndex = INDEX_MAIN_TOP;
 		strFMModel = "";
 		RetryCount = 0;
+		CheckBKCU = false;
+		CheckRMCU = false;
 	}
 
 
@@ -485,7 +456,7 @@ public class MainActivity extends Activity {
 		}
 		
 		public void GetDataFromNative(){
-			if(CAN1Comm.Get_nRecvFWInfoFlag_61184_250_48() == 1){
+			if((CAN1Comm.Get_TargetSourceAddress() == CAN1CommManager.SA_MCU) && (CAN1Comm.Get_nRecvFWInfoFlag_61184_250_48() == 1)){
 				CAN1Comm.Set_nRecvFWInfoFlag_61184_250_48(0);
 				FWModel = CAN1Comm.Get_FirmwareInformation_FWModel_RX_SEND_FW_N_INFO_61184_250_48();
 				strFMModel = new String(FWModel,0,FWModel.length);
@@ -493,6 +464,10 @@ public class MainActivity extends Activity {
 				if(FWModel[0] == 0xff || FWModel[0] == 0)
 					strFMModel = "";
 			}
+			if(CAN1Comm.Get_CheckBKCUComm()==1)
+				CheckBKCU = true;
+			if(CAN1Comm.Get_CheckRMCUComm()==1)
+				CheckRMCU = true;
 		}
 
 	/////////////////////////////////////////////////////////////////////
@@ -543,6 +518,13 @@ public class MainActivity extends Activity {
 		transaction.replace(R.id.FrameLayout_fragment_body, _BKCUFragment);
 		transaction.commit();
 	}
+
+	public void showRMCU(){
+		android.app.FragmentTransaction transaction = getFragmentManager().beginTransaction();
+		transaction.replace(R.id.FrameLayout_fragment_body, _RMCUFragment);
+		transaction.commit();
+	}
+	
 	//////////////////////////////////////////////////////////////////////////////////////
 	public void showMonitorUpdateQuestionPopup(){
 		if(MenuDialog != null){
@@ -732,6 +714,11 @@ public class MainActivity extends Activity {
 
 		case INDEX_BKCU_TOP:
 			_UpperFragment.setButtonInvisible(View.INVISIBLE); // ++, -- 150326 cjg
+			showMain();
+			break;
+			
+		case INDEX_RMCU_TOP:
+			_UpperFragment.setButtonInvisible(View.INVISIBLE); 
 			showMain();
 			break;
 

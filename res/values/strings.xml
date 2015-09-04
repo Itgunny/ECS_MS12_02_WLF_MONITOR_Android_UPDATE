@@ -8,6 +8,7 @@
     <string name="MCU">MCU</string>
     <string name="Cluster">Cluster</string>
     <string name="BKCU">BKCU</string>
+    <string name="RMCU">RMCU</string>    
     <string name="Monitor_STM32">Monitor Firmware</string>
     <string name="Monitor_STM32_Factory_Init">Monitor Firmware Factory Init</string>
     <string name="Monitor_Android_OS">Monitor OS</string>

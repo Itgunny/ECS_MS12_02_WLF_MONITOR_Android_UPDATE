@@ -47,6 +47,7 @@ public class CANUpdatePopup extends Dialog{
 	private static final int RESULT_FLASH_CRC_ERROR		 			= 0x42;
 	private static final int RESULT_FLASH_CRC_NOFW		 			= 0x43;
 	private static final int RESULT_CANCEL_BY_MASTER				= 0x51;
+	private static final int RESULT_CANCEL_BY_TIMEOUT				= 0x52;
 	// CAN1CommManager
 	private static CAN1CommManager CAN1Comm;
 	private static MainActivity ParentActivity;
@@ -68,6 +69,7 @@ public class CANUpdatePopup extends Dialog{
 	protected static int RETURN_FAIL_NOFW 						= 4;
 	protected static int RETURN_FAIL_INCORRECT_STATUS 			= 5;
 	protected static int RETURN_CANCEL_BY_MASTER				= 6;
+	protected static int RETURN_CANCEL_BY_TIMEOUT				= 7;
 	@Override
 	public boolean onTouchEvent(MotionEvent event) {
 		// TODO Auto-generated method stub
@@ -739,128 +741,6 @@ public class CANUpdatePopup extends Dialog{
 			}
 		
 		}
-		// Update Thread
-		/*public static class UpdateThread extends AsyncTask<Void, Void, Void> {
-			private WeakReference<CANUpdatePopup.Builder> BuilderRef = null;
-			private WeakReference<CANUpdatePopup> DialogRef = null;
-			public Message msg = null;
-			public UpdateThread(CANUpdatePopup _dialog, CANUpdatePopup.Builder _bulder){
-				this.BuilderRef = new WeakReference<CANUpdatePopup.Builder>(_bulder);
-				this.DialogRef = new WeakReference<CANUpdatePopup>(_dialog);
-				msg = new Message();
-			}
-			@Override
-			protected void onPreExecute() {
-				// TODO Auto-generated method stub
-				super.onPreExecute();
-			}
-			@Override
-			protected Void doInBackground(Void... params) {
-				// TODO Auto-generated method stub
-				try{	
-					Log.d(TAG,"doInBackground");
-					int ReturnValue;
-					Log.d(TAG,"UpdateThread");
-					
-					/////////////////////////////////Step 1. Enter Download Mode////////////////////////////
-					BuilderRef.get().EnterDownloadMode();
-					Thread.sleep(2000);
-					/////////////////////////////////Step 2. Check Application//////////////////////////////
-					ReturnValue = BuilderRef.get().CheckApplication(BuilderRef.get().FirmwareInfo);
-					if(ReturnValue == RETURN_FAIL_TIMEOUT){
-						Log.e(TAG,"CheckApplication Fail 1");
-						ReturnValue = BuilderRef.get().CheckApplication(BuilderRef.get().FirmwareInfo);
-						if(ReturnValue == RETURN_FAIL_TIMEOUT){
-							Log.e(TAG,"CheckApplication Fail 2 TimeOut");
-							BuilderRef.get().showToast(ParentActivity.getResources().getString(string.Update_Fail));
-							BuilderRef.get().DisplayWarningStatus(ParentActivity.getResources().getString(string.Update_Fail)+"\nDo Not Receive Ack new F/W Info");
-							DialogRef.get().dismiss();
-						}else if(ReturnValue == RETURN_FAIL_EXIT){
-							Log.e(TAG,"CheckApplication Fail Exit");
-							BuilderRef.get().showToast(ParentActivity.getResources().getString(string.Update_Fail));
-						//	BuilderRef.get().DisplayStatus(ParentActivity.getResources().getString(string.Update_Fail)+"\nSend New F/W Info Exit");
-							DialogRef.get().dismiss();
-						}
-					}else if(ReturnValue == RETURN_FAIL_EXIT){
-						Log.e(TAG,"CheckApplication Fail Exit");
-						BuilderRef.get().showToast(ParentActivity.getResources().getString(string.Update_Fail));
-					//	BuilderRef.get().DisplayStatus(ParentActivity.getResources().getString(string.Update_Fail)+"\nSend New F/W Info Exit");
-						DialogRef.get().dismiss();
-					}
-					
-					/////////////////////////////////Step 3. Send Application//////////////////////////////
-					ReturnValue = BuilderRef.get().SendApplication(BuilderRef.get().UpdateFile, BuilderRef.get().FirmwareInfo);
-					if(ReturnValue == RETURN_FAIL_TIMEOUT){
-						Log.e(TAG,"SendApplication Fail RETURN_FAIL_TIMEOUT");
-						BuilderRef.get().showToast(ParentActivity.getResources().getString(string.Update_Fail));
-						BuilderRef.get().DisplayWarningStatus(ParentActivity.getResources().getString(string.Update_Fail)+"\nDo Not Receive Request Packet");
-						DialogRef.get().dismiss();
-					}else if(ReturnValue == RETURN_FAIL_EXIT){
-						Log.e(TAG,"SendApplication Fail RETURN_FAIL_EXIT");
-						BuilderRef.get().showToast(ParentActivity.getResources().getString(string.Update_Fail));
-						//BuilderRef.get().DisplayStatus(ParentActivity.getResources().getString(string.Update_Fail)+"\nSend Application Exit");
-						DialogRef.get().dismiss();
-					}
-					else if(ReturnValue == RETURN_FAIL_NOFW){
-						Log.e(TAG,"SendApplication Fail RETURN_FAIL_NOFW");
-						BuilderRef.get().showToast(ParentActivity.getResources().getString(string.Update_Fail));
-						//BuilderRef.get().DisplayStatus(ParentActivity.getResources().getString(string.Update_Fail)+"\nSend Application No Firmware");
-						DialogRef.get().dismiss();
-					}
-					else if(ReturnValue == RETURN_FAIL_CRCERROR){
-						Log.e(TAG,"SendApplication Fail RETURN_FAIL_CRCERROR");
-						BuilderRef.get().showToast(ParentActivity.getResources().getString(string.Update_Fail));
-						//BuilderRef.get().DisplayStatus(ParentActivity.getResources().getString(string.Update_Fail)+"\nSend Application No Firmware");
-						DialogRef.get().dismiss();
-					}
-					else if(ReturnValue == RETURN_FAIL_INCORRECT_STATUS){
-						Log.e(TAG,"SendApplication Fail RETURN_FAIL_INCORRECT_STATUS");
-						BuilderRef.get().showToast(ParentActivity.getResources().getString(string.Update_Fail));
-						BuilderRef.get().DisplayWarningStatus(ParentActivity.getResources().getString(string.Update_Fail)+"\nSend Application Incorrect Status");
-						DialogRef.get().dismiss();
-						
-					}
-					
-					/////////////////////////////////Step 4. Send Download Mode Finish////////////////////////////
-					BuilderRef.get().SendDownloadModeFinish();
-					
-					/////////////////////////////////Step 5. Send Enter Application Update////////////////////////
-					BuilderRef.get().EnterAppUpdate();
-					
-					/////////////////////////////////Step 6. Check Firmware Update Status/////////////////////////
-					BuilderRef.get().CheckFWUpdateComplete();
-
-					/////////////////////////////////Step 7. Finish CAN Update////////////////////////////////////
-					BuilderRef.get().showToast(ParentActivity.getResources().getString(string.Update_Finish));
-					DialogRef.get().dismiss();
-					updateThread.cancel(true);
-				}
-
-				catch(RuntimeException ee){
-					Log.e(TAG,"RuntimeException");
-				} catch (InterruptedException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-					Log.e(TAG,"InterruptedException");
-				}
-				return null;
-			}
-
-			@Override
-			protected void onCancelled() {
-				Log.d(TAG,"onCancelled");
-				// TODO Auto-generated method stub
-				super.onCancelled();
-			}
-			
-			@Override
-			protected void onPostExecute(Void result) {
-				// TODO Auto-generated method stub
-				Log.d(TAG,"onPostExecute");
-				super.onPostExecute(result);
-			}
-		}*/
-		
 		public void showToast(final String str){
 			ParentActivity.runOnUiThread(new Runnable() {
 				@Override

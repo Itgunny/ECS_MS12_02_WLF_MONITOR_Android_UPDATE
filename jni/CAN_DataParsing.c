@@ -297,7 +297,7 @@ void CheckCTSData_MCU()
     static int CTSCount = 0;
 	if(nCTSFlag_MCU == 1)
 	{
-		__android_log_print(ANDROID_LOG_INFO, "CheckCTSData_MCU", "nCTSFlag_MCU:UpdateCancel=%d\n", UpdateCancel);
+		//__android_log_print(ANDROID_LOG_INFO, "CheckCTSData_MCU", "nCTSFlag_MCU:UpdateCancel=%d\n", UpdateCancel);
 		Send_RTSData(&RTSData[0],nRTSDataLength,TargetSourceAddress);
 		nCTSFlag_MCU = 0;
 		nRTSFlag_MCU = 0;
@@ -306,7 +306,7 @@ void CheckCTSData_MCU()
 	}
 	if(nRTSFlag_MCU == 1)
 	{
-		__android_log_print(ANDROID_LOG_INFO, "CheckCTSData_MCU", "nRTSFlag_MCU:UpdateCancel=%d\n", UpdateCancel);
+		//__android_log_print(ANDROID_LOG_INFO, "CheckCTSData_MCU", "nRTSFlag_MCU:UpdateCancel=%d\n", UpdateCancel);
 		if(nCTSFlag_MCU == 0)
 		{
 			CTSCount++;
@@ -520,11 +520,19 @@ void InitNewProtoclValuable() {
 	nLength_61184_250_81 = FIRMWAREINFO_SIZE;
 
 	CANRecvIndex = 0;
+
+	CheckBKCUComm = 0;
+	CheckRMCUComm = 0;
 }
 
 
 void UART1_SeperateData_NEWCAN2(int Priority, int PF, int PS, int SourceAddress, unsigned char* Data)
 {
+	if(SourceAddress == SA_BKCU)
+		CheckBKCUComm = 1;
+	else if(SourceAddress == SA_RMCU)
+		CheckRMCUComm = 1;
+
 	if(SourceAddress == TargetSourceAddress)
 		UART1_SeperateData_Default(Priority,PF,PS,Data);
 
@@ -535,6 +543,7 @@ void UART1_SeperateData_NEWCAN2(int Priority, int PF, int PS, int SourceAddress,
 }
 void UART1_SeperateData_Default(int Priority, int PF, int PS, unsigned char* Data)
 {
+	//__android_log_print(ANDROID_LOG_INFO, "NATIVE","UART1_SeperateData_Default PF[%02X] PS[%02X]", PF, PS);
 	unsigned short Command;
 
 
@@ -1823,9 +1832,20 @@ jint _UART1_TxComm(JNIEnv *env, jobject this, jint PS) {
 				MakeCANDataSingle(0x18,0xEF,TargetSourceAddress,SA_CANUPDATE,(unsigned char*)&TX_APP_N_DL_START_61184_250_64);
 				break;
 			case 67:	// 0x43
-				nRTSDataLength = sizeof(TX_SEND_PACKET_M_61184_250_67);
-				memcpy(&RTSData[0], (unsigned char*) &TX_SEND_PACKET_M_61184_250_67, sizeof(TX_SEND_PACKET_M_61184_250_67));
-				Send_RTS(0x1C,0xEF,0x00,TargetSourceAddress,SA_CANUPDATE,nRTSDataLength);
+				if(TX_SEND_PACKET_M_61184_250_67.PacketLength == 1024)
+				{
+					nRTSDataLength = sizeof(TX_SEND_PACKET_M_61184_250_67);
+					memcpy(&RTSData[0], (unsigned char*) &TX_SEND_PACKET_M_61184_250_67, sizeof(TX_SEND_PACKET_M_61184_250_67));
+					Send_RTS(0x1C,0xEF,0x00,TargetSourceAddress,SA_CANUPDATE,nRTSDataLength);
+				}
+				else if(TX_SEND_PACKET_M_61184_250_67.PacketLength != 1024)
+				{
+					nRTSDataLength = sizeof(TX_SEND_PACKET_M_61184_250_67) - (1024-TX_SEND_PACKET_M_61184_250_67.PacketLength);
+					TX_SEND_PACKET_M_61184_250_67.DistributionFileData[TX_SEND_PACKET_M_61184_250_67.PacketLength] = TX_SEND_PACKET_M_61184_250_67.PacketCRC % 256;
+					TX_SEND_PACKET_M_61184_250_67.DistributionFileData[TX_SEND_PACKET_M_61184_250_67.PacketLength+1] = TX_SEND_PACKET_M_61184_250_67.PacketCRC / 256;
+					memcpy(&RTSData[0], (unsigned char*) &TX_SEND_PACKET_M_61184_250_67, sizeof(TX_SEND_PACKET_M_61184_250_67));
+					Send_RTS(0x1C,0xEF,0x00,TargetSourceAddress,SA_CANUPDATE,nRTSDataLength);
+				}
 				break;
 
 			case 81:	// 0x51
@@ -1844,7 +1864,6 @@ jint _UART1_TxComm(JNIEnv *env, jobject this, jint PS) {
 			case 96:	// 0x60
 				MakeCANDataSingle(0x18,0xEF,TargetSourceAddress,SA_CANUPDATE,(unsigned char*)&TX_FW_UPDATE_START_61184_250_96);
 				break;
-
 		}
 	return result;
 }

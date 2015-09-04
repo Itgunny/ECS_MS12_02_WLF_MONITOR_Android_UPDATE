@@ -1,7 +1,6 @@
 package taeha.wheelloader.update;
 
 import taeha.wheelloader.update.R.string;
-import taeha.wheelloader.update._Parent_CANUpdateFragment.ReadThread;
 import android.content.DialogInterface;
 import android.os.Bundle;
 import android.util.Log;
@@ -9,10 +8,10 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-public class BKCUFragment extends _Parent_CANUpdateFragment{
-	private static final String TAG = "BKCUFragment";
+public class RMCUFragment extends _Parent_CANUpdateFragment{
+	private static final String TAG = "RMCUFragment";
 	
-	CANUpdatePopup.Builder BKCUCANUpdateBuilder;
+	CANUpdatePopup.Builder RMCUCANUpdateBuilder;
 	UpdateQuestionMonitorSTM32Popup.Builder UpdateQuestionBuilder;
 	
 	protected void InitResource(){
@@ -25,7 +24,7 @@ public class BKCUFragment extends _Parent_CANUpdateFragment{
 			public void onClick(View v) {
 				// TODO Auto-generated method stub
 				if(FileOkFlag == true){
-					showMCUUpdateQuestionPopup();
+					showRMCUUpdateQuestionPopup();
 				}
 			}
 		});
@@ -34,7 +33,7 @@ public class BKCUFragment extends _Parent_CANUpdateFragment{
 	protected void InitValuables(){
 		Log.d(TAG,"InitValuables");
 		super.InitValuables();
-		BKCUCANUpdateBuilder = new CANUpdatePopup.Builder(ParentActivity,this);
+		RMCUCANUpdateBuilder = new CANUpdatePopup.Builder(ParentActivity,this);
 		UpdateQuestionBuilder = new UpdateQuestionMonitorSTM32Popup.Builder(ParentActivity);
 	}
 	
@@ -49,7 +48,7 @@ public class BKCUFragment extends _Parent_CANUpdateFragment{
 		InitValuables();
 		InitButtonListener();
 		
-		CAN1Comm.TxCMDToMCU(CAN1CommManager.CMD_CANUPDATE, 1, CAN1CommManager.SA_BKCU);
+		CAN1Comm.TxCMDToMCU(CAN1CommManager.CMD_CANUPDATE, 1, 0x4A);
 		
 		try {
 			Thread.sleep(100);
@@ -58,12 +57,12 @@ public class BKCUFragment extends _Parent_CANUpdateFragment{
 			e.printStackTrace();
 		}
 		
-		CAN1Comm.Set_TargetSourceAddress(CAN1CommManager.SA_BKCU);
+		CAN1Comm.Set_TargetSourceAddress(CAN1CommManager.SA_RMCU);
 		CAN1Comm.Set_FWID_TX_REQUEST_FW_N_INFO_61184_250_32(0);
 		CAN1Comm.TxCANToMCU(0x20);
 		
 		
-		FileOkFlag = GetFWInfoFromFile(UpdateFile.GetBKCUFirmwareUpdateFile());
+		FileOkFlag = GetFWInfoFromFile(UpdateFile.GetRMCUFirmwareUpdateFile());
 		if(FileOkFlag){
 			FileSlaveIDDisplay(FileFirmwareInfo.SlaveID);
 			FileFWIDDisplay(FileFirmwareInfo.FWID);
@@ -73,19 +72,20 @@ public class BKCUFragment extends _Parent_CANUpdateFragment{
 			FileProtoVersionDisplay(FileFirmwareInfo.ProtoVer);
 			FileDateDisplay(FileFirmwareInfo.Date);
 			FileTimeDisplay(FileFirmwareInfo.Time);
+			btnUpdate.setClickable(true);
 		}else{
 			StatusWarningDisplay(ParentActivity.getResources().getString(string.Update_File_Error));
 			btnUpdate.setClickable(false);
 		}
 		
 		
-		ParentActivity.MenuIndex = ParentActivity.INDEX_BKCU_TOP;
-		textViewMachineTitle.setText(ParentActivity.getResources().getString(string.BKCU));
+		ParentActivity.MenuIndex = MainActivity.INDEX_RMCU_TOP;
+		textViewMachineTitle.setText(ParentActivity.getResources().getString(string.RMCU));
 		return mRoot;
 
 	}
 	
-	public void showMCUUpdateQuestionPopup(){
+	public void showRMCUUpdateQuestionPopup(){
 
 		if(ParentActivity.MenuDialog != null){
 			ParentActivity.MenuDialog.dismiss();
@@ -99,7 +99,7 @@ public class BKCUFragment extends _Parent_CANUpdateFragment{
 			public void onClick(DialogInterface dialog, int which) {
 				// TODO Auto-generated method stub
 				Log.d(TAG,"setOKButton");
-				showBKCUCANUpdatePopup();
+				showRMCUCANUpdatePopup();
 				dialog.dismiss();
 			}
 		});
@@ -128,13 +128,13 @@ public class BKCUFragment extends _Parent_CANUpdateFragment{
 		ParentActivity.MenuDialog.show();		
 	}
 	
-	public void showBKCUCANUpdatePopup(){
+	public void showRMCUCANUpdatePopup(){
 
 		if(ParentActivity.MenuDialog != null){
 			ParentActivity.MenuDialog.dismiss();
 			ParentActivity.MenuDialog = null;
 		}
-		BKCUCANUpdateBuilder.setExitButton(new DialogInterface.OnClickListener() {
+		RMCUCANUpdateBuilder.setExitButton(new DialogInterface.OnClickListener() {
 			
 			@Override
 			public void onClick(DialogInterface dialog, int which) {
@@ -145,7 +145,7 @@ public class BKCUFragment extends _Parent_CANUpdateFragment{
 				
 			}
 		});
-		BKCUCANUpdateBuilder.setDismiss(new DialogInterface.OnDismissListener() {
+		RMCUCANUpdateBuilder.setDismiss(new DialogInterface.OnDismissListener() {
 			
 			@Override
 			public void onDismiss(DialogInterface dialog) {
@@ -155,7 +155,7 @@ public class BKCUFragment extends _Parent_CANUpdateFragment{
 
 			}
 		});
-		ParentActivity.MenuDialog = BKCUCANUpdateBuilder.create(BKCUCANUpdateBuilder,UpdateFile.GetBKCUFirmwareUpdateFile(),FileFirmwareInfo);
+		ParentActivity.MenuDialog = RMCUCANUpdateBuilder.create(RMCUCANUpdateBuilder,UpdateFile.GetRMCUFirmwareUpdateFile(),FileFirmwareInfo);
 		ParentActivity.MenuDialog.show();		
 	}
 

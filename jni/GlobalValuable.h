@@ -238,7 +238,8 @@ unsigned int		nRecvPasswordChangeResultFlag;
 unsigned int		nRecvSensorCalibrationStatusFlag;
 unsigned int		nRecvResDownFlag;
 
-
+unsigned char		CheckBKCUComm;
+unsigned char		CheckRMCUComm;
 
 /////////////CAN Update///////////////
 unsigned char		TargetSourceAddress;

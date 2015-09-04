@@ -1,7 +1,6 @@
 
 #include "CAN_DataParsing.c"
 
-
 void	Set_nRecvSendBootloaderStatusFlag_61184_250_17(JNIEnv * env, jobject this, int Data)
 {
 
@@ -22,6 +21,11 @@ void	Set_MultiPacketErrFlag(JNIEnv * env, jobject this, int Data)
 jint	Get_MultiPacketErrFlag(JNIEnv * env, jobject this)
 {
 	return MultiPacketErrFlag;
+}
+
+jint	Get_TargetSourceAddress(JNIEnv * env, jobject this)
+{
+	return TargetSourceAddress;
 }
 
 void	Set_TargetSourceAddress(JNIEnv * env, jobject this, int Data)
@@ -839,6 +843,12 @@ void	Set_ResultFlashCRC_RX_FW_N_DL_COMPLETE_61184_250_80(JNIEnv * env, jobject t
 	RX_FW_N_DL_COMPLETE_61184_250_80.ResultFlashCRC = Data;
 }
 
+jint Get_CheckBKCUComm(JNIEnv * env, jobject this) {
+	return CheckBKCUComm;
+}
+jint Get_CheckRMCUComm(JNIEnv * env, jobject this) {
+	return CheckRMCUComm;
+}
 
 
 static JNINativeMethod methods[] = {
@@ -858,6 +868,7 @@ static JNINativeMethod methods[] = {
 		{"Get_nRecvSendBootloaderStatusFlag_61184_250_17", "()I", (void*)*Get_nRecvSendBootloaderStatusFlag_61184_250_17},
 		{"Set_MultiPacketErrFlag", "(I)V", (void*)Set_MultiPacketErrFlag},
 		{"Get_MultiPacketErrFlag", "()I", (void*)*Get_MultiPacketErrFlag},
+		{"Get_TargetSourceAddress", "()I", (void*)*Get_TargetSourceAddress},
 		{"Set_TargetSourceAddress", "(I)V", (void*)Set_TargetSourceAddress},
 		{"Set_nLength_61184_250_66", "(I)V", (void*)Set_nLength_61184_250_66},
 		{"Set_nLength_61184_250_81", "(I)V", (void*)Set_nLength_61184_250_81},
@@ -1000,7 +1011,10 @@ static JNINativeMethod methods[] = {
 		{"Get_FirmwareInformation_AppStartAddress_RX_FW_UPDATE_COMPLETE_61184_250_112", "()I", (void*)*Get_FirmwareInformation_AppStartAddress_RX_FW_UPDATE_COMPLETE_61184_250_112},
 		{"Get_Status_RX_UPD_UPDATE_STATUS_61184_250_84", "()I", (void*)*Get_Status_RX_UPD_UPDATE_STATUS_61184_250_84},
 		{"Get_Progress_RX_UPD_UPDATE_STATUS_61184_250_84", "()I", (void*)*Get_Progress_RX_UPD_UPDATE_STATUS_61184_250_84},
-		{"Get_nRecvUPDFormatCompleteFlag_61184_250_85", "()I", (void*)*Get_nRecvUPDFormatCompleteFlag_61184_250_85}
+		{"Get_nRecvUPDFormatCompleteFlag_61184_250_85", "()I", (void*)*Get_nRecvUPDFormatCompleteFlag_61184_250_85},
+
+		{ "Get_CheckBKCUComm", "()I",(void*) Get_CheckBKCUComm },
+		{ "Get_CheckRMCUComm", "()I",(void*) Get_CheckRMCUComm }
 
 };
 

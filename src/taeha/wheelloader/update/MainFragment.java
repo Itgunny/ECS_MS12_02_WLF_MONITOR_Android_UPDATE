@@ -1,21 +1,17 @@
 package taeha.wheelloader.update;
 
-import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import taeha.wheelloader.update.R.string;
-
-
 import android.app.Activity;
 import android.app.Fragment;
-import android.app.ListFragment;
-import android.graphics.Color;
-import android.graphics.Shader;
-import android.graphics.Shader.TileMode;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.Message;
 import android.util.AttributeSet;
 import android.util.Log;
@@ -24,11 +20,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.Button;
-import android.widget.ImageButton;
 import android.widget.ListView;
 import android.widget.SimpleAdapter;
-import android.widget.TextView;
 import android.widget.Toast;
 
 public class MainFragment extends Fragment{
@@ -39,6 +32,7 @@ public class MainFragment extends Fragment{
 	private static final int STATE_MCU 		= 1;
 	private static final int STATE_CLUSTER 	= 2;
 	private static final int STATE_BKCU 	= 3;
+	private static final int STATE_RMCU 	= 4;
 	/////////////////////////////////////////////////////////////////////
 	/////////////////////RESOURCE////////////////////////////////////////
 	// Fragment Root
@@ -46,8 +40,6 @@ public class MainFragment extends Fragment{
 	
 	// ListView
 	ListView listItem;
-	
-
 	/////////////////////////////////////////////////////////////////////
 	
 	/////////////////////VALUABLE////////////////////////////////////////
@@ -55,7 +47,15 @@ public class MainFragment extends Fragment{
 	private MainActivity ParentActivity;
 	
 	ArrayAdapter<String> listAdapter;
-
+	List<Map<String, String>> data;
+	SimpleAdapter adapter;
+	
+	public boolean OldCheckBKCU;
+	public boolean OldCheckRMCU;
+	
+	private Timer mCheckListTimer = null;
+	private int CheckListTimerCount;
+	public Handler handler;
 	/////////////////////////////////////////////////////////////////////	
 	
 	///////////////////ANIMATION/////////////////////////////////////////
@@ -65,6 +65,7 @@ public class MainFragment extends Fragment{
 	///////////////////Common Function///////////////////////////////////
 	private void InitResource(){
 		listItem = (ListView)mRoot.findViewById(R.id.listView_screen_main);
+		
 	}
 	private void InitButtonListener(){
 		AdapterView.OnItemClickListener mItemClickListener = new AdapterView.OnItemClickListener() {
@@ -92,7 +93,14 @@ public class MainFragment extends Fragment{
 					ParentActivity._UpperFragment.setButtonInvisible(View.VISIBLE); // ++, -- 150326 cjg
 					break;
 				case STATE_BKCU:
-					ParentActivity.showBKCU();
+					if(OldCheckBKCU == true)
+						ParentActivity.showBKCU();
+					else
+						ParentActivity.showRMCU();
+					ParentActivity._UpperFragment.setButtonInvisible(View.VISIBLE); // ++, -- 150326 cjg
+					break;
+				case STATE_RMCU:
+					ParentActivity.showRMCU();
 					ParentActivity._UpperFragment.setButtonInvisible(View.VISIBLE); // ++, -- 150326 cjg
 					break;
 				default:
@@ -109,13 +117,15 @@ public class MainFragment extends Fragment{
 	private void InitValuables(){
 		Log.d(TAG,"InitValuables");
 		
+		CheckListTimerCount = 0;
 
-		List<Map<String, String>> data = new ArrayList<Map<String, String>>();
+		data = new ArrayList<Map<String, String>>();
 		
 		Map<String, String> mapMonitor = new HashMap<String, String>(2);
 		Map<String, String> mapMCU = new HashMap<String, String>(2);
 		Map<String, String> mapCluster = new HashMap<String, String>(2);
 		Map<String, String> mapBKCU = new HashMap<String, String>(2);
+		Map<String, String> mapRMCU = new HashMap<String, String>(2);
 		
 		mapMonitor.put("First Line", ParentActivity.getResources().getString(string.Monitor));
 		mapMonitor.put("Second Line","");
@@ -128,23 +138,64 @@ public class MainFragment extends Fragment{
         mapCluster.put("First Line", ParentActivity.getResources().getString(string.Cluster));
         mapCluster.put("Second Line","");
         data.add(mapCluster);
-        // ++, 150401 cjg
-		if(ParentActivity.isAvailableBKCU.equals("-")){
-		}else{
+        
+        OldCheckBKCU = ParentActivity.CheckBKCU;
+		if(OldCheckBKCU == true){
 			mapBKCU.put("First Line", ParentActivity.getResources().getString(string.BKCU));
 			mapBKCU.put("Second Line","");
 			data.add(mapBKCU);
 		}
-		// --, 150401 cjg
-        SimpleAdapter adapter = new SimpleAdapter(ParentActivity, data,
+		OldCheckRMCU = ParentActivity.CheckRMCU;
+		if(OldCheckRMCU == true){
+			mapRMCU.put("First Line", ParentActivity.getResources().getString(string.RMCU));
+			mapRMCU.put("Second Line","");
+			data.add(mapRMCU);
+		}		
+		
+		adapter = new SimpleAdapter(ParentActivity, data,
                 android.R.layout.simple_list_item_2, 
                 new String[] {"First Line", "Second Line" }, 
-                new int[] {android.R.id.text1, android.R.id.text2 });
-		
-		
+                new int[] {android.R.id.text1, android.R.id.text2 });	
        
 		listItem.setAdapter(adapter);
 		
+	}
+	
+	private void SetMainList(){
+		data.clear();
+		
+		Map<String, String> mapMonitor = new HashMap<String, String>(2);
+		Map<String, String> mapMCU = new HashMap<String, String>(2);
+		Map<String, String> mapCluster = new HashMap<String, String>(2);
+		Map<String, String> mapBKCU = new HashMap<String, String>(2);
+		Map<String, String> mapRMCU = new HashMap<String, String>(2);
+		
+		mapMonitor.put("First Line", ParentActivity.getResources().getString(string.Monitor));
+		mapMonitor.put("Second Line","");
+        data.add(mapMonitor);
+        
+        mapMCU.put("First Line", ParentActivity.getResources().getString(string.MCU));
+        mapMCU.put("Second Line","");
+        data.add(mapMCU);
+        
+        mapCluster.put("First Line", ParentActivity.getResources().getString(string.Cluster));
+        mapCluster.put("Second Line","");
+        data.add(mapCluster);
+        
+        OldCheckBKCU = ParentActivity.CheckBKCU;
+		if(OldCheckBKCU == true){
+			mapBKCU.put("First Line", ParentActivity.getResources().getString(string.BKCU));
+			mapBKCU.put("Second Line","");
+			data.add(mapBKCU);
+		}
+		OldCheckRMCU = ParentActivity.CheckRMCU;
+		if(OldCheckRMCU == true){
+			mapRMCU.put("First Line", ParentActivity.getResources().getString(string.RMCU));
+			mapRMCU.put("Second Line","");
+			data.add(mapRMCU);
+		}		
+			
+		adapter.notifyDataSetChanged();
 	}
 	////////////////////////////////////////////////////////////////////
 	
@@ -176,6 +227,8 @@ public class MainFragment extends Fragment{
 		// TODO Auto-generated method stub
 		Log.d(TAG, "onCreate");
 		super.onCreate(savedInstanceState);
+		
+		
 	}
 
 	@Override
@@ -189,7 +242,22 @@ public class MainFragment extends Fragment{
 		InitValuables();
 		InitButtonListener();
 		
+		if((OldCheckBKCU == false) || (OldCheckRMCU == false))
+			StartCheckListTimer();
+		
 		ParentActivity.MenuIndex = ParentActivity.INDEX_MAIN_TOP;
+		
+		handler = new Handler(){
+
+			@Override
+			public void handleMessage(Message msg) {
+				// TODO Auto-generated method stub
+				if(msg.what == 0){
+					SetMainList();
+				}
+			}
+		};
+		
 		return mRoot;
 
 	}
@@ -264,4 +332,46 @@ public class MainFragment extends Fragment{
 	}
 	/////////////////////////////////////////////////////////////////////
 
+	public void StartCheckListTimer(){
+		CheckListTimerCount = 0;
+		CancelCheckListTimer();
+		mCheckListTimer = new Timer();
+		mCheckListTimer.schedule(new CheckListTimerClass(),1,1000);
+	}
+	
+	public void CancelCheckListTimer(){
+		if(mCheckListTimer != null){
+			mCheckListTimer.cancel();
+			mCheckListTimer.purge();
+			mCheckListTimer = null;
+		}
+		
+	}
+	
+	public class CheckListTimerClass extends TimerTask{
+
+		@Override
+		public void run() {
+			// TODO Auto-generated method stub
+			Log.d(TAG, "CheckListTimerCount"+CheckListTimerCount);
+			if(++CheckListTimerCount > 5){
+				CancelCheckListTimer();
+			}else if((OldCheckBKCU == true) && (OldCheckRMCU == true)){
+				CancelCheckListTimer();
+			}else{
+				if((OldCheckBKCU != ParentActivity.CheckBKCU) || (OldCheckRMCU != ParentActivity.CheckRMCU))
+				{
+					handler.sendEmptyMessage(0);
+					
+				}
+				try {
+					Thread.sleep(200);
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+		}
+		
+	}	
 }
