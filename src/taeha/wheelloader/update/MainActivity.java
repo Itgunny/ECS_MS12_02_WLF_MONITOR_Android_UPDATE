@@ -82,6 +82,7 @@ public class MainActivity extends Activity {
 	// 3. List 높이 293 -> 320으로 변경
 	// 4. SendPacket부분 1024 고정 -> 1024 이하 되게 수정
 	// 5. BKCU File 읽는 부분, 초기 시작부분 수정
+	// 6. RMCU Update 파일 선택해서 업데이트
 	////////////////////////////////////////////////////////////////////
 
 	public static final int INDEX_MAIN_TOP								= 0X1100;
@@ -107,6 +108,7 @@ public class MainActivity extends Activity {
 	public static final int INDEX_BKCU_UPDATE							= 0X5111;
 
 	public static final int INDEX_RMCU_TOP								= 0x6000;
+	public static final int INDEX_RMCU_SELECT							= 0x6100;
 	public static final int INDEX_RMCU_QUESTION							= 0x6110;
 	public static final int INDEX_RMCU_UPDATE							= 0x6111;
 
@@ -126,6 +128,7 @@ public class MainActivity extends Activity {
 	MCUListFragment 	_MCUListFragment; // ++, --, cjg 150601
 	BKCUFragment 		_BKCUFragment;
 	RMCUFragment		_RMCUFragment;
+	RMCUListFragment    _RMCUListFragment;
 	////////////////////////////////////////////////////////////////////
 	///////////////////////////POPUP////////////////////////////////////
 	UpdaetMonitorSTM32Popup.Builder MonitorSTM32Builder;
@@ -294,6 +297,7 @@ public class MainActivity extends Activity {
 		_MCUListFragment = new MCUListFragment();// ++, --, 150601 cjg
 		_BKCUFragment = new BKCUFragment();
 		_RMCUFragment = new RMCUFragment();
+		_RMCUListFragment = new RMCUListFragment();
 	}
 
 	public void InitPopup(){
@@ -519,12 +523,16 @@ public class MainActivity extends Activity {
 		transaction.commit();
 	}
 
-	public void showRMCU(){
+	public void showRMCUSelect(){
 		android.app.FragmentTransaction transaction = getFragmentManager().beginTransaction();
 		transaction.replace(R.id.FrameLayout_fragment_body, _RMCUFragment);
 		transaction.commit();
 	}
-	
+	public void showRMCUList(){
+		android.app.FragmentTransaction transaction = getFragmentManager().beginTransaction();
+		transaction.replace(R.id.FrameLayout_fragment_body, _RMCUListFragment);
+		transaction.commit();
+	}
 	//////////////////////////////////////////////////////////////////////////////////////
 	public void showMonitorUpdateQuestionPopup(){
 		if(MenuDialog != null){
@@ -730,7 +738,14 @@ public class MainActivity extends Activity {
 			}else{
 				showMCUList();
 			}
-
+			break;
+		case INDEX_RMCU_SELECT:
+			if(getisDisConnected() == true){
+				showMain();
+				_UpperFragment.setButtonInvisible(View.INVISIBLE);
+			}else{
+				showRMCUList();
+			}
 			break;
 		case INDEX_MONITOR_ANDROID_OS:
 			showMonitor();
