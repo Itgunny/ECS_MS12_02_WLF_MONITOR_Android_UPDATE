@@ -123,15 +123,15 @@ public class MonitorFragment extends Fragment{
 						Toast.makeText(ParentActivity.getApplicationContext(), "Please Connect USB into device.", 50).show();
 					}
 					// ++, 150630 cjg	
-		        	Runtime runtime = Runtime.getRuntime();
-		        	Process process;
-		        	try{
-		        		String cmd = "sync";
-		        		process = runtime.exec(cmd);
-		        		Log.d(TAG, "sync");
-		        	}catch(Exception e){
-		        		e.fillInStackTrace();
-		        	}
+//		        	Runtime runtime = Runtime.getRuntime();
+//		        	Process process;
+//		        	try{
+//		        		String cmd = "sync";
+//		        		process = runtime.exec(cmd);
+//		        		Log.d(TAG, "sync");
+//		        	}catch(Exception e){
+//		        		e.fillInStackTrace();
+//		        	}
 		        	// --, 150630 cjg
 					break;
 				case STATE_ANDROID_UPDATE:

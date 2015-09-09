@@ -227,6 +227,8 @@ public class CANUpdatePopup extends Dialog{
 			int FormatStatus;
 			int FormatProgress_CRC;
 			int RetryCount = 0;
+			int OldFormatProgress_CRC = 0xff;
+			int Old_FormatStatus = 0xff;
 			progressProgram.setProgress(0);
 			progressProgram.setMax(100);
 			//UPD Format Start
@@ -238,11 +240,19 @@ public class CANUpdatePopup extends Dialog{
 				FormatComplete = CAN1Comm.Get_nRecvUPDFormatCompleteFlag_61184_250_85();
 				FormatStatus = CAN1Comm.Get_Status_RX_UPD_UPDATE_STATUS_61184_250_84();
 				FormatProgress_CRC = CAN1Comm.Get_Progress_RX_UPD_UPDATE_STATUS_61184_250_84();
-				//Log.d(TAG, "FormatStatus :" + FormatStatus + "Format P:" + FormatProgress_CRC);
+				//Log.d(TAG, "FormatStatus :" + FormatStatus + "Format P:" + FormatProgress_CRC + "Count:" + Count);
 				if(FormatStatus == 0x01){
-					DisplayProgress(FormatProgress_CRC);
-					DisplayStatus("Format UPD region");
-					Count = 0;
+					if(Old_FormatStatus != FormatStatus)
+					{
+						Old_FormatStatus = FormatStatus;
+						DisplayStatus("Format UPD region");
+					}
+					if(OldFormatProgress_CRC != FormatProgress_CRC)
+					{
+						OldFormatProgress_CRC = FormatProgress_CRC;
+						DisplayProgress(FormatProgress_CRC);
+						StartTimeoutTimer();
+					}
 				}
 				if(Count >= TIMEOUT){
 					
@@ -341,6 +351,16 @@ public class CANUpdatePopup extends Dialog{
 					}else{
 						Log.d(TAG, "RetryCount"+RetryCount);
 						CancelTimeoutTimer();
+						
+						ResultFlashCRC = CAN1Comm.Get_ResultFlashCRC_RX_FW_N_DL_COMPLETE_61184_250_80();
+						Log.d(TAG, "ResulFlash : " + ResultFlashCRC);
+						if(ResultFlashCRC == RESULT_CANCEL_BY_TIMEOUT){
+							Log.d(TAG, "Cancel By Timeout");
+							CAN1Comm.TxCANToMCU(0x51);
+							CAN1Comm.Set_ResultFlashCRC_RX_FW_N_DL_COMPLETE_61184_250_80(255);
+							return RETURN_CANCEL_BY_TIMEOUT;
+						}
+						
 						return RETURN_FAIL_TIMEOUT;
 					}
 					
@@ -381,6 +401,11 @@ public class CANUpdatePopup extends Dialog{
 				DisplayWarningStatus("FW DL Complete : No F/W");
 				CAN1Comm.Set_ResultFlashCRC_RX_FW_N_DL_COMPLETE_61184_250_80(0);
 				return RETURN_FAIL_NOFW;
+			}else if(ResultFlashCRC == RESULT_CANCEL_BY_TIMEOUT){
+				Log.e(TAG,"ResultFlash TimeOut");
+				DisplayWarningStatus("FW DL Complete : Cancel by Timeout");
+				CAN1Comm.Set_ResultFlashCRC_RX_FW_N_DL_COMPLETE_61184_250_80(0);
+				return RETURN_CANCEL_BY_TIMEOUT;
 			}
 			else{
 				Log.e(TAG,"ResultFlash ???");
@@ -706,6 +731,12 @@ public class CANUpdatePopup extends Dialog{
 						Log.e(TAG,"Canceled by Master");
 						BuilderRef.get().showToast(ParentActivity.getResources().getString(string.Update_Fail));
 						//BuilderRef.get().DisplayStatus(ParentActivity.getResources().getString(string.Update_Fail)+"\nSend Application No Firmware");
+						DialogRef.get().dismiss();
+					}
+					else if(ReturnValue == RETURN_CANCEL_BY_TIMEOUT){
+						Log.e(TAG,"Canceled by Timeout");
+						BuilderRef.get().showToast(ParentActivity.getResources().getString(string.Update_Fail));
+						BuilderRef.get().DisplayWarningStatus(ParentActivity.getResources().getString(string.Update_Fail)+"\tCancel by Timeout");
 						DialogRef.get().dismiss();
 					}
 					else if(ReturnValue == RETURN_FAIL_INCORRECT_STATUS){
