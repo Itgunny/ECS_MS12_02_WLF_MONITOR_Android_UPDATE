@@ -60,7 +60,7 @@ public class CANUpdatePopup extends Dialog{
 	protected static Thread threadUpdate = null;
 	protected static UpdateThread updateThread = null;
 	
-	protected static int TIMEOUT 			= 100;
+	protected static int TIMEOUT 			= 60;
 	
 	protected static int RETURN_FAIL_TIMEOUT 					= 0;
 	protected static int RETURN_SUCCESS 						= 1;
@@ -201,7 +201,7 @@ public class CANUpdatePopup extends Dialog{
 						// TODO Auto-generated method stub
 						Log.d(TAG,"OKButtonClickListener");
 						ExitButtonClickListener.onClick(dialog, DialogInterface.BUTTON_POSITIVE);
-						CAN1Comm.Set_nRecAckNewFWNInfoFlag_61184_250_82(1);
+						CAN1Comm.Set_nRecAckNewFWNInfoFlag_61184_250_82(0);
 						//CAN1Comm.Set_nRecvFWDLCompleteFlag_61184_250_80(1);
 						CAN1Comm.TxCANToMCU(0x46);
 						UpdateProgramFlag = false;
@@ -241,11 +241,17 @@ public class CANUpdatePopup extends Dialog{
 				FormatStatus = CAN1Comm.Get_Status_RX_UPD_UPDATE_STATUS_61184_250_84();
 				FormatProgress_CRC = CAN1Comm.Get_Progress_RX_UPD_UPDATE_STATUS_61184_250_84();
 				//Log.d(TAG, "FormatStatus :" + FormatStatus + "Format P:" + FormatProgress_CRC + "Count:" + Count);
+				
+				// 이전 Status 및 Progress 일 경우에만 갱신, 아닐 경우 Timeout Count!!
 				if(FormatStatus == 0x01){
 					if(Old_FormatStatus != FormatStatus)
 					{
 						Old_FormatStatus = FormatStatus;
-						DisplayStatus("Format UPD region");
+						Count = 0;
+						if(RetryCount == 0)
+							DisplayStatus("Format UPD region");
+						else
+							DisplayStatus("Format UPD region (Retry:"+Integer.toString(RetryCount)+")");
 					}
 					if(OldFormatProgress_CRC != FormatProgress_CRC)
 					{
@@ -260,17 +266,20 @@ public class CANUpdatePopup extends Dialog{
 					CAN1Comm.Set_Status_RX_UPD_UPDATE_STATUS_61184_250_84(0);
 					CAN1Comm.Set_Progress_RX_UPD_UPDATE_STATUS_61184_250_84(0);
 					
-					if(RetryCount++ >= 1)
+					// 5초 4회 재시도
+					if(++RetryCount >= 4)
 					{
-						Log.d(TAG, "UPDFormat : Retry");
-						Count = 0;
-						StartTimeoutTimer();					
+						Log.d(TAG, "UPDFormat : Pass");
+						break;
 					}
 					else
 					{
-						Log.d(TAG, "UPDFormat : Pass");
-						CancelTimeoutTimer();
-						return RETURN_SUCCESS;
+						DisplayStatus("Format UPD region (Retry:"+Integer.toString(RetryCount)+")");
+						Log.d(TAG, "UPDFormat : Retry");
+						OldFormatProgress_CRC = 0xff;
+						Old_FormatStatus = 0xff;
+						CAN1Comm.TxCANToMCU(0x45);
+						StartTimeoutTimer();					
 					}
 				}
 			}
@@ -286,6 +295,7 @@ public class CANUpdatePopup extends Dialog{
 		public int CheckApplication(FirmwareInfoClass _firmwareinfo){
 			Log.d(TAG,"CheckApplication");
 			int AckNewFWInfo = 0;
+			int RetryCount = 0;
 			SendNewFWInfo(_firmwareinfo);
 			DisplayStatus("Send New FW Info"); //++, --, 150716 cjg
 			DisplayStatusNumber("(" + 3 + " / " + TotalCount + ")");
@@ -293,11 +303,41 @@ public class CANUpdatePopup extends Dialog{
 			while(AckNewFWInfo == 0){
 				AckNewFWInfo = CAN1Comm.Get_nRecAckNewFWNInfoFlag_61184_250_82();
 				if(Count >= TIMEOUT){
-					CancelTimeoutTimer();
-					return RETURN_FAIL_TIMEOUT;
+					// 5초 4회 재시도
+					if(++RetryCount >= 4)
+					{
+						CancelTimeoutTimer();
+						return RETURN_FAIL_TIMEOUT;
+					}
+					else
+					{
+						Log.d(TAG, "Send new F/W Info : Retry"+RetryCount);
+						DisplayStatus("Send New FW Info (Retry:"+Integer.toString(RetryCount)+")");
+						CAN1Comm.Set_nRecAckNewFWNInfoFlag_61184_250_82(0);
+						SendNewFWInfo(_firmwareinfo);
+						CAN1Comm.TxCANToMCU(0x45);
+						StartTimeoutTimer();					
+					}
 				}
-				if(UpdateProgramFlag == false)
-					return RETURN_FAIL_EXIT;
+				
+				if(UpdateProgramFlag == false){
+					int ResultFlashCRC = CAN1Comm.Get_ResultFlashCRC_RX_FW_N_DL_COMPLETE_61184_250_80();
+					Log.d(TAG, "ResulFlash : " + ResultFlashCRC);
+					if(ResultFlashCRC == RESULT_CANCEL_BY_MASTER){
+						Log.d(TAG, "Update Cancel!!!");
+						CAN1Comm.TxCANToMCU(0x51);
+						CAN1Comm.Set_ResultFlashCRC_RX_FW_N_DL_COMPLETE_61184_250_80(255);
+						return RETURN_FAIL_EXIT;
+					}
+
+					if(Count >= TIMEOUT){
+						// 5초 4회 재시도
+						if(++RetryCount < 4){
+							CAN1Comm.TxCANToMCU(0x46);
+							StartTimeoutTimer();
+						}
+					}
+				}
 			}
 			DisplayStatus("Ack New FW Info"); //++, --, 150716 cjg
 			DisplayStatusNumber("(" + 4 + " / " + TotalCount + ")");
@@ -310,12 +350,12 @@ public class CANUpdatePopup extends Dialog{
 			Log.d(TAG, "SendApplication");
 			
 			int DLComplete = 0;
-			int FWID;
+			//int FWID;
 			int SectionIndex;
 			int PacketIndex;
 			int ResultFlashCRC;
-			int RetryCount;
-			RetryCount = 0;
+			int RetryCount = 0;
+			int RetryCancelCount = 0;
 			DisplayCancelButton();
 			progressProgram.setMax(FirmwareInfo.NumberofSection * FirmwareInfo.NumberofPacket);
 			CAN1Comm.Set_nRecvRequestPacketMFlag_61184_250_83(0);
@@ -328,7 +368,7 @@ public class CANUpdatePopup extends Dialog{
 				
 				if(CAN1Comm.Get_nRecvRequestPacketMFlag_61184_250_83() == 1){
 					CAN1Comm.Set_nRecvRequestPacketMFlag_61184_250_83(0);
-					FWID = CAN1Comm.Get_FWID_RX_REQUEST_PACKET_M_61184_250_83();
+					//FWID = CAN1Comm.Get_FWID_RX_REQUEST_PACKET_M_61184_250_83();
 					SectionIndex = CAN1Comm.Get_SectionNumber_RX_REQUEST_PACKET_M_61184_250_83();
 					PacketIndex = CAN1Comm.Get_PacketNumber_RX_REQUEST_PACKET_M_61184_250_83();
 
@@ -341,34 +381,7 @@ public class CANUpdatePopup extends Dialog{
 					StartTimeoutTimer();
 				}
 				
-				if(Count >= TIMEOUT){
-					if(RetryCount == 0){
-						Log.d(TAG, "RetryCount"+RetryCount);
-						RetryCount++;
-						StartTimeoutTimer();
-						//CAN1Comm.TxCANToMCU(0x40);
-						//DisplayStatus("App DL Start");
-					}else{
-						Log.d(TAG, "RetryCount"+RetryCount);
-						CancelTimeoutTimer();
-						
-						ResultFlashCRC = CAN1Comm.Get_ResultFlashCRC_RX_FW_N_DL_COMPLETE_61184_250_80();
-						Log.d(TAG, "ResulFlash : " + ResultFlashCRC);
-						if(ResultFlashCRC == RESULT_CANCEL_BY_TIMEOUT){
-							Log.d(TAG, "Cancel By Timeout");
-							CAN1Comm.TxCANToMCU(0x51);
-							CAN1Comm.Set_ResultFlashCRC_RX_FW_N_DL_COMPLETE_61184_250_80(255);
-							return RETURN_CANCEL_BY_TIMEOUT;
-						}
-						
-						return RETURN_FAIL_TIMEOUT;
-					}
-					
-				}
 				if(UpdateProgramFlag == false){
-					if(Count % 10 == 0)
-						CAN1Comm.TxCANToMCU(0x46);
-					
 					ResultFlashCRC = CAN1Comm.Get_ResultFlashCRC_RX_FW_N_DL_COMPLETE_61184_250_80();
 					Log.d(TAG, "ResulFlash : " + ResultFlashCRC);
 					if(ResultFlashCRC == RESULT_CANCEL_BY_MASTER){
@@ -376,6 +389,41 @@ public class CANUpdatePopup extends Dialog{
 						CAN1Comm.TxCANToMCU(0x51);
 						CAN1Comm.Set_ResultFlashCRC_RX_FW_N_DL_COMPLETE_61184_250_80(255);
 						return RETURN_FAIL_EXIT;
+					}
+
+					if(Count >= TIMEOUT){
+						Log.d(TAG, "RetryCount"+RetryCancelCount);
+						// 5초 4회 재시도
+						if(++RetryCancelCount < 4){
+							CAN1Comm.TxCANToMCU(0x46);
+							StartTimeoutTimer();
+						}
+					}
+				}else{
+					if(Count >= TIMEOUT){
+						// 5초 4회 재시도
+						if(++RetryCount >= 4){
+							Log.d(TAG, "RetryCount"+RetryCount);
+							CancelTimeoutTimer();
+							
+							ResultFlashCRC = CAN1Comm.Get_ResultFlashCRC_RX_FW_N_DL_COMPLETE_61184_250_80();
+							Log.d(TAG, "ResulFlash : " + ResultFlashCRC);
+							if(ResultFlashCRC == RESULT_CANCEL_BY_TIMEOUT){
+								Log.d(TAG, "Cancel By Timeout");
+								CAN1Comm.TxCANToMCU(0x51);
+								CAN1Comm.Set_ResultFlashCRC_RX_FW_N_DL_COMPLETE_61184_250_80(255);
+								return RETURN_CANCEL_BY_TIMEOUT;
+							}
+							
+							return RETURN_FAIL_TIMEOUT;
+						}else{
+							Log.d(TAG, "RetryCount"+RetryCount);
+							CAN1Comm.Set_nRecvRequestPacketMFlag_61184_250_83(0);
+							CAN1Comm.TxCANToMCU(0x40);
+							DisplayStatus("App DL Start(Retry:"+Integer.toString(RetryCount)+")");
+							StartTimeoutTimer();
+						}
+						
 					}
 				}
 			}

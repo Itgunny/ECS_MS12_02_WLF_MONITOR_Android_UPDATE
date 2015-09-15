@@ -37,7 +37,7 @@ public class MainActivity extends Activity {
 	////2.0.0.2
 	//	Enter DW Mode 후 2초 딜레이 추가 (Cluster Serial Flash Erase Time)
 	////2.0.0.3
-	// Requeset 후 응답 없을 시 1회 재요청
+	// Request 후 응답 없을 시 1회 재요청
 	// CTS, ACK 응답 없을 시 4회 재요청
 	// Status Text 추가 
 	// CAN Update Popup 종료 시 Thread도 강제 종료
@@ -78,11 +78,15 @@ public class MainActivity extends Activity {
 	// 4. MCU F/W Info 요청하여 F/W Model 우측 상단 항시 표기(HHI 임혁준씨 요청)
 	////3.1.0 15.09.03
 	// 1. CAN UPDATE RMCU 추가
+	////3.1.0 15.09.15
+	// 1. RMCU 업데이트 중 뻑나는 현상 개선
 	// 2. Main List에 RMCU, BKCU 패킷 확인해서 Display(공유 데이터로 확인하는 부분 삭제)
 	// 3. List 높이 293 -> 320으로 변경
 	// 4. SendPacket부분 1024 고정 -> 1024 이하 되게 수정
 	// 5. BKCU File 읽는 부분, 초기 시작부분 수정
 	// 6. RMCU Update 파일 선택해서 업데이트
+	// 7. 기존 F/W Info, UPD Format Start, Send new F/W Info, APP DL Start, APP DL Cancel 5초 4회 재시도
+	// 8. 모델 요청 메인 페이지에서만 요청하도록 변경(벤치 테스트에서 MCU가 안달린 경우 다른 장비의 F/W Info를 요청함)
 	////////////////////////////////////////////////////////////////////
 
 	public static final int INDEX_MAIN_TOP								= 0X1100;
@@ -450,12 +454,13 @@ public class MainActivity extends Activity {
 
 
 		public void SetDataFromNative(){
-			if(strFMModel == "" && RetryCount < 5)
-			{
-				CAN1Comm.Set_TargetSourceAddress(CAN1CommManager.SA_MCU);
-				CAN1Comm.Set_FWID_TX_REQUEST_FW_N_INFO_61184_250_32(0);
-				CAN1Comm.TxCANToMCU(0x20);
-				RetryCount++;
+			if(MenuIndex == INDEX_MAIN_TOP){
+				if(strFMModel == "" && RetryCount < 5){
+					CAN1Comm.Set_TargetSourceAddress(CAN1CommManager.SA_MCU);
+					CAN1Comm.Set_FWID_TX_REQUEST_FW_N_INFO_61184_250_32(0);
+					CAN1Comm.TxCANToMCU(0x20);
+					RetryCount++;
+				}
 			}
 		}
 		

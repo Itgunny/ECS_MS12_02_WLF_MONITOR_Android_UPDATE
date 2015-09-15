@@ -99,7 +99,6 @@ public class _Parent_CANUpdateFragment extends Fragment{
 	FirmwareInfoClass FileFirmwareInfo;
 	
 	int RetryCount;
-	
 	int BootloaderStatus;
 	/////////////////////////////////////////////////////////////////////	
 	
@@ -351,33 +350,40 @@ public class _Parent_CANUpdateFragment extends Fragment{
 	}
 	
 	public void UpdateUI(){
-		if(CAN1Comm.Get_nRecvFWInfoFlag_61184_250_48() == 1){
-			CAN1Comm.Set_nRecvFWInfoFlag_61184_250_48(0);
-			MachineSlaveIDDisplay(MachineFirmwareInfo.SlaveID);
-			MachineFWIDDisplay(MachineFirmwareInfo.FWID);
-			MachineFWNameDisplay(MachineFirmwareInfo.FWName);
-			MachineFWModelDisplay(MachineFirmwareInfo.FWModel);
-			MachineFWVersionDisplay(MachineFirmwareInfo.FWVersion);
-			MachineProtoVersionDisplay(MachineFirmwareInfo.ProtoVer);
-			MachineDateDisplay(MachineFirmwareInfo.Date);
-			MachineTimeDisplay(MachineFirmwareInfo.Time);
-			RetryCount = 101;
-			
-			if(FileOkFlag)
-				StatusDisplay("Ready to Download");
-		}else{
-			
-			if(RetryCount < 100){
-				RetryCount++;
-				if(FileOkFlag)
-					StatusWarningDisplay("Do Not Receive Send F/W Info");
-			}
-			else if(RetryCount == 100){
-				CAN1Comm.Set_FWID_TX_REQUEST_FW_N_INFO_61184_250_32(0);
-				CAN1Comm.TxCANToMCU(0x20);
+		if(RetryCount != 101){
+			if(CAN1Comm.Get_nRecvFWInfoFlag_61184_250_48() == 1){
+				CAN1Comm.Set_nRecvFWInfoFlag_61184_250_48(0);
+				MachineSlaveIDDisplay(MachineFirmwareInfo.SlaveID);
+				MachineFWIDDisplay(MachineFirmwareInfo.FWID);
+				MachineFWNameDisplay(MachineFirmwareInfo.FWName);
+				MachineFWModelDisplay(MachineFirmwareInfo.FWModel);
+				MachineFWVersionDisplay(MachineFirmwareInfo.FWVersion);
+				MachineProtoVersionDisplay(MachineFirmwareInfo.ProtoVer);
+				MachineDateDisplay(MachineFirmwareInfo.Date);
+				MachineTimeDisplay(MachineFirmwareInfo.Time);
 				RetryCount = 101;
-			}
-		}		
+				
+				if(FileOkFlag)
+					StatusDisplay("Ready to Download");
+			}else {
+	
+				if(RetryCount < 50){
+					if(++RetryCount % 10 == 0)
+					{
+						Log.d(TAG, "Retry : Request F/W Info");
+						CAN1Comm.Set_FWID_TX_REQUEST_FW_N_INFO_61184_250_32(0);
+						CAN1Comm.TxCANToMCU(0x20);
+					}
+				}
+				else{
+					if(FileOkFlag)
+						StatusWarningDisplay("Do Not Receive Send F/W Info");
+	//				CAN1Comm.Set_FWID_TX_REQUEST_FW_N_INFO_61184_250_32(0);
+	//				CAN1Comm.TxCANToMCU(0x20);
+	//				RetryCount = 101;
+				}
+			}		
+		}
 		if(CAN1Comm.Get_nRecvSendBootloaderStatusFlag_61184_250_17() == 1){
 			CAN1Comm.Set_nRecvSendBootloaderStatusFlag_61184_250_17(0);
 			BootLoaderStatusDisplay(BootloaderStatus);

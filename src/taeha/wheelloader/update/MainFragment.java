@@ -93,14 +93,18 @@ public class MainFragment extends Fragment{
 					ParentActivity._UpperFragment.setButtonInvisible(View.VISIBLE); // ++, -- 150326 cjg
 					break;
 				case STATE_BKCU:
-					if(OldCheckBKCU == true)
+					if(OldCheckBKCU == true){
 						ParentActivity.showBKCU();
+						ParentActivity._UpperFragment.setButtonInvisible(View.VISIBLE); // ++, -- 150326 cjg
+					}
 					else{
 						if(ParentActivity.getisDisConnected() == false){
 							ParentActivity.showRMCUList();
+							ParentActivity._UpperFragment.setButtonInvisible(View.VISIBLE);
+						}else{
+							Toast.makeText(ParentActivity, "Please Connet USB into device.", Toast.LENGTH_SHORT).show();
 						}
 					}
-					ParentActivity._UpperFragment.setButtonInvisible(View.VISIBLE); // ++, -- 150326 cjg
 					break;
 				case STATE_RMCU:
 					if(ParentActivity.getisDisConnected() == false){

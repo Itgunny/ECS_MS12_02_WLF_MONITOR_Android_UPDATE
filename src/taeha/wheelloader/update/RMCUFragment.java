@@ -48,6 +48,8 @@ public class RMCUFragment extends _Parent_CANUpdateFragment{
 		InitValuables();
 		InitButtonListener();
 		
+		ParentActivity.MenuIndex = MainActivity.INDEX_RMCU_SELECT;
+		
 		CAN1Comm.TxCMDToMCU(CAN1CommManager.CMD_CANUPDATE, 1, 0x4A);
 		
 		try {
@@ -79,7 +81,6 @@ public class RMCUFragment extends _Parent_CANUpdateFragment{
 		}
 		
 		
-		ParentActivity.MenuIndex = MainActivity.INDEX_RMCU_SELECT;
 		textViewMachineTitle.setText(ParentActivity.getResources().getString(string.RMCU));
 		return mRoot;
 

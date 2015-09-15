@@ -52,6 +52,8 @@ public class ClusterFragment extends _Parent_CANUpdateFragment{
 		InitValuables();
 		InitButtonListener();
 		
+		ParentActivity.MenuIndex = ParentActivity.INDEX_CLUSTER_TOP;
+
 		CAN1Comm.TxCMDToMCU(CAN1CommManager.CMD_CANUPDATE, 1, 0x17);
 		
 		try {
@@ -83,7 +85,6 @@ public class ClusterFragment extends _Parent_CANUpdateFragment{
 		}
 		
 		
-		ParentActivity.MenuIndex = ParentActivity.INDEX_CLUSTER_TOP;
 		textViewMachineTitle.setText(ParentActivity.getResources().getString(string.Cluster));
 		return mRoot;
 

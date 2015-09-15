@@ -359,12 +359,17 @@ void	Set_DistributionFileData_TX_SEND_PACKET_M_61184_250_67(JNIEnv * env, jobjec
 {
 	jbyte *pArr;
 	int i;
-	int size = sizeof(TX_SEND_PACKET_M_61184_250_67.DistributionFileData);
+	int size = 0;
 
+	if(TX_SEND_PACKET_M_61184_250_67.PacketLength > sizeof(TX_SEND_PACKET_M_61184_250_67.DistributionFileData))
+		size = sizeof(TX_SEND_PACKET_M_61184_250_67.DistributionFileData);
+	else
+		size = TX_SEND_PACKET_M_61184_250_67.PacketLength;
 	pArr = (*env)->GetByteArrayElements(env, Data, NULL);
 
-	for (i = 0; i < size; i++)
+	for (i = 0; i < size; i++){
 		TX_SEND_PACKET_M_61184_250_67.DistributionFileData[i] = pArr[i];
+	}
 
 	(*env)->ReleaseByteArrayElements(env, Data, pArr, 0);
 }
