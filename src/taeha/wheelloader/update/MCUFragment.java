@@ -102,6 +102,7 @@ public class MCUFragment extends _Parent_CANUpdateFragment{
 				Log.d(TAG,"setOKButton");
 				showMCUCANUpdatePopup();
 				dialog.dismiss();
+				ParentActivity.MenuIndex = ParentActivity.INDEX_MCU_SELECT;
 			}
 		});
 		UpdateQuestionBuilder.setCancelButton(new DialogInterface.OnClickListener() {
@@ -111,8 +112,7 @@ public class MCUFragment extends _Parent_CANUpdateFragment{
 				// TODO Auto-generated method stub
 				Log.d(TAG,"setCancelButton");				
 				dialog.dismiss();
-				
-				
+				ParentActivity.MenuIndex = ParentActivity.INDEX_MCU_SELECT;
 			}
 		});
 		UpdateQuestionBuilder.setDismiss(new DialogInterface.OnDismissListener() {
@@ -121,7 +121,7 @@ public class MCUFragment extends _Parent_CANUpdateFragment{
 			public void onDismiss(DialogInterface dialog) {
 				// TODO Auto-generated method stub
 				Log.d(TAG,"onDismiss");
-				
+				ParentActivity.MenuIndex = ParentActivity.INDEX_MCU_SELECT;
 
 			}
 		});

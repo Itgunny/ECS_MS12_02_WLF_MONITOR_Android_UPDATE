@@ -102,6 +102,7 @@ public class BKCUFragment extends _Parent_CANUpdateFragment{
 				Log.d(TAG,"setOKButton");
 				showBKCUCANUpdatePopup();
 				dialog.dismiss();
+				ParentActivity.MenuIndex = ParentActivity.INDEX_BKCU_TOP;
 			}
 		});
 		UpdateQuestionBuilder.setCancelButton(new DialogInterface.OnClickListener() {
@@ -111,7 +112,7 @@ public class BKCUFragment extends _Parent_CANUpdateFragment{
 				// TODO Auto-generated method stub
 				Log.d(TAG,"setCancelButton");				
 				dialog.dismiss();
-				
+				ParentActivity.MenuIndex = ParentActivity.INDEX_BKCU_TOP;
 				
 			}
 		});
@@ -121,7 +122,7 @@ public class BKCUFragment extends _Parent_CANUpdateFragment{
 			public void onDismiss(DialogInterface dialog) {
 				// TODO Auto-generated method stub
 				Log.d(TAG,"onDismiss");
-				
+				ParentActivity.MenuIndex = ParentActivity.INDEX_BKCU_TOP;
 
 			}
 		});

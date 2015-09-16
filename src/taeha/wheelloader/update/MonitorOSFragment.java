@@ -274,6 +274,7 @@ public class MonitorOSFragment extends Fragment{
 				}	
 				
 				dialog.dismiss();
+				ParentActivity.MenuIndex = ParentActivity.INDEX_MONITOR_ANDROID_OS;
 			}
 		});
 		UpdateQuestionBuilder.setCancelButton(new DialogInterface.OnClickListener() {
@@ -283,8 +284,7 @@ public class MonitorOSFragment extends Fragment{
 				// TODO Auto-generated method stub
 				Log.d(TAG,"setCancelButton");				
 				dialog.dismiss();
-				
-				
+				ParentActivity.MenuIndex = ParentActivity.INDEX_MONITOR_ANDROID_OS;
 			}
 		});
 		UpdateQuestionBuilder.setDismiss(new DialogInterface.OnDismissListener() {
@@ -293,7 +293,7 @@ public class MonitorOSFragment extends Fragment{
 			public void onDismiss(DialogInterface dialog) {
 				// TODO Auto-generated method stub
 				Log.d(TAG,"onDismiss");
-				
+				ParentActivity.MenuIndex = ParentActivity.INDEX_MONITOR_ANDROID_OS;
 
 			}
 		});

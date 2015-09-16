@@ -87,16 +87,24 @@ public class MainActivity extends Activity {
 	// 6. RMCU Update 파일 선택해서 업데이트
 	// 7. 기존 F/W Info, UPD Format Start, Send new F/W Info, APP DL Start, APP DL Cancel 5초 4회 재시도
 	// 8. 모델 요청 메인 페이지에서만 요청하도록 변경(벤치 테스트에서 MCU가 안달린 경우 다른 장비의 F/W Info를 요청함)
+	////3.1.0 15.09.16
+	// 1. 모니터 메뉴트리 변경
+	//	- FW+APP + ETC
+	//	- ETC : PDF, OS, APP, FW 등등
+	//	- PDF 폴더 삭제 기능 추가
 	////////////////////////////////////////////////////////////////////
 
 	public static final int INDEX_MAIN_TOP								= 0X1100;
 
 	public static final int INDEX_MONITOR_TOP							= 0X2100;
+	public static final int INDEX_MONITOR_STM32_APP_QUESTION			= 0X2101;
+	public static final int INDEX_MONITOR_STM32_APP_UPDATE				= 0X2102;
 	public static final int INDEX_MONITOR_STM32_QUESTION				= 0X2110;
 	public static final int INDEX_MONITOR_STM32_UPDATE					= 0X2111;
 	public static final int INDEX_MONITOR_ANDROID_OS					= 0X2200;
 	public static final int INDEX_MONITOR_ANDROID_OS_QUESTION			= 0X2210;
 	public static final int INDEX_MONITOR_COPY_TO_USB					= 0X2220;
+	public static final int INDEX_MONITOR_ETC							= 0X2230;
 
 	public static final int INDEX_CLUSTER_TOP							= 0X3000;
 	public static final int INDEX_CLUSTER_QUESTION						= 0X3110;
@@ -133,8 +141,12 @@ public class MainActivity extends Activity {
 	BKCUFragment 		_BKCUFragment;
 	RMCUFragment		_RMCUFragment;
 	RMCUListFragment    _RMCUListFragment;
+	EtcFragment			_EtcFragment;
 	////////////////////////////////////////////////////////////////////
 	///////////////////////////POPUP////////////////////////////////////
+	UpdateMonitorSTM32AndAppPopup.Builder MonitorSTM32AndAppBuilder;
+	UpdateQuestionMonitorSTM32AndAppPopup.Builder MonitorSTM32AndAppQuestionBuilder;
+	UpdateQuestionMonitorAppPopup.Builder MonitorAppQuestionBuilder;
 	UpdaetMonitorSTM32Popup.Builder MonitorSTM32Builder;
 	UpdateQuestionMonitorSTM32Popup.Builder MonitorUpdateQuestionBuilder;
 	MonitorCopyErrorToUSB.Builder MonitorCopyErrorToUSBBuilder;
@@ -302,12 +314,16 @@ public class MainActivity extends Activity {
 		_BKCUFragment = new BKCUFragment();
 		_RMCUFragment = new RMCUFragment();
 		_RMCUListFragment = new RMCUListFragment();
+		_EtcFragment = new EtcFragment();
 	}
 
 	public void InitPopup(){
+		MonitorSTM32AndAppBuilder = new UpdateMonitorSTM32AndAppPopup.Builder(this);
+		MonitorSTM32AndAppQuestionBuilder = new UpdateQuestionMonitorSTM32AndAppPopup.Builder(this);
 		MonitorSTM32Builder = new UpdaetMonitorSTM32Popup.Builder(this);
 		MonitorUpdateQuestionBuilder = new UpdateQuestionMonitorSTM32Popup.Builder(this);
 		MonitorCopyErrorToUSBBuilder = new MonitorCopyErrorToUSB.Builder(this);
+		MonitorAppQuestionBuilder = new UpdateQuestionMonitorAppPopup.Builder(this);
 	}
 
 	public void InitValuable(){
@@ -538,8 +554,13 @@ public class MainActivity extends Activity {
 		transaction.replace(R.id.FrameLayout_fragment_body, _RMCUListFragment);
 		transaction.commit();
 	}
+	public void showEtc(){
+		android.app.FragmentTransaction transaction = getFragmentManager().beginTransaction();
+		transaction.replace(R.id.FrameLayout_fragment_body, _EtcFragment);
+		transaction.commit();
+	}
 	//////////////////////////////////////////////////////////////////////////////////////
-	public void showMonitorUpdateQuestionPopup(){
+	public void showMonitorUpdateQuestionPopup(int flag){//public void showMonitorUpdateQuestionPopup(){
 		if(MenuDialog != null){
 			MenuDialog.dismiss();
 			MenuDialog = null;
@@ -578,8 +599,146 @@ public class MainActivity extends Activity {
 
 			}
 		});
+		if(flag == 0){
+			MenuDialog = MonitorUpdateQuestionBuilder.create(getResources().getString(string.Do_you_want_update_firmware));
+			MenuIndex = INDEX_MONITOR_ETC;
+		}else if(flag == 1){
+			MenuDialog = MonitorUpdateQuestionBuilder.create(getResources().getString(string.Do_you_want_update_only_firmware));
+			MenuIndex = INDEX_MONITOR_TOP;
+		}
+		MenuDialog.show();		
+	}
+	public void showMonitorAppQuestionPopup(final int flag){
+		if(MenuDialog != null){
+			MenuDialog.dismiss();
+			MenuDialog = null;
+		}
 
-		MenuDialog = MonitorUpdateQuestionBuilder.create(getResources().getString(string.Do_you_want_update));
+
+		MonitorAppQuestionBuilder.setOKButton(new DialogInterface.OnClickListener() {
+
+			@Override
+			public void onClick(DialogInterface dialog, int which) {
+				// TODO Auto-generated method stub
+				Log.d(TAG,"setOKButton");
+				UpdateFileFindClass UpdateFile;
+				UpdateFile = new UpdateFileFindClass(MainActivity.this);
+				if(flag == 0){
+					MenuIndex = INDEX_MONITOR_TOP;
+					if(UpdateFile.GetMonitorVersion() != null)
+						UpdateFile.MonitorAndroidAppUpdate();
+				}else if(flag == 1){
+					MenuIndex = INDEX_MONITOR_ETC;
+					if(UpdateFile.GetUpdateProgramVersion() != null){
+						UpdateFile.MonitorUpdateProgramUpdate();
+					}
+				}else if(flag == 2){
+					MenuIndex = INDEX_MONITOR_ETC;
+					if(UpdateFile.GetMiracastVersion() != null){
+						UpdateFile.MonitorMiracastAppUpdate();
+					}
+				}else if(flag == 3){
+					MenuIndex = INDEX_MONITOR_ETC;
+					if(UpdateFile.GetMonitorVersion() != null)
+						UpdateFile.MonitorAndroidAppUpdate();
+				}
+				dialog.dismiss();
+			}
+		});
+		MonitorAppQuestionBuilder.setCancelButton(new DialogInterface.OnClickListener() {
+
+			@Override
+			public void onClick(DialogInterface dialog, int which) {
+				// TODO Auto-generated method stub
+				Log.d(TAG,"setCancelButton");
+				if(flag == 0){
+					MenuIndex = INDEX_MONITOR_TOP;
+					
+				}else if(flag == 1){
+					MenuIndex = INDEX_MONITOR_ETC;
+
+				}else if(flag == 2){
+					MenuIndex = INDEX_MONITOR_ETC;
+
+				}else if(flag == 3){
+					MenuIndex = INDEX_MONITOR_ETC;
+				}
+				dialog.dismiss();
+			}
+		});
+		MonitorAppQuestionBuilder.setDismiss(new DialogInterface.OnDismissListener() {
+
+			@Override
+			public void onDismiss(DialogInterface dialog) {
+				// TODO Auto-generated method stub
+				Log.d(TAG,"onDismiss");
+				if(flag == 0){
+					MenuIndex = INDEX_MONITOR_TOP;
+					
+				}else if(flag == 1){
+					MenuIndex = INDEX_MONITOR_ETC;
+
+				}else if(flag == 2){
+					MenuIndex = INDEX_MONITOR_ETC;
+
+				}else if(flag == 3){
+					MenuIndex = INDEX_MONITOR_ETC;
+				}
+			}
+		});
+		//Application
+		if(flag == 0){
+			MenuDialog = MonitorAppQuestionBuilder.create(getResources().getString(string.Do_you_want_update_only_app));	
+		}else if(flag == 1){
+			MenuDialog = MonitorAppQuestionBuilder.create(getResources().getString(string.Do_you_want_update_update));
+		}else if(flag == 2){
+			MenuDialog = MonitorAppQuestionBuilder.create(getResources().getString(string.Do_you_want_update_smartterminal));
+		}else if(flag == 3){
+			MenuDialog = MonitorAppQuestionBuilder.create(getResources().getString(string.Do_you_want_update_app));
+		}
+		
+		MenuDialog.show();		
+	}
+	//150914, cjg ++
+	public void showMonitorSTM32AndAppQuestionPopup(){
+		if(MenuDialog != null){
+			MenuDialog.dismiss();
+			MenuDialog = null;
+		}
+
+
+		MonitorSTM32AndAppQuestionBuilder.setOKButton(new DialogInterface.OnClickListener() {
+
+			@Override
+			public void onClick(DialogInterface dialog, int which) {
+				// TODO Auto-generated method stub
+				Log.d(TAG,"setOKButton");
+
+				dialog.dismiss();
+				showMonitorSTM32AndAppUpdatePopup();
+			}
+		});
+		MonitorSTM32AndAppQuestionBuilder.setCancelButton(new DialogInterface.OnClickListener() {
+
+			@Override
+			public void onClick(DialogInterface dialog, int which) {
+				// TODO Auto-generated method stub
+				Log.d(TAG,"setCancelButton");				
+				dialog.dismiss();
+			}
+		});
+		MonitorSTM32AndAppQuestionBuilder.setDismiss(new DialogInterface.OnDismissListener() {
+
+			@Override
+			public void onDismiss(DialogInterface dialog) {
+				// TODO Auto-generated method stub
+				Log.d(TAG,"onDismiss");
+
+
+			}
+		});
+
+		MenuDialog = MonitorSTM32AndAppQuestionBuilder.create(getResources().getString(string.Do_you_want_update_firmware_and_app));
 		MenuDialog.show();		
 	}
 	public void showMonitorFactoryInitUpdateQuestionPopup(){
@@ -626,7 +785,26 @@ public class MainActivity extends Activity {
 		MenuDialog = MonitorUpdateQuestionBuilder.create(getResources().getString(string.Do_you_want_update_factory_init));
 		MenuDialog.show();		
 	}
+	public void showMonitorSTM32AndAppUpdatePopup(){
 
+		if(MenuDialog != null){
+			MenuDialog.dismiss();
+			MenuDialog = null;
+		}
+
+		MonitorSTM32AndAppBuilder.setDismiss(new DialogInterface.OnDismissListener() {
+
+			@Override
+			public void onDismiss(DialogInterface dialog) {
+				// TODO Auto-generated method stub
+				Log.d(TAG,"onDismiss");
+
+
+			}
+		});
+		MenuDialog = MonitorSTM32AndAppBuilder.create(MonitorSTM32AndAppBuilder,0);
+		MenuDialog.show();		
+	}
 	public void showMonitorSTM32UpdatePopup(){
 
 		if(MenuDialog != null){
@@ -698,6 +876,8 @@ public class MainActivity extends Activity {
 		case INDEX_MONITOR_STM32_UPDATE:
 			MonitorSTM32Builder.recResponse(response);
 			break;
+		case INDEX_MONITOR_STM32_APP_UPDATE:
+			MonitorSTM32AndAppBuilder.recResponse(response);
 
 		default:
 			break;
@@ -753,6 +933,9 @@ public class MainActivity extends Activity {
 			}
 			break;
 		case INDEX_MONITOR_ANDROID_OS:
+			showEtc();
+			break;
+		case INDEX_MONITOR_ETC:
 			showMonitor();
 			break;
 		default:

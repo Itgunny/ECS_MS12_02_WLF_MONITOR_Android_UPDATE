@@ -106,6 +106,7 @@ public class ClusterFragment extends _Parent_CANUpdateFragment{
 				Log.d(TAG,"setOKButton");
 				showClusterCANUpdatePopup();
 				dialog.dismiss();
+				ParentActivity.MenuIndex = ParentActivity.INDEX_CLUSTER_TOP;
 			}
 		});
 		UpdateQuestionBuilder.setCancelButton(new DialogInterface.OnClickListener() {
@@ -115,8 +116,7 @@ public class ClusterFragment extends _Parent_CANUpdateFragment{
 				// TODO Auto-generated method stub
 				Log.d(TAG,"setCancelButton");				
 				dialog.dismiss();
-				
-				
+				ParentActivity.MenuIndex = ParentActivity.INDEX_CLUSTER_TOP;				
 			}
 		});
 		UpdateQuestionBuilder.setDismiss(new DialogInterface.OnDismissListener() {
@@ -125,7 +125,7 @@ public class ClusterFragment extends _Parent_CANUpdateFragment{
 			public void onDismiss(DialogInterface dialog) {
 				// TODO Auto-generated method stub
 				Log.d(TAG,"onDismiss");
-				
+				ParentActivity.MenuIndex = ParentActivity.INDEX_CLUSTER_TOP;
 
 			}
 		});

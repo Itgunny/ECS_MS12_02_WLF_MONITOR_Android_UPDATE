@@ -10,28 +10,23 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 import taeha.wheelloader.update.R.string;
-
-
 import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
-import android.os.Handler;
 import android.os.Message;
-import android.sax.StartElementListener;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup.LayoutParams;
-import android.widget.ImageButton;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
 
-public class UpdaetMonitorSTM32Popup extends Dialog{
-	private static final String TAG = "UpdaetMonitorSTM32Popup";
+public class UpdateMonitorSTM32AndAppPopup extends Dialog{
+	private static final String TAG = "UpdateMonitorSTM32AndAppPopup";
 
 	
 	private static final int FILE_DOWN_ENABLE 				= 0x01; // 1
@@ -57,18 +52,18 @@ public class UpdaetMonitorSTM32Popup extends Dialog{
 	// CAN1CommManager
 	private static CAN1CommManager CAN1Comm;   
 	private static MainActivity ParentActivity;
-	
+
 	@Override
 	public boolean onTouchEvent(MotionEvent event) {
 		// TODO Auto-generated method stub
 		return false;
 		//return super.onTouchEvent(event);
 	}
-	public UpdaetMonitorSTM32Popup(Context context) {
+	public UpdateMonitorSTM32AndAppPopup(Context context) {
 		super(context);
 		// TODO Auto-generated constructor stub
 	}
-	public UpdaetMonitorSTM32Popup(Context context, int theme) {
+	public UpdateMonitorSTM32AndAppPopup(Context context, int theme) {
 		super(context,theme);
 		// TODO Auto-generated constructor stub
 	}
@@ -83,7 +78,7 @@ public class UpdaetMonitorSTM32Popup extends Dialog{
 
 	public static class Builder{
 		private Context context;
-		UpdaetMonitorSTM32Popup dialog;
+		UpdateMonitorSTM32AndAppPopup dialog;
 		
 		// Thread
 		protected static Thread threadUpdate = null;
@@ -128,11 +123,11 @@ public class UpdaetMonitorSTM32Popup extends Dialog{
 		
 		// Create Dialog
 		
-		public UpdaetMonitorSTM32Popup create(UpdaetMonitorSTM32Popup.Builder builder, int _FactoryInitFlag){
-			ParentActivity.MenuIndex = ParentActivity.INDEX_MONITOR_STM32_UPDATE;
+		public UpdateMonitorSTM32AndAppPopup create(UpdateMonitorSTM32AndAppPopup.Builder builder, int _FactoryInitFlag){
+			ParentActivity.MenuIndex = ParentActivity.INDEX_MONITOR_STM32_APP_UPDATE;
 			LayoutInflater inflater = (LayoutInflater)context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 			
-			dialog = new UpdaetMonitorSTM32Popup(context,R.style.Dialog);
+			dialog = new UpdateMonitorSTM32AndAppPopup(context,R.style.Dialog);
 			
 			View layout = inflater.inflate(R.layout.popup_update_monitor_stm32, null);
 			progressErase = (ProgressBar)layout.findViewById(R.id.progressBar_popup_update_monitor_stm32_erase);
@@ -171,12 +166,12 @@ public class UpdaetMonitorSTM32Popup extends Dialog{
 		/////////////////////////////////////Download Seq///////////////////////////////////////////////////////
 		// Update Thread
 		public static class UpdateThread implements Runnable {
-			private WeakReference<UpdaetMonitorSTM32Popup.Builder> BuilderRef = null;
-			private WeakReference<UpdaetMonitorSTM32Popup> DialogRef = null;
+			private WeakReference<UpdateMonitorSTM32AndAppPopup.Builder> BuilderRef = null;
+			private WeakReference<UpdateMonitorSTM32AndAppPopup> DialogRef = null;
 			public Message msg = null;
-			public UpdateThread(UpdaetMonitorSTM32Popup _dialog, UpdaetMonitorSTM32Popup.Builder _bulder){
-				this.BuilderRef = new WeakReference<UpdaetMonitorSTM32Popup.Builder>(_bulder);
-				this.DialogRef = new WeakReference<UpdaetMonitorSTM32Popup>(_dialog);
+			public UpdateThread(UpdateMonitorSTM32AndAppPopup dialog, UpdateMonitorSTM32AndAppPopup.Builder builder){
+				this.BuilderRef = new WeakReference<UpdateMonitorSTM32AndAppPopup.Builder>(builder);
+				this.DialogRef = new WeakReference<UpdateMonitorSTM32AndAppPopup>(dialog);
 				msg = new Message();
 			}
 		
@@ -199,7 +194,14 @@ public class UpdaetMonitorSTM32Popup extends Dialog{
 						return;
 					}	
 					BuilderRef.get().DisplayStatus(ParentActivity.getResources().getString(string.Update_Finish));
+					
+					UpdateFileFindClass UpdateFile;
+					UpdateFile = new UpdateFileFindClass(ParentActivity);
+					if(UpdateFile.GetMonitorVersion() != null)
+						UpdateFile.MonitorAndroidAppUpdate();
 					DialogRef.get().dismiss();
+
+					
 				}
 				catch (InterruptedException e) {
 					// TODO Auto-generated catch block
@@ -219,7 +221,6 @@ public class UpdaetMonitorSTM32Popup extends Dialog{
 				public void run() {
 					// TODO Auto-generated method stub
 					ParentActivity._MonitorFragment.StatusWarningDisplay(status);
-					ParentActivity._EtcFragment.StatusWarningDisplay(status);
 				}
 			});
 		}
@@ -230,7 +231,6 @@ public class UpdaetMonitorSTM32Popup extends Dialog{
 				public void run() {
 					// TODO Auto-generated method stub
 					ParentActivity._MonitorFragment.StatusDisplay(status);
-					ParentActivity._EtcFragment.StatusDisplay(status);
 				}
 			});
 		}
