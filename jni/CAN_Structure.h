@@ -434,3 +434,45 @@ typedef struct
 	unsigned char		DM[3];
 
 }__attribute__((packed))  APP_N_DL_CANCEL_61184_250_70;
+
+
+typedef struct
+{
+	unsigned char	MessageType;
+
+	unsigned char	AutomaticEngineShutdown_363:2;
+	unsigned char	AutomaticEngineShutdownTypeControlByte:2;
+	unsigned char	Reserved0:4;
+
+	unsigned char	SettingTimeforAutomaticEngineShutdown_364;
+
+	unsigned char	EngineShutdownCotrolByte;
+
+	unsigned char	DelayedEngineShutdown_365:2;
+	unsigned char	Reserved1:6;
+
+	unsigned char	SettingTimeofrDelayedEngineShutdown_366;
+
+	unsigned char	DM0[2];
+
+}__attribute__((packed))  ENGINE_SHUTDOWN_MODE_SETTING_61184_121;
+
+typedef struct
+{
+	unsigned char	MessageType;
+
+	unsigned char	AutomaticEngineShutdown_363:2;
+	unsigned char	AutomaticEngineShutdownType:2;
+	unsigned char	Reserved0:4;
+
+	unsigned char	SettingTimeforAutomaticEngineShutdown_364;
+
+	unsigned char	RemainingTimeforAutomaticEngineShutdown;
+
+	unsigned char	Reserved1;
+
+	unsigned char	SettingTimeforDelayedEngineShutdown_366;
+
+	unsigned short	RemainingTimeforDelayedEngineShutdown;
+
+}__attribute__((packed))  ENGINE_SHUTDOWN_MODE_STATUS_61184_122;

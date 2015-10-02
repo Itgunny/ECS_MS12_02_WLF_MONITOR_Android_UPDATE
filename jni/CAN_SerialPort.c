@@ -855,7 +855,6 @@ jint Get_CheckRMCUComm(JNIEnv * env, jobject this) {
 	return CheckRMCUComm;
 }
 
-
 static JNINativeMethod methods[] = {
 		{ "Open_UART1", "(Ljava/lang/String;II)Ljava/io/FileDescriptor;",(void*) _Open_UART1 },
 		{ "Close_UART1", "()V",(void*) _Close_UART1 },
@@ -1019,8 +1018,7 @@ static JNINativeMethod methods[] = {
 		{"Get_nRecvUPDFormatCompleteFlag_61184_250_85", "()I", (void*)*Get_nRecvUPDFormatCompleteFlag_61184_250_85},
 
 		{ "Get_CheckBKCUComm", "()I",(void*) Get_CheckBKCUComm },
-		{ "Get_CheckRMCUComm", "()I",(void*) Get_CheckRMCUComm }
-
+		{ "Get_CheckRMCUComm", "()I",(void*) Get_CheckRMCUComm },
 };
 
 

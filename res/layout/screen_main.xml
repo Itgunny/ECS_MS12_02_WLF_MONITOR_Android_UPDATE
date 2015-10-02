@@ -8,7 +8,7 @@
     <ListView
         android:id="@+id/listView_screen_main"
         android:layout_width="match_parent"
-        android:layout_height="320dp"
+        android:layout_height="350dp"
         android:layout_alignParentLeft="true"
         android:layout_alignParentTop="true" >
     </ListView>
@@ -19,7 +19,7 @@
         android:layout_height="wrap_content"
         android:layout_below="@+id/listView_screen_main"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="20dp"
+        android:layout_marginTop="10dp"
         android:text="Do not try to turn off the machine"
         android:textAppearance="?android:attr/textAppearanceLarge"
         android:textColor="#ffff0000"

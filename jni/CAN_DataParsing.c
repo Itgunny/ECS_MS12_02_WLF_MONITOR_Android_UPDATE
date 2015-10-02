@@ -368,6 +368,7 @@ void CheckAckData_MCU()
 
 void InitNewProtoclValuable() {
 	UpdateCancel = 0;
+	SendEngineAutoShutdown = 0;
 
 	memset((unsigned char*) &RX_RES_RTC, 0xFF, sizeof(RX_RES_RTC));
 	memset((unsigned char*) &RX_RES_Version, 0xFF, sizeof(RX_RES_Version));
@@ -433,6 +434,10 @@ void InitNewProtoclValuable() {
 	memset((unsigned char*) &RX_UPD_UPDATE_COMPLETE_61184_250_85, 0xFF, sizeof(RX_UPD_UPDATE_COMPLETE_61184_250_85));
 	memset((unsigned char*) &RX_APP_N_DL_CANCEL_61184_250_70, 0xFF, sizeof(RX_APP_N_DL_CANCEL_61184_250_70));
 
+	memset((unsigned char*) &TX_ENGINE_SHUTDOWN_MODE_SETTING_61184_121, 0xFF, sizeof(TX_ENGINE_SHUTDOWN_MODE_SETTING_61184_121));
+	memset((unsigned char*) &RX_ENGINE_SHUTDOWN_MODE_STATUS_61184_122, 0xFF, sizeof(RX_ENGINE_SHUTDOWN_MODE_STATUS_61184_122));
+
+
 	TX_SEND_BOOTLOADER_STATUS_61184_250_17.MessageType = 0XFE;			//SM
 	TX_REQUEST_SLAVE_INFO_61184_250_33.MessageType = 0xFE;		//MS
 	TX_SEND_SLAVE_INFO_61184_250_49.MessageType = 0xFE;					//SM
@@ -453,6 +458,7 @@ void InitNewProtoclValuable() {
 	TX_UPD_UPDATE_STATUS_61184_250_84.MessageType = 0xFE;
 	TX_UPD_UPDATE_COMPLETE_61184_250_85.MessageType = 0xFE;
 	TX_APP_N_DL_CANCEL_61184_250_70.MessageType = 0xFE;
+	TX_ENGINE_SHUTDOWN_MODE_SETTING_61184_121.MessageType = 121;
 
 
 	TX_SEND_BOOTLOADER_STATUS_61184_250_17.Command = 17;		//SM
@@ -525,6 +531,24 @@ void InitNewProtoclValuable() {
 	CheckRMCUComm = 0;
 }
 
+void CheckAutoShutDown(){
+	int EngineAutoShutdownRemainingTime = RX_ENGINE_SHUTDOWN_MODE_STATUS_61184_122.RemainingTimeforAutomaticEngineShutdown;
+	int EngineAutoShutdownMode = RX_ENGINE_SHUTDOWN_MODE_STATUS_61184_122.AutomaticEngineShutdown_363;
+
+	if(EngineAutoShutdownMode == 1){
+		__android_log_print(ANDROID_LOG_INFO, "NATIVE","CheckAutoShutDown!! Mode[%d] Time[%d]", EngineAutoShutdownMode, EngineAutoShutdownRemainingTime);
+		if(SendEngineAutoShutdown++ % 5 == 0)
+		{
+			TX_ENGINE_SHUTDOWN_MODE_SETTING_61184_121.AutomaticEngineShutdownTypeControlByte = RX_ENGINE_SHUTDOWN_MODE_STATUS_61184_122.AutomaticEngineShutdownType;
+			TX_ENGINE_SHUTDOWN_MODE_SETTING_61184_121.AutomaticEngineShutdown_363 = 0;	// DATA_STATE_AUTOSHUTDOWN_OFF
+			TX_ENGINE_SHUTDOWN_MODE_SETTING_61184_121.EngineShutdownCotrolByte = 1;		// STATE_COTROL_AUTO_CANCEL
+			MakeCANDataSingle(0x18,0xEF,SA_MCU,SA_MONITOR,(unsigned char*)&TX_ENGINE_SHUTDOWN_MODE_SETTING_61184_121);
+			TX_ENGINE_SHUTDOWN_MODE_SETTING_61184_121.EngineShutdownCotrolByte = 15;
+		}
+	}else{
+		SendEngineAutoShutdown = 0;
+	}
+}
 
 void UART1_SeperateData_NEWCAN2(int Priority, int PF, int PS, int SourceAddress, unsigned char* Data)
 {
@@ -535,12 +559,40 @@ void UART1_SeperateData_NEWCAN2(int Priority, int PF, int PS, int SourceAddress,
 
 	if(SourceAddress == TargetSourceAddress)
 		UART1_SeperateData_Default(Priority,PF,PS,Data);
+	else if(SourceAddress == SA_MCU)
+		CheckAutoDefault(Priority,PF,PS,Data);
 
 	unsigned int PGN;
 	PGN = ((Data[6] & 0xFF) << 24) + ((Data[5] & 0xFF) << 16) + ((Data[4] & 0xFF) << 8) + (Data[3] & 0xFF);
 //	__android_log_print(ANDROID_LOG_INFO, "NATIVE", "PGN[0x%x] Data 0x%2x 0x%2x 0x%2x 0x%2x 0x%2x 0x%2x 0x%2x 0x%2x", PGN
 //			,Data[7],Data[8],Data[9],Data[10],Data[11],Data[12],Data[13],Data[14]);
 }
+void CheckAutoDefault(int Priority, int PF, int PS, unsigned char* Data)
+{
+	unsigned short Command;
+
+
+	CAN_RX_PACKET*		CANPacket;
+
+	CANPacket = (CAN_RX_PACKET*) Data;
+
+	Command = Data[8] + (Data[9] << 8);
+
+	switch (PF) {
+		case 239:	// 0xEF00 61184
+
+			switch (Data[7]) {	// Message Type
+
+				case 122	:
+							memcpy((unsigned char*)&RX_ENGINE_SHUTDOWN_MODE_STATUS_61184_122,&Data[7],8);
+							CheckAutoShutDown();
+							break	;
+			}
+
+			break;
+	}
+}
+
 void UART1_SeperateData_Default(int Priority, int PF, int PS, unsigned char* Data)
 {
 	//__android_log_print(ANDROID_LOG_INFO, "NATIVE","UART1_SeperateData_Default PF[%02X] PS[%02X]", PF, PS);
@@ -559,6 +611,11 @@ void UART1_SeperateData_Default(int Priority, int PF, int PS, unsigned char* Dat
 		case 239:	// 0xEF00 61184
 
 			switch (Data[7]) {	// Message Type
+
+				case 122	:
+							memcpy((unsigned char*)&RX_ENGINE_SHUTDOWN_MODE_STATUS_61184_122,&Data[7],8);
+							CheckAutoShutDown();
+							break	;
 
 				case 0xFE:	// 0xFE
 
@@ -762,70 +819,6 @@ void InitUART1Valuable() {
 	InitNewProtoclValuable();
 
 }
-#if 0
-void ThreadParsing_UART1(void *data) {
-	unsigned char UART1_DataCurr[UART1_PARSING_SIZE][UART1_RXPACKET_SIZE];
-	int i = 0;
-
-	InitUART1Valuable();
-	__android_log_print(ANDROID_LOG_INFO, "NATIVE", "ThreadParsing UART1\n");
-	while (bParsingRunningFlag_UART1)
-	{
-		if (bParsingFlag_UART1 == 1)
-		{
-			pthread_mutex_lock(&mutex_UART1);
-			memcpy(&UART1_DataCurr, &UART1_RxTmpTwo,UART1_PARSING_SIZE * UART1_RXPACKET_SIZE);
-			pthread_mutex_unlock(&mutex_UART1);
-			UART1_DataParsing(UART1_DataCurr);
-			bParsingFlag_UART1 = 0;
-		}
-		sleep(0); // 다른 Thread 들의 점유를 위해 사용
-
-	}
-}
-
-
-void UART1_DataParsing(unsigned char (*pBuff)[UART1_RXPACKET_SIZE]) {
-	unsigned char PF, PS, SourceAddr, priority;
-//	int nPF,nPS,nSourceAddr,npriority;
-	int i = 0;
-	int j = 0;
-
-	for (i = 0; i < UART1_PARSING_SIZE; i++) {
-		memcpy(&cUART1_RxData[0], &(pBuff[i][0]), UART1_RXPACKET_SIZE);
-
-		if (cUART1_RxData[0] == SERIAL_RX_STX && cUART1_RxData[1] == SERIAL_RX_ID) {
-			if (cUART1_RxData[2] == SERIAL_RX_DATA_LEN
-			&&  cUART1_RxData[UART1_RXPACKET_SIZE - 1] == SERIAL_RX_ETX) {
-
-				PF = UART1_Rx_Data->RX_PF;
-				PS = UART1_Rx_Data->RX_PS;
-				SourceAddr = UART1_Rx_Data->RX_SOURCEADDR;
-				priority = (UART1_Rx_Data->RX_PRIORITY) >> 2;
-
-
-				UART1_SeperateData_NEWCAN2(priority, PF, PS, SourceAddr);
-
-			}
-			else
-			{
-				__android_log_print(ANDROID_LOG_INFO, "NATIVE",
-						"UART1 Data Length[0x%x], ETX Fault[0x%x]\n",
-						cUART1_RxData[2],
-						cUART1_RxData[UART1_RXPACKET_SIZE - 1]);
-			}
-		}
-		else
-		{
-			__android_log_print(ANDROID_LOG_INFO, "NATIVE",
-					"UART1 Data STX[0x%x], RX_ID Fault[0x%x]\n",
-					cUART1_RxData[0], cUART1_RxData[1]);
-		}
-
-	}
-
-}
-#else
 void ThreadParsing_UART1(void *data) {
 	unsigned char Buf[UART1_RXPACKET_SIZE];
 	int i = 0;
@@ -877,7 +870,6 @@ void UART1_DataParsing(unsigned char* Data) {
 
 
 }
-#endif
 void ThreadParsing_UART3(void *data) {
 	unsigned char UART3_DataCurr[UART3_PARSING_SIZE][UART3_RXPACKET_SIZE];
 
@@ -977,198 +969,6 @@ void UART3_AckCheck(unsigned char Tail)
 
 
 /////////////////////////////////////////////////
-#if 0
-void *Thread_Read_UART1(void *data)
-{
-	int dwRead = 0;
-	int i = 0;
-
-	__android_log_print(ANDROID_LOG_INFO, "NATIVE", "Thread_Read1\n");
-	if (!glpVM)
-	{
-		__android_log_print(ANDROID_LOG_INFO, "NATIVE", "error (!glpVM)");
-		return;
-	}
-
-	JNIEnv *env = NULL;
-	(*glpVM)->AttachCurrentThread(glpVM, &env, NULL);
-	if (env == NULL || jObject == NULL)
-	{
-		(*glpVM)->DetachCurrentThread(glpVM);
-		__android_log_print(ANDROID_LOG_INFO, "NATIVE",
-			"error (env == NULL || AVM_JM.jObject == NULL)");
-		return;
-	}
-
-	while (bReadRunningFlag_UART1)
-	{
-		dwRead = 0;
-		//	통신 시작 후 1byte씩 읽고, 정상 데이터를 수신한 다음부터는 원래 싸이즈로 받는다.
-		if (UART1ReadFlag == 0 || UART1ReadFlag == 1)
-		{
-			dwRead = read(fd_UART1, UART1_ReadBuff, 1);
-//			__android_log_print(ANDROID_LOG_INFO, "NATIVE", "Thread_Read_UART1 Read OK [0x%x]\n",UART1_ReadBuff[0]);
-		}
-		else
-		{
-			dwRead = read(fd_UART1, UART1_ReadBuff, UART1_RXPACKET_SIZE);
-
-//			__android_log_print(ANDROID_LOG_INFO, "NATIVE", "UART1_ReadBuff [0x%x][0x%x][0x%x][0x%x][0x%x][0x%x][0x%x][0x%x][0x%x][0x%x][0x%x][0x%x][0x%x][0x%x][0x%x][0x%x][0x%x]\n",
-//							UART1_ReadBuff[0],UART1_ReadBuff[1],UART1_ReadBuff[2],UART1_ReadBuff[3],UART1_ReadBuff[4],UART1_ReadBuff[5],UART1_ReadBuff[6],UART1_ReadBuff[7],UART1_ReadBuff[8],UART1_ReadBuff[9],
-//							UART1_ReadBuff[10],UART1_ReadBuff[11],UART1_ReadBuff[12],UART1_ReadBuff[13],UART1_ReadBuff[14],UART1_ReadBuff[15],UART1_ReadBuff[16]);
-//			__android_log_print(ANDROID_LOG_INFO, "NATIVE","RX PGN[0x%x%x%x%x] Data[0x%x][0x%x][0x%x][0x%x][0x%x][0x%x][0x%x][0x%x]\n",
-//					UART1_ReadBuff[6],UART1_ReadBuff[5],UART1_ReadBuff[4],UART1_ReadBuff[3],UART1_ReadBuff[7],UART1_ReadBuff[8],UART1_ReadBuff[9]
-//					,UART1_ReadBuff[10],UART1_ReadBuff[11],UART1_ReadBuff[12],UART1_ReadBuff[13],UART1_ReadBuff[14]);
-		}
-
-		//	CAN PACKET 구조가 아니면 들어온 것을 모두 버린다.
-		if (UART1ReadFlag == 2)
-		{
-			if (UART1_ReadBuff[0] != SERIAL_RX_STX || UART1_ReadBuff[UART1_RXPACKET_SIZE - 1] != SERIAL_RX_ETX)
-			{
-
-				tcflush(fd_UART1, TCIOFLUSH);
-				UART1ReadFlag = 0;
-				//				__android_log_print(ANDROID_LOG_INFO, "UART1_ReadBuff","UART1_Read Error\n");
-				__android_log_print(ANDROID_LOG_INFO, "NATIVE", "UART1_ReadBuff Error[%d][%d][%d][%d][%d][%d][%d][%d][%d][%d][%d][%d][%d][%d][%d][%d][%d]\n",
-					UART1_ReadBuff[0],UART1_ReadBuff[1],UART1_ReadBuff[2],UART1_ReadBuff[3],UART1_ReadBuff[4],UART1_ReadBuff[5],UART1_ReadBuff[6],UART1_ReadBuff[7],UART1_ReadBuff[8],UART1_ReadBuff[9],
-					UART1_ReadBuff[10],UART1_ReadBuff[11],UART1_ReadBuff[12],UART1_ReadBuff[13],UART1_ReadBuff[14],UART1_ReadBuff[15],UART1_ReadBuff[16]);
-			}
-			else
-			{
-				UART1_DataParsing(UART1_ReadBuff);
-				CANRecvIndex++;
-				__android_log_print(ANDROID_LOG_INFO, "NATIVE", "CANRecvIndex[%d]\n",CANRecvIndex);
-			}
-		}
-		else if (UART1ReadFlag == 0)
-		{
-			if (UART1_ReadBuff[0] == SERIAL_RX_STX)
-			{
-				UART1ReadFlag = 1;
-				dwUART1ReadCnt = 1;
-			} else
-			{
-				dwUART1ReadCnt = 0;
-			}
-		}
-		else if (UART1ReadFlag == 1)
-		{
-			if (dwUART1ReadCnt == (UART1_RXPACKET_SIZE - 1)&& UART1_ReadBuff[0] == SERIAL_RX_ETX)
-			{
-				UART1ReadFlag = 2;
-			}
-			else
-			{
-				if (dwUART1ReadCnt == (UART1_RXPACKET_SIZE - 1))
-				{
-					UART1ReadFlag = 0;
-					dwUART1ReadCnt = 0;
-				}
-				else
-				{
-					dwUART1ReadCnt++;
-				}
-			}
-		}
-		sleep(0); // 다른 Thread 들의 점유를 위해 사용
-	}
-	__android_log_print(ANDROID_LOG_INFO, "NATIVE", "Thread_Read1 Finish\n");
-	(*glpVM)->DetachCurrentThread(glpVM);
-}
-
-void *Thread_Read_UART3(void *data) {
-	int dwRead = 0;
-	int i = 0;
-
-	__android_log_print(ANDROID_LOG_INFO, "NATIVE", "Thread_Read3\n");
-	if (!glpVM) {
-		__android_log_print(ANDROID_LOG_INFO, "NATIVE", "error (!glpVM)");
-		return;
-	}
-
-	JNIEnv *env = NULL;
-	(*glpVM)->AttachCurrentThread(glpVM, &env, NULL);
-	if (env == NULL || jObject == NULL) {
-		(*glpVM)->DetachCurrentThread(glpVM);
-		__android_log_print(ANDROID_LOG_INFO, "NATIVE",
-				"error (env == NULL || AVM_JM.jObject == NULL)");
-		return;
-	}
-
-	while (bReadRunningFlag_UART3) {
-		dwRead = 0;
-		//	통신 시작 후 1byte씩 읽고, 정상 데이터를 수신한 다음부터는 원래 싸이즈로 받는다.
-		if (UART3ReadFlag == 0 || UART3ReadFlag == 1) {
-			dwRead = read(fd_UART3, UART3_ReadBuff, 1);
-//			__android_log_print(ANDROID_LOG_INFO, "UART3_ReadBuff", "dwRead[%d] UART3_ReadBuff [%d]\n",dwRead,UART3_ReadBuff[0]);
-		}
-
-		else {
-			dwRead = read(fd_UART3, UART3_ReadBuff, UART3_RXPACKET_SIZE);
-//			__android_log_print(ANDROID_LOG_INFO, "UART3_ReadBuff", "dwRead[%d] UART3_ReadBuff [%d][%d][%d][%d][%d][%d][%d][%d][%d][%d][%d]\n",dwRead,UART3_ReadBuff[0],UART3_ReadBuff[1]
-//												  ,UART3_ReadBuff[2],UART3_ReadBuff[3],UART3_ReadBuff[4],UART3_ReadBuff[5],UART3_ReadBuff[6],UART3_ReadBuff[7]
-//												  ,UART3_ReadBuff[8],UART3_ReadBuff[9],UART3_ReadBuff[10]);
-		}
-
-		//	CAN PACKET 구조가 아니면 들어온 것을 모두 버린다.
-		if (UART3ReadFlag == 2) {
-			if (UART3_ReadBuff[0] != SERIAL_RX_STX ||
-					(UART3_ReadBuff[UART3_RXPACKET_SIZE - 1] != SERIAL_RX_ETX
-					 &&  UART3_ReadBuff[UART3_RXPACKET_SIZE - 1] != SERIAL_RX_ACK
-					 && UART3_ReadBuff[UART3_RXPACKET_SIZE - 1] != SERIAL_RX_NAK)) {
-
-				tcflush(fd_UART3, TCIOFLUSH);
-				UART3ReadFlag = 0;
-
-				__android_log_print(ANDROID_LOG_INFO, "UART3_ReadBuff", "dwRead[%d] UART3_ReadBuff error [%d][%d][%d][%d][%d][%d][%d][%d][%d][%d][%d]\n",dwRead,UART3_ReadBuff[0],UART3_ReadBuff[1]
-																  ,UART3_ReadBuff[2],UART3_ReadBuff[3],UART3_ReadBuff[4],UART3_ReadBuff[5],UART3_ReadBuff[6],UART3_ReadBuff[7]
-																  ,UART3_ReadBuff[8],UART3_ReadBuff[9],UART3_ReadBuff[10]);
-			} else {
-
-				memcpy(&(UART3_RxTmpOne[UART3_RxInx++][0]), &UART3_ReadBuff[0],
-						UART3_RXPACKET_SIZE);
-
-				if (UART3_RxInx >= UART3_PARSING_SIZE) {
-					UART3_RxInx = 0;
-					pthread_mutex_lock(&mutex_UART3);
-					memcpy(&(UART3_RxTmpTwo), &(UART3_RxTmpOne),
-							UART3_PARSING_SIZE * UART3_RXPACKET_SIZE);
-					pthread_mutex_unlock(&mutex_UART3);
-					bParsingFlag_UART3 = 1;
-				}
-			}
-		} else if (UART3ReadFlag == 0) {
-			if (UART3_ReadBuff[0] == SERIAL_RX_STX) {
-				UART3ReadFlag = 1;
-				dwUART3ReadCnt = 1;
-			} else {
-				dwUART3ReadCnt = 0;
-			}
-		} else if (UART3ReadFlag == 1) {
-			if (dwUART3ReadCnt == (UART3_RXPACKET_SIZE - 1) && UART3_ReadBuff[0] == SERIAL_RX_ETX)
-			{
-				UART3ReadFlag = 2;
-			}
-		else
-		{
-			if (dwUART3ReadCnt == (UART3_RXPACKET_SIZE - 1))
-			{
-				UART3ReadFlag = 0;
-				dwUART3ReadCnt = 0;
-			}
-			else
-			{
-				dwUART3ReadCnt++;
-			}
-		}
-	}
-		sleep(0); // 다른 Thread 들의 점유를 위해 사용
-	}
-	__android_log_print(ANDROID_LOG_INFO, "NATIVE", "Thread_Read3 Finish\n");
-	(*glpVM)->DetachCurrentThread(glpVM);
-}
-#else
 void *Thread_Read_UART1(void *data)
 {
 	int dwRead = 0;
@@ -1366,9 +1166,6 @@ void *Thread_Read_UART3(void *data) {
 	__android_log_print(ANDROID_LOG_INFO, "NATIVE", "Thread_Read3 Finish\n");
 	(*glpVM)->DetachCurrentThread(glpVM);
 }
-#endif
-
-
 
 speed_t getBaudrate(jint baudrate) {
 	switch (baudrate) {
@@ -1864,6 +1661,11 @@ jint _UART1_TxComm(JNIEnv *env, jobject this, jint PS) {
 			case 96:	// 0x60
 				MakeCANDataSingle(0x18,0xEF,TargetSourceAddress,SA_CANUPDATE,(unsigned char*)&TX_FW_UPDATE_START_61184_250_96);
 				break;
+
+			case 121	:
+				MakeCANDataSingle(0x18,0xEF,SA_MCU,SA_MONITOR,(unsigned char*)&TX_ENGINE_SHUTDOWN_MODE_SETTING_61184_121);
+				break;
+
 		}
 	return result;
 }

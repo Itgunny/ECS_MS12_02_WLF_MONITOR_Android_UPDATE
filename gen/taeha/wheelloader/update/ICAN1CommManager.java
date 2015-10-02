@@ -1,6 +1,6 @@
 /*
  * This file is auto-generated.  DO NOT MODIFY.
- * Original file: G:\\Project\\Wheel Loader F Monitor\\SRC\\Wheel_Loader_F_Series_Update\\src\\taeha\\wheelloader\\update\\ICAN1CommManager.aidl
+ * Original file: C:\\WL_F\\Wheel_Loader_F_Series_Update\\src\\taeha\\wheelloader\\update\\ICAN1CommManager.aidl
  */
 package taeha.wheelloader.update;
 public interface ICAN1CommManager extends android.os.IInterface

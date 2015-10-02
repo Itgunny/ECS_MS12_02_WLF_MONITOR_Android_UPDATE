@@ -92,6 +92,9 @@ public class MainActivity extends Activity {
 	//	- FW+APP + ETC
 	//	- ETC : PDF, OS, APP, FW 등등
 	//	- PDF 폴더 삭제 기능 추가
+	////3.1.0 15.10.01
+	// 1. 엔진 자동 정지 프로토콜 올 경우 Cancel 프로토콜 전송
+	// 2. Main List 스크롤 안생기도록 수정 
 	////////////////////////////////////////////////////////////////////
 
 	public static final int INDEX_MAIN_TOP								= 0X1100;
@@ -489,6 +492,8 @@ public class MainActivity extends Activity {
 				if(FWModel[0] == 0xff || FWModel[0] == 0)
 					strFMModel = "";
 			}
+			
+
 			if(CAN1Comm.Get_CheckBKCUComm()==1)
 				CheckBKCU = true;
 			if(CAN1Comm.Get_CheckRMCUComm()==1)

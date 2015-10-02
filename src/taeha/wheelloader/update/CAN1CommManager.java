@@ -386,7 +386,6 @@ public class CAN1CommManager extends ICAN1CommManager.Stub{		// ttySAC1(Linux), 
 	
 	public int Get_CheckBKCUComm(){ return service.Get_CheckBKCUComm();}
 	public int Get_CheckRMCUComm(){ return service.Get_CheckRMCUComm();}
-
 	
 	////////////////////////////////////////////////////////////////////
 	// CALLBACK METHOD
