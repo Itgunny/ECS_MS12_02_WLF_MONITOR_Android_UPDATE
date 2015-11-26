@@ -25,6 +25,7 @@ import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.SimpleAdapter;
 import android.widget.TextView;
+import android.widget.Toast;
 
 public class MonitorFragment extends Fragment{
 	
@@ -32,7 +33,12 @@ public class MonitorFragment extends Fragment{
 	private static final String TAG = "MonitorFragment";
 	
 	private static final int STATE_STM32_ANDOROID_APP	= 0;
-	private static final int STATE_ETC					= 1;
+	private static final int STATE_LANGUAGE				= 1;
+	private static final int STATE_LANGUAGE_INIT		= 2;
+	private static final int STATE_ETC					= 3;
+	
+	public  static String ROOT_PATH = "/storage/emulated/legacy/Language";
+	public  static String ROOT_PATH_USB = "/mnt/usb/UPDATE/Monitor/Language";
 	/////////////////////////////////////////////////////////////////////
 	/////////////////////RESOURCE////////////////////////////////////////
 	// Fragment Root
@@ -82,6 +88,30 @@ public class MonitorFragment extends Fragment{
 						Log.d(TAG, "STM32");
 					}
 					break;
+				case STATE_LANGUAGE:
+					if(ParentActivity.getisDisConnected() == false){
+						List<File> dirList = getDirFileList(ROOT_PATH_USB);
+						File dir = new File(ROOT_PATH);
+						if(!dir.exists()){
+							dir.mkdirs();
+						}
+						try{
+							for(int i = 0; i < dirList.size(); i++){
+								String fileName = dirList.get(i).getName();
+								fileCopy(ROOT_PATH_USB + "/" + fileName, ROOT_PATH + "/" + fileName);
+								Toast.makeText(ParentActivity.getApplicationContext(), "Copy Sucess : \n" + fileName + "(" + Integer.valueOf(i+1) + " / " + dirList.size() + ")", 50).show();
+							}	
+						}catch(Exception e){
+							Log.d(TAG, "exception");
+						}
+					} else{
+						Toast.makeText(ParentActivity.getApplicationContext(), "Please Connect USB into device.", 50).show();
+					}
+					break;
+				case STATE_LANGUAGE_INIT:
+					fileRemove(ROOT_PATH);
+					Toast.makeText(ParentActivity.getApplicationContext(), "Remove string.xls file", 50).show();
+					break;
 				case STATE_ETC:
 					ParentActivity.showEtc();
 					break;
@@ -101,7 +131,10 @@ public class MonitorFragment extends Fragment{
 		List<Map<String, String>> data = new ArrayList<Map<String, String>>();
 		
 		Map<String, String> mapSTM32AndApp = new HashMap<String, String>(2);
+		Map<String, String> mapLanguage = new HashMap<String, String>(2);
+		Map<String, String> mapLanguageInit = new HashMap<String, String>(2);
 		Map<String, String> mapEtc = new HashMap<String, String>(2);
+		
 		
 		mapSTM32AndApp.put("First Line", ParentActivity.getResources().getString(string.Monitor_STM32_APP));
 		if((UpdateFile.GetMonitorSTM32Version() != null ) && (UpdateFile.GetMonitorVersion() != null)){
@@ -113,6 +146,14 @@ public class MonitorFragment extends Fragment{
 			mapSTM32AndApp.put("Second Line", "Firmware : " + UpdateFile.GetMonitorSTM32Version());
 		}
 		data.add(mapSTM32AndApp);
+		
+		mapLanguage.put("First Line", ParentActivity.getResources().getString(string.Monitor_Copy_LANGUAGE));
+		mapLanguage.put("Second Line", "");
+		data.add(mapLanguage); 
+		
+		mapLanguageInit.put("First Line", ParentActivity.getResources().getString(string.Monitor_LANGUAGE_Init));
+		mapLanguageInit.put("Second Line", "");
+		data.add(mapLanguageInit); 
 		
         mapEtc.put("First Line", ParentActivity.getResources().getString(string.Monitor_ETC));
         mapEtc.put("Second Line","");

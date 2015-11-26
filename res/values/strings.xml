@@ -19,9 +19,12 @@
     <string name="Monitor_ETC">Monitor ETC</string>
     <string name="Monitor_Android_Update">Monitor Update - Update</string>
     <string name="Monitor_Android_Miracast">Monitor Update Smart Terminal</string>
+    <string name="Monitor_Android_Remove_Miracast">Monitor Remove SmartTerminal</string>
     <string name="Monitor_Copy_Errors_To_USB">Monitor Copy Errors To USB</string>
     <string name="Monitor_Copy_USB_TO_PDF">Monitor Update HELP(PDF)</string>
     <string name="Monitor_Remove_PDF_File">Monitor Remove HELP(PDF)</string>
+    <string name="Monitor_Copy_LANGUAGE">Monitor Update Language(XLS)</string>
+    <string name="Monitor_LANGUAGE_Init">Monitor Init	Language(Android)</string>
     <string name="OK">OK</string>
     <string name="Exit">Exit</string>
     <string name="CANCEL">CANCEL</string>
@@ -32,6 +35,7 @@
     <string name="Do_you_want_update_only_app">Do you want to update only application?</string>
     <string name="Do_you_want_update_update">Do you want to update the Update Program?</string>
     <string name="Do_you_want_update_smartterminal">Do you want to update Smart Terminal?</string>
+    <string name="Do_you_want_remove_smartterminal">Do you want to remove Smart Terminal?</string>
     <string name="Do_you_want_update_firmware_and_app"><font size="10">Do you want to update firmware and application?</font></string>
     <string name="Do_you_want_update_factory_init">Do you want to update factory init?</string>
     <string name="Program">Program</string>

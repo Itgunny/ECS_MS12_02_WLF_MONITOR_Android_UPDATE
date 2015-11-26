@@ -29,7 +29,7 @@ public class MainActivity extends Activity {
 
 
 	public static final int VERSION_HIGH		= 3;
-	public static final int VERSION_LOW			= 1;
+	public static final int VERSION_LOW			= 2;
 	public static final int VERSION_SUB_HIGH	= 0;
 	//	public static final int VERSION_SUB_LOW		= 0;
 
@@ -95,6 +95,9 @@ public class MainActivity extends Activity {
 	////3.1.0 15.10.01
 	// 1. 엔진 자동 정지 프로토콜 올 경우 Cancel 프로토콜 전송
 	// 2. Main List 스크롤 안생기도록 수정 
+	////3.2.0 15.11.26
+	// 1. Language Folder 복사 기능 추가.
+	// 2. Language Init 삭제 기능 추가. 
 	////////////////////////////////////////////////////////////////////
 
 	public static final int INDEX_MAIN_TOP								= 0X1100;
@@ -646,7 +649,11 @@ public class MainActivity extends Activity {
 					MenuIndex = INDEX_MONITOR_ETC;
 					if(UpdateFile.GetMonitorVersion() != null)
 						UpdateFile.MonitorAndroidAppUpdate();
-				}
+				}/*else if(flag == 4){
+					MenuIndex = INDEX_MONITOR_ETC;
+					UpdateFile.MonitorRemoveMiracast();
+					
+				}*/
 				dialog.dismiss();
 			}
 		});
@@ -700,6 +707,8 @@ public class MainActivity extends Activity {
 			MenuDialog = MonitorAppQuestionBuilder.create(getResources().getString(string.Do_you_want_update_smartterminal));
 		}else if(flag == 3){
 			MenuDialog = MonitorAppQuestionBuilder.create(getResources().getString(string.Do_you_want_update_app));
+		}else if(flag == 4){
+			MenuDialog = MonitorAppQuestionBuilder.create(getResources().getString(string.Do_you_want_remove_smartterminal));
 		}
 		
 		MenuDialog.show();		

@@ -303,7 +303,20 @@ public class UpdateFileFindClass {
 			return;
 		apkInstall(f);
 	}
-	
+	/*public void MonitorRemoveMiracast(){
+		try {
+	       Intent intent = new Intent(Intent.ACTION_UNINSTALL_PACKAGE)
+	       
+	       .setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP
+	    		    | Intent.FLAG_ACTIVITY_NEW_TASK
+					| Intent.FLAG_ACTIVITY_SINGLE_TOP)
+           .setData(Uri.parse("package:" + "com.powerone.wfd.sink"));
+	       
+	       context.startActivity(intent);
+		} catch (Exception e) {
+
+		}
+	}*/
 	public String GetMonitorVersion(){
 		int[] nVersion;
 		int Version;
@@ -330,10 +343,8 @@ public class UpdateFileFindClass {
 		try {
 
 			Intent packageinstaller = new Intent(Intent.ACTION_VIEW);
-
 			packageinstaller.setDataAndType(apkUri,
 					"application/vnd.android.package-archive");
-
 			context.startActivity(packageinstaller);
 
 		} catch (Exception e) {

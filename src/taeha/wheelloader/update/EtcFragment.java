@@ -1,9 +1,11 @@
 package taeha.wheelloader.update;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -14,13 +16,17 @@ import java.util.Map;
 import taeha.wheelloader.update.R.string;
 import android.app.Activity;
 import android.app.Fragment;
+import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -32,13 +38,13 @@ import android.widget.Toast;
 public class EtcFragment extends Fragment{
 	private static final String TAG = "EtcFragment";
 	/////////////////////////////CONSTANT//////////////////////////
-	private static final int STATE_ANDROID_OS	 		= 0;
-	private static final int STATE_ANDROID_UPDATE 		= 1;
-	private static final int STATE_ANDROID_MIRACAST 	= 2;
-	private static final int STATE_PDF_TO_ANDROID  		= 3;
-	private static final int STATE_PDF_REMOVE_FILE 		= 4;
-	private static final int STATE_STM32	 			= 5;
-	private static final int STATE_ANDROID_APP			= 6;
+	private static final int STATE_ANDROID_OS	 			= 0;
+	private static final int STATE_ANDROID_UPDATE 			= 1;
+	private static final int STATE_ANDROID_MIRACAST 		= 2;
+	private static final int STATE_PDF_TO_ANDROID  			= 3;
+	private static final int STATE_PDF_REMOVE_FILE 			= 4;
+	private static final int STATE_STM32	 				= 5;
+	private static final int STATE_ANDROID_APP				= 6;
 	//private static final int STATE_STM32_FACTORYINIT	= 7;
 	public  static String ROOT_PATH = "/storage/emulated/legacy/Help_pdf";
 	public  static String ROOT_PATH_USB = "/mnt/usb/UPDATE/Monitor/Help_pdf";
@@ -56,6 +62,11 @@ public class EtcFragment extends Fragment{
 	ArrayAdapter<String> listAdapter;
 	
 	UpdateFileFindClass UpdateFile;
+	
+	private static final String CHECK_MIRACAST = "com.powerone.wfd.sink";
+	/*PackageManager pm = null;
+	static boolean installedMiracast = false;
+	Handler handler = null;*/
 	//////////////////////////////////////////////////////////////
 	
 	////////////////Common Function///////////////////////////////
@@ -79,7 +90,7 @@ public class EtcFragment extends Fragment{
 					break;
 				case STATE_ANDROID_MIRACAST:
 					if(UpdateFile.GetMiracastVersion() != null)
-						ParentActivity.showMonitorAppQuestionPopup(2);
+							ParentActivity.showMonitorAppQuestionPopup(2);
 					break;
 				case STATE_PDF_TO_ANDROID:
 					if(ParentActivity.getisDisConnected() == false){
@@ -156,6 +167,7 @@ public class EtcFragment extends Fragment{
 		}
 		data.add(mapMiracastProgram);
 		
+		
 		mapPdfCopy.put("First Line", ParentActivity.getResources().getString(string.Monitor_Copy_USB_TO_PDF));
 		mapPdfCopy.put("Second Line", "");
 		data.add(mapPdfCopy);
@@ -218,13 +230,16 @@ public class EtcFragment extends Fragment{
 		// TODO Auto-generated method stub
 		Log.d(TAG, "onCreate");
 		super.onCreate(savedInstanceState);
+		/*pm = getActivity().getPackageManager();*/
+		
 		if(Build.VERSION.SDK_INT <= Build.VERSION_CODES.ICE_CREAM_SANDWICH_MR1){
 			ROOT_PATH = "/mnt/sdcard/Help_pdf";
 			Log.d(TAG, ROOT_PATH);
 		}else {
 			ROOT_PATH = "/storage/emulated/legacy/Help_pdf";
 			Log.d(TAG, ROOT_PATH);
-		}
+		}		
+		
 	}
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container,
