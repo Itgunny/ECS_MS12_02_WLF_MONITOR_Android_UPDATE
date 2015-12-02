@@ -3,12 +3,17 @@ package taeha.wheelloader.update;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
 
 
 
+
+import java.nio.channels.FileChannel;
+import java.util.Arrays;
+import java.util.List;
 
 import android.content.Context;
 import android.content.Intent;
@@ -17,6 +22,7 @@ import android.provider.OpenableColumns;
 import android.text.method.MovementMethod;
 import android.util.Log;
 import android.widget.ProgressBar;
+import android.widget.Toast;
 
 public class UpdateFileFindClass {
 	public static final String TAG = "UpdateFileFindClass";
@@ -83,6 +89,10 @@ public class UpdateFileFindClass {
 	public static String RMCU_FIRMWARE_PATH = "/mnt/usb/UPDATE/RMCU";
 	public static String RMCU_FIRMWARE_NAME = "RMCU_v";
 	public static String RMCU_FIRMWARE_EXT = ".THM";
+	
+	public static String MONITOR_LANGUAGE_PATH = "/mnt/usb/UPDATE/Monitor/Language";
+	public static String MONITOR_LANGUAGE_NAME = "string_v";
+	public static String MONITOR_LANGUAGE_EXT = ".xls";
 
 	String strPath;
 	String strFileNameHead;
@@ -386,7 +396,53 @@ public class UpdateFileFindClass {
 	////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////////////////////////////////////////
 		
-	
+	//////////////////////////////////////// Language Application Install/////////////////////////////////
+	public void MonitorLanguageUpdate(){
+		File f = GetLastVersionProgram(MONITOR_LANGUAGE_PATH,MONITOR_LANGUAGE_NAME,MONITOR_LANGUAGE_EXT);
+		fileCopy(MONITOR_LANGUAGE_PATH + "/" + f.getName(), "/storage/emulated/legacy/Language" + "/string.xls");
+	}
+	public static void fileCopy(String inputFilePath, String outputFilePath){
+		try{
+			FileInputStream fis = new FileInputStream(inputFilePath);
+			FileOutputStream fos = new FileOutputStream(outputFilePath);
+			
+			FileChannel fcin = fis.getChannel();
+			FileChannel fcout = fos.getChannel();
+			
+			long size = fcin.size();
+			fcin.transferTo(0, size, fcout);
+			Log.d(TAG," "+ inputFilePath + " " + outputFilePath);
+			
+			fcout.close();
+			fcin.close();
+			
+			fos.close();
+			fis.close();
+		} catch(IOException e){
+			e.printStackTrace();
+		}
+	}
+	public String GetLanguageVersion(){
+		int[] nVersion;
+		int Version;
+		String strVersion;
+		nVersion = new int[4];
+		
+		File f = GetLastVersionProgram(MONITOR_LANGUAGE_PATH,MONITOR_LANGUAGE_NAME,MONITOR_LANGUAGE_EXT);
+		if(f == null)
+			return null;
+		Version = GetThreeVersion(MONITOR_LANGUAGE_PATH,MONITOR_LANGUAGE_NAME,MONITOR_LANGUAGE_EXT,f.getPath());
+		
+		nVersion[0] = (Version / 1000) % 10; // 2
+		nVersion[1] = (Version / 100) % 10;  // 2
+		nVersion[2] = (Version / 10) % 10;
+		
+		strVersion = Integer.toString(nVersion[0]) + "." + Integer.toString(nVersion[1])
+				+ "." + Integer.toString(nVersion[2]);
+		
+		return strVersion;
+	}	
+	////////////////////////////////////////////////////////////////////////////////////////////////////////
 	//////////////////////////////////////// Update Program Application Install/////////////////////////////////
 	
 	public void MonitorUpdateProgramUpdate(){

@@ -90,22 +90,20 @@ public class MonitorFragment extends Fragment{
 					break;
 				case STATE_LANGUAGE:
 					if(ParentActivity.getisDisConnected() == false){
-						List<File> dirList = getDirFileList(ROOT_PATH_USB);
-						File dir = new File(ROOT_PATH);
-						if(!dir.exists()){
-							dir.mkdirs();
+						if(UpdateFile.GetLanguageVersion() != null){
+							File dir = new File(ROOT_PATH);
+							if(!dir.exists()){
+								dir.mkdirs();
+							}
+							try{
+								UpdateFile.MonitorLanguageUpdate();
+								Toast.makeText(ParentActivity.getApplicationContext(), "Copy Sucess : string.xls", 50).show();								
+							}catch(Exception e){
+								Log.d(TAG, "exception");
+							}
+						} else{
+							Toast.makeText(ParentActivity.getApplicationContext(), "Please Connect USB into device.", 50).show();
 						}
-						try{
-							for(int i = 0; i < dirList.size(); i++){
-								String fileName = dirList.get(i).getName();
-								fileCopy(ROOT_PATH_USB + "/" + fileName, ROOT_PATH + "/" + fileName);
-								Toast.makeText(ParentActivity.getApplicationContext(), "Copy Sucess : \n" + fileName + "(" + Integer.valueOf(i+1) + " / " + dirList.size() + ")", 50).show();
-							}	
-						}catch(Exception e){
-							Log.d(TAG, "exception");
-						}
-					} else{
-						Toast.makeText(ParentActivity.getApplicationContext(), "Please Connect USB into device.", 50).show();
 					}
 					break;
 				case STATE_LANGUAGE_INIT:
@@ -148,7 +146,9 @@ public class MonitorFragment extends Fragment{
 		data.add(mapSTM32AndApp);
 		
 		mapLanguage.put("First Line", ParentActivity.getResources().getString(string.Monitor_Copy_LANGUAGE));
-		mapLanguage.put("Second Line", "");
+		if(UpdateFile.GetLanguageVersion() != null){
+			mapLanguage.put("Second Line", "" + UpdateFile.GetLanguageVersion());
+		}
 		data.add(mapLanguage); 
 		
 		mapLanguageInit.put("First Line", ParentActivity.getResources().getString(string.Monitor_LANGUAGE_Init));
