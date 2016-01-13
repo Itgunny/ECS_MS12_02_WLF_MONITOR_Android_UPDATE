@@ -27,7 +27,7 @@ static void timer_handler( int sig, siginfo_t *si, void *uc )
     	if(UpdateCancel == 0)
     	{
     		CheckCTSData_MCU();
-    		CheckAckData_MCU();
+    		//CheckAckData_MCU();
     	}
     	//sleep(0);
     	//timer_delete(*tidp);		// Timer Kill

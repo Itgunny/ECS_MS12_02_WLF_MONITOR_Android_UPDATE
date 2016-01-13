@@ -70,6 +70,7 @@ public class CANUpdatePopup extends Dialog{
 	protected static int RETURN_FAIL_INCORRECT_STATUS 			= 5;
 	protected static int RETURN_CANCEL_BY_MASTER				= 6;
 	protected static int RETURN_CANCEL_BY_TIMEOUT				= 7;
+	
 	@Override
 	public boolean onTouchEvent(MotionEvent event) {
 		// TODO Auto-generated method stub
@@ -173,6 +174,7 @@ public class CANUpdatePopup extends Dialog{
 			
 			
 			CAN1Comm = CAN1CommManager.getInstance();
+			
 			UpdateFile = _updatefile;
 			FirmwareInfo = _firmwareinfo;
 			
@@ -238,9 +240,12 @@ public class CANUpdatePopup extends Dialog{
 			StartTimeoutTimer();
 			while(FormatComplete == 0){
 				FormatComplete = CAN1Comm.Get_nRecvUPDFormatCompleteFlag_61184_250_85();
+
 				FormatStatus = CAN1Comm.Get_Status_RX_UPD_UPDATE_STATUS_61184_250_84();
+
 				FormatProgress_CRC = CAN1Comm.Get_Progress_RX_UPD_UPDATE_STATUS_61184_250_84();
-				//Log.d(TAG, "FormatStatus :" + FormatStatus + "Format P:" + FormatProgress_CRC + "Count:" + Count);
+
+				
 				
 				// 이전 Status 및 Progress 일 경우에만 갱신, 아닐 경우 Timeout Count!!
 				if(FormatStatus == 0x01){
@@ -261,11 +266,9 @@ public class CANUpdatePopup extends Dialog{
 					}
 				}
 				if(Count >= TIMEOUT){
-					
 					CAN1Comm.Set_nRecvUPDFormatCompleteFlag_61184_250_85(0);
 					CAN1Comm.Set_Status_RX_UPD_UPDATE_STATUS_61184_250_84(0);
 					CAN1Comm.Set_Progress_RX_UPD_UPDATE_STATUS_61184_250_84(0);
-					
 					// 5초 4회 재시도
 					if(++RetryCount >= 4)
 					{
@@ -296,6 +299,7 @@ public class CANUpdatePopup extends Dialog{
 			Log.d(TAG,"CheckApplication");
 			int AckNewFWInfo = 0;
 			int RetryCount = 0;
+			
 			SendNewFWInfo(_firmwareinfo);
 			DisplayStatus("Send New FW Info"); //++, --, 150716 cjg
 			DisplayStatusNumber("(" + 3 + " / " + TotalCount + ")");
@@ -322,7 +326,7 @@ public class CANUpdatePopup extends Dialog{
 				
 				if(UpdateProgramFlag == false){
 					int ResultFlashCRC = CAN1Comm.Get_ResultFlashCRC_RX_FW_N_DL_COMPLETE_61184_250_80();
-					Log.d(TAG, "ResulFlash : " + ResultFlashCRC);
+					Log.d(TAG, "CanUpdate CheckApplication ResultFlash : " + ResultFlashCRC);
 					if(ResultFlashCRC == RESULT_CANCEL_BY_MASTER){
 						Log.d(TAG, "Update Cancel!!!");
 						CAN1Comm.TxCANToMCU(0x51);
@@ -365,15 +369,17 @@ public class CANUpdatePopup extends Dialog{
 			DisplayStatusNumber("(" + 5 + " / " + TotalCount + ")");
 			while(DLComplete == 0){
 				DLComplete = CAN1Comm.Get_nRecvFWDLCompleteFlag_61184_250_80();
-				
+
+
 				if(CAN1Comm.Get_nRecvRequestPacketMFlag_61184_250_83() == 1){
+
 					CAN1Comm.Set_nRecvRequestPacketMFlag_61184_250_83(0);
 					//FWID = CAN1Comm.Get_FWID_RX_REQUEST_PACKET_M_61184_250_83();
 					SectionIndex = CAN1Comm.Get_SectionNumber_RX_REQUEST_PACKET_M_61184_250_83();
+
 					PacketIndex = CAN1Comm.Get_PacketNumber_RX_REQUEST_PACKET_M_61184_250_83();
 
 					SendPacket(GetPacketfromFile(_updatefile, _firmwareinfo, SectionIndex, PacketIndex),SectionIndex,PacketIndex,_firmwareinfo.PacketUnitSize);
-
 					DisplayProgress((SectionIndex * _firmwareinfo.NumberofPacket) + PacketIndex);
 					DisplayStatus("Section : " + Integer.toString(SectionIndex) + ", Packet : " + Integer.toString(PacketIndex));
 					DisplayStatusNumber("(" + 6 + " / " + TotalCount + ")");
@@ -383,16 +389,15 @@ public class CANUpdatePopup extends Dialog{
 				
 				if(UpdateProgramFlag == false){
 					ResultFlashCRC = CAN1Comm.Get_ResultFlashCRC_RX_FW_N_DL_COMPLETE_61184_250_80();
-					Log.d(TAG, "ResulFlash : " + ResultFlashCRC);
+					Log.d(TAG, "CanUpdate SendApplication ResultFlashCRC : " + ResultFlashCRC);
 					if(ResultFlashCRC == RESULT_CANCEL_BY_MASTER){
 						Log.d(TAG, "Update Cancel!!!");
 						CAN1Comm.TxCANToMCU(0x51);
 						CAN1Comm.Set_ResultFlashCRC_RX_FW_N_DL_COMPLETE_61184_250_80(255);
 						return RETURN_FAIL_EXIT;
 					}
-
 					if(Count >= TIMEOUT){
-						Log.d(TAG, "RetryCount"+RetryCancelCount);
+						Log.d(TAG, "CanUpdate SendApplication RetryCount"+RetryCancelCount);
 						// 5초 4회 재시도
 						if(++RetryCancelCount < 4){
 							CAN1Comm.TxCANToMCU(0x46);
@@ -403,21 +408,19 @@ public class CANUpdatePopup extends Dialog{
 					if(Count >= TIMEOUT){
 						// 5초 4회 재시도
 						if(++RetryCount >= 4){
-							Log.d(TAG, "RetryCount"+RetryCount);
+							Log.d(TAG, "CanUpdate SendApplication RetryCount"+RetryCount);
 							CancelTimeoutTimer();
-							
 							ResultFlashCRC = CAN1Comm.Get_ResultFlashCRC_RX_FW_N_DL_COMPLETE_61184_250_80();
-							Log.d(TAG, "ResulFlash : " + ResultFlashCRC);
+							Log.d(TAG, "CanUpdate SendApplication ResultFlashCRC : " + ResultFlashCRC);
 							if(ResultFlashCRC == RESULT_CANCEL_BY_TIMEOUT){
 								Log.d(TAG, "Cancel By Timeout");
 								CAN1Comm.TxCANToMCU(0x51);
 								CAN1Comm.Set_ResultFlashCRC_RX_FW_N_DL_COMPLETE_61184_250_80(255);
 								return RETURN_CANCEL_BY_TIMEOUT;
 							}
-							
 							return RETURN_FAIL_TIMEOUT;
 						}else{
-							Log.d(TAG, "RetryCount"+RetryCount);
+							Log.d(TAG, "CanUpdate SendApplication RetryCount"+RetryCount);
 							CAN1Comm.Set_nRecvRequestPacketMFlag_61184_250_83(0);
 							CAN1Comm.TxCANToMCU(0x40);
 							DisplayStatus("App DL Start(Retry:"+Integer.toString(RetryCount)+")");
@@ -432,7 +435,6 @@ public class CANUpdatePopup extends Dialog{
 			
 			CAN1Comm.Set_nRecvFWDLCompleteFlag_61184_250_80(0);
 			ResultFlashCRC = CAN1Comm.Get_ResultFlashCRC_RX_FW_N_DL_COMPLETE_61184_250_80();
-			
 			if(ResultFlashCRC == RESULT_FLASH_CRC_OK){
 				Log.d(TAG,"ResultFlash  CRC OK");
 				DisplayStatus("FW DL Complete : CRC OK");
@@ -604,7 +606,6 @@ public class CANUpdatePopup extends Dialog{
 			CAN1Comm.Set_PacketLength_TX_SEND_PACKET_M_61184_250_67(_packetlength);
 			CAN1Comm.Set_DistributionFileData_TX_SEND_PACKET_M_61184_250_67(_packet);
 			CAN1Comm.Set_PacketCRC_TX_SEND_PACKET_M_61184_250_67(CRC);
-			
 			CAN1Comm.TxCANToMCU(0x43);
 		}
 		public void DisplayFirwareInfoAfterUpdate(final FirmwareInfoClass _firmwareinfo){
@@ -771,8 +772,7 @@ public class CANUpdatePopup extends Dialog{
 					else if(ReturnValue == RETURN_FAIL_CRCERROR){
 						Log.e(TAG,"SendApplication Fail RETURN_FAIL_CRCERROR");
 						BuilderRef.get().showToast(ParentActivity.getResources().getString(string.Update_Fail));
-						//BuilderRef.get().DisplayStatus(ParentActivity.getResources().getString(string.Update_Fail)+"\nSend Application No Firmware");
-						DialogRef.get().dismiss();
+//BuilderRef.get().DisplayStatus(ParentActivity.getResources().getString(string.Update_Fail)+"\nSend Application No Firmware");						DialogRef.get().dismiss();
 						return;
 					}
 					else if(ReturnValue == RETURN_CANCEL_BY_MASTER){
@@ -794,7 +794,6 @@ public class CANUpdatePopup extends Dialog{
 						DialogRef.get().dismiss();
 						return;
 					}
-					
 					/////////////////////////////////Step 4. Send Download Mode Finish////////////////////////////
 					BuilderRef.get().SendDownloadModeFinish();
 					
@@ -807,6 +806,7 @@ public class CANUpdatePopup extends Dialog{
 					/////////////////////////////////Step 7. Finish CAN Update////////////////////////////////////
 					BuilderRef.get().showToast(ParentActivity.getResources().getString(string.Update_Finish));
 					DialogRef.get().dismiss();
+					
 				}
 
 				catch(RuntimeException ee){
@@ -888,9 +888,9 @@ public class CANUpdatePopup extends Dialog{
 		}
 		
 		int Crc16Table[] = {
-				0x0000, 0xC0C1, 0xC181, 0x0140, 0xC301, 0x03C0, 0x0280, 0xC241,
+				   0x0000, 0xC0C1, 0xC181, 0x0140, 0xC301, 0x03C0, 0x0280, 0xC241,
 				   0xC601, 0x06C0, 0x0780, 0xC741, 0x0500, 0xC5C1, 0xC481, 0x0440,
-				   0xCC01, 0x0CC0, 0x0D80, 0xCD41, 0x0F00, 0xCFC1, 0xCE81, 0x0E40,
+                   0xCC01, 0x0CC0, 0x0D80, 0xCD41, 0x0F00, 0xCFC1, 0xCE81, 0x0E40,
 				   0x0A00, 0xCAC1, 0xCB81, 0x0B40, 0xC901, 0x09C0, 0x0880, 0xC841,
 				   0xD801, 0x18C0, 0x1980, 0xD941, 0x1B00, 0xDBC1, 0xDA81, 0x1A40,
 				   0x1E00, 0xDEC1, 0xDF81, 0x1F40, 0xDD01, 0x1DC0, 0x1C80, 0xDC41,

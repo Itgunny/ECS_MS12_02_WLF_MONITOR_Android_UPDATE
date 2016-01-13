@@ -29,7 +29,7 @@ public class MainActivity extends Activity {
 
 
 	public static final int VERSION_HIGH		= 3;
-	public static final int VERSION_LOW			= 2;
+	public static final int VERSION_LOW			= 3;
 	public static final int VERSION_SUB_HIGH	= 0;
 	//	public static final int VERSION_SUB_LOW		= 0;
 
@@ -98,6 +98,8 @@ public class MainActivity extends Activity {
 	////3.2.0 15.11.26
 	// 1. Language Folder 복사 기능 추가.
 	// 2. Language Init 삭제 기능 추가. 
+	////3.3.0 16.01.12
+	// 1. Monitor - MCU CRC Error 문제 개선 - ACK 처리 부분 주석 처리.
 	////////////////////////////////////////////////////////////////////
 
 	public static final int INDEX_MAIN_TOP								= 0X1100;
