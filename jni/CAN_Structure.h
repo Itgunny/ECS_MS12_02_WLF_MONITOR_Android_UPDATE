@@ -476,3 +476,65 @@ typedef struct
 	unsigned short	RemainingTimeforDelayedEngineShutdown;
 
 }__attribute__((packed))  ENGINE_SHUTDOWN_MODE_STATUS_61184_122;
+
+// BKCU
+typedef struct
+{
+	unsigned char	ControlByte;
+
+	unsigned short	TotalSendByte;
+
+	unsigned short	TotalSendPacket;
+
+	unsigned char	PGN_LSB;
+
+	unsigned char	PGN_2ND;
+
+	unsigned char	PGN_MSB;
+
+}__attribute__((packed))  BKCU_RTS_DOWNLOAD_MODE_65280_250_52;
+
+typedef struct
+{
+	unsigned char	ControlByte;
+
+	unsigned char	SentPacketNumber;
+
+	unsigned char	reserved;
+
+	unsigned short	NextStartPacketNumber;
+
+	unsigned char	PGN_LSB;
+
+	unsigned char	PGN_2ND;
+
+	unsigned char	PGN_MSB;
+
+}__attribute__((packed))  BKCU_CTS_DOWNLOAD_MODE_65280_250_52;
+
+typedef struct
+{
+	unsigned char	ControlByte;
+
+	unsigned short	TotalReceiveByte;
+
+	unsigned short	TotalReceivePacket;
+
+	unsigned char	PGN_LSB;
+
+	unsigned char	PGN_2ND;
+
+	unsigned char	PGN_MSB;
+
+}__attribute__((packed))  BKCU_DOWNLOAD_COMPLETE_65280_250_52;
+
+typedef struct
+{
+	unsigned short	SequenceNumber;
+
+	unsigned short	Address;
+
+	unsigned char	Data[4];
+
+}__attribute__((packed))  BKCU_SEND_PACKET_65024_250_52;
+// BKCU

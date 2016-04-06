@@ -78,7 +78,6 @@ public class UpdaetMonitorSTM32Popup extends Dialog{
 		// TODO Auto-generated method stub
 		super.dismiss();	
 		ParentActivity.MenuIndex = ParentActivity.INDEX_MONITOR_TOP;
-		
 	}
 
 	public static class Builder{
@@ -219,18 +218,15 @@ public class UpdaetMonitorSTM32Popup extends Dialog{
 				public void run() {
 					// TODO Auto-generated method stub
 					ParentActivity._MonitorFragment.StatusWarningDisplay(status);
-					ParentActivity._EtcFragment.StatusWarningDisplay(status);
 				}
 			});
 		}
 		public void DisplayStatus(final String status){
 			ParentActivity.runOnUiThread(new Runnable() {
-				
 				@Override
 				public void run() {
 					// TODO Auto-generated method stub
 					ParentActivity._MonitorFragment.StatusDisplay(status);
-					ParentActivity._EtcFragment.StatusDisplay(status);
 				}
 			});
 		}

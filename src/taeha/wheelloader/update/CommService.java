@@ -265,6 +265,24 @@ public class CommService extends Service{
 	public native void Set_Progress_ResultFlashCRC_RX_FW_UPDATE_STATUS_61184_250_113(int Data);
 	public native void Set_ResultFlashCRC_RX_FW_N_DL_COMPLETE_61184_250_80(int Data);
 	//--, 150820 cjg
+	
+	//++, 160329 cjg
+	public native int Get_SentPacketNumber_RX_BKCU_CTS_DOWNLOAD_MODE_65280_250_52();
+	public native int Get_NextStartPacketNumber_RX_BKCU_CTS_DOWNLOAD_MODE_65280_250_52();
+	public native void Set_SentPacketNumber_RX_BKCU_CTS_DOWNLOAD_MODE_65280_250_52(int Data);
+	public native void Set_NextStartPacketNumber_RX_BKCU_CTS_DOWNLOAD_MODE_65280_250_52(int Data);
+	
+	public native int Get_ControlByte_RX_BKCU_DOWNLOAD_COMPLETE_65280_250_52();
+	public native int Get_TotalReceiveByte_RX_BKCU_DOWNLOAD_COMPLETE_65280_250_52();
+	public native int Get_TotalReceivePacket_RX_BKCU_DOWNLOAD_COMPLETE_65280_250_52();
+	
+	public native void	Set_TotalSendByte_TX_BKCU_RTS_DOWNLOAD_MODE_65280_250_52(int Data);
+	public native void	Set_TotalSendPacket_TX_BKCU_RTS_DOWNLOAD_MODE_65280_250_52(int Data);
+	
+	public native void	Set_SequenceNumber_TX_BKCU_SEND_PACKET_65024_250_52(int Data);
+	public native void	Set_Data_TX_BKCU_SEND_PACKET_65024_250_52(byte[] Data);
+	
+	//--, 160329 cjg
 	public native int Get_CheckBKCUComm();
 	public native int Get_CheckRMCUComm();
 	

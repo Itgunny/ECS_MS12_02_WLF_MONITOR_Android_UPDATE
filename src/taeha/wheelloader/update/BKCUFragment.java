@@ -1,5 +1,11 @@
 package taeha.wheelloader.update;
 
+import java.io.BufferedReader;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+
 import taeha.wheelloader.update.R.string;
 import taeha.wheelloader.update._Parent_CANUpdateFragment.ReadThread;
 import android.content.DialogInterface;

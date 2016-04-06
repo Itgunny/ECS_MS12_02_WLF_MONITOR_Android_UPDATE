@@ -102,7 +102,42 @@ void MakeCANDataSingle(unsigned char Priority, unsigned char PF, unsigned char P
 
 	SetDatatoRingBuffer(Buf);
 }
+void MakeCANBKCURTSData(unsigned char Priority, unsigned char PF, unsigned char PS, unsigned char SA, unsigned char *Data){
+	unsigned char Buf[UART1_TXPACKET_SIZE];
+	int i;
+	Buf[0] = SERIAL_RX_STX;
+	Buf[1] = Priority;
+	Buf[2] = PF;
+	Buf[3] = PS;
+	Buf[4] = SA;
 
+	Buf[5] = 16;
+
+	for(i = 0; i < 4; i++)
+		Buf[i + 6] = Data[i + 1];
+
+	Buf[10] = 0xFE;
+	Buf[11] = 0xFF;
+	Buf[12] = 0;
+	Buf[UART1_TXPACKET_SIZE-1] = SERIAL_RX_ETX;
+
+	SetDatatoRingBuffer(Buf);
+}
+void MakeCANBKCUSendData(unsigned char Priority, unsigned char PF, unsigned char PS, unsigned char SA, unsigned char *Data){
+	unsigned char Buf[UART1_TXPACKET_SIZE];
+	int i;
+	Buf[0] = SERIAL_RX_STX;
+	Buf[1] = Priority;
+	Buf[2] = PF;
+	Buf[3] = PS;
+	Buf[4] = SA;
+	for(i = 0; i < 8; i++)
+		Buf[i + 5] = Data[i];
+
+	Buf[UART1_TXPACKET_SIZE-1] = SERIAL_RX_ETX;
+
+	SetDatatoRingBuffer(Buf);
+}
 void MakeCANDataMultiBoradcast(unsigned char Priority, unsigned char PF, unsigned char PS, unsigned char DA, unsigned char SA, unsigned char *Data, unsigned int Length)
 {
 	unsigned char Buf[UART1_TXPACKET_SIZE];
@@ -412,6 +447,8 @@ void InitNewProtoclValuable() {
 	memset((unsigned char*) &TX_UPD_UPDATE_STATUS_61184_250_84, 0xFF, sizeof(TX_UPD_UPDATE_STATUS_61184_250_84));
 	memset((unsigned char*) &TX_UPD_UPDATE_COMPLETE_61184_250_85, 0xFF, sizeof(TX_UPD_UPDATE_COMPLETE_61184_250_85));
 	memset((unsigned char*) &TX_APP_N_DL_CANCEL_61184_250_70, 0xFF, sizeof(TX_APP_N_DL_CANCEL_61184_250_70));
+	memset((unsigned char*) &TX_BKCU_RTS_DOWNLOAD_MODE_65280_250_52, 0xFF, sizeof(TX_BKCU_RTS_DOWNLOAD_MODE_65280_250_52));
+	memset((unsigned char*) &TX_BKCU_SEND_PACKET_65024_250_52, 0xFF, sizeof(TX_BKCU_SEND_PACKET_65024_250_52));
 
 	memset((unsigned char*) &TX_SEND_BOOTLOADER_STATUS_61184_250_17, 0xFF, sizeof(TX_SEND_BOOTLOADER_STATUS_61184_250_17));
 	memset((unsigned char*) &RX_REQUEST_SLAVE_INFO_61184_250_33, 0xFF, sizeof(RX_REQUEST_SLAVE_INFO_61184_250_33));
@@ -432,7 +469,8 @@ void InitNewProtoclValuable() {
 	memset((unsigned char*) &RX_UPD_UPDATE_START_61184_250_69, 0xFF, sizeof(RX_UPD_UPDATE_START_61184_250_69));
 	memset((unsigned char*) &RX_UPD_UPDATE_STATUS_61184_250_84, 0xFF, sizeof(RX_UPD_UPDATE_STATUS_61184_250_84));
 	memset((unsigned char*) &RX_UPD_UPDATE_COMPLETE_61184_250_85, 0xFF, sizeof(RX_UPD_UPDATE_COMPLETE_61184_250_85));
-	memset((unsigned char*) &RX_APP_N_DL_CANCEL_61184_250_70, 0xFF, sizeof(RX_APP_N_DL_CANCEL_61184_250_70));
+	memset((unsigned char*) &RX_BKCU_CTS_DOWNLOAD_MODE_65280_250_52, 0xFF, sizeof(RX_BKCU_CTS_DOWNLOAD_MODE_65280_250_52));
+	memset((unsigned char*) &RX_BKCU_DOWNLOAD_COMPLETE_65280_250_52, 0xFF, sizeof(RX_BKCU_DOWNLOAD_COMPLETE_65280_250_52));
 
 	memset((unsigned char*) &TX_ENGINE_SHUTDOWN_MODE_SETTING_61184_121, 0xFF, sizeof(TX_ENGINE_SHUTDOWN_MODE_SETTING_61184_121));
 	memset((unsigned char*) &RX_ENGINE_SHUTDOWN_MODE_STATUS_61184_122, 0xFF, sizeof(RX_ENGINE_SHUTDOWN_MODE_STATUS_61184_122));
@@ -552,20 +590,22 @@ void CheckAutoShutDown(){
 
 void UART1_SeperateData_NEWCAN2(int Priority, int PF, int PS, int SourceAddress, unsigned char* Data)
 {
-	if(SourceAddress == SA_BKCU)
+	if(SourceAddress == SA_BKCU){
 		CheckBKCUComm = 1;
+	__android_log_print(ANDROID_LOG_INFO, "NATIVE", "PGN[0x%x] Data 0x%2x 0x%2x 0x%2x ", Priority, PF, PS, SourceAddress);
+	}
 	else if(SourceAddress == SA_RMCU)
 		CheckRMCUComm = 1;
 
-	if(SourceAddress == TargetSourceAddress)
+	if(SourceAddress == TargetSourceAddress){
 		UART1_SeperateData_Default(Priority,PF,PS,Data);
+	}
 	else if(SourceAddress == SA_MCU)
 		CheckAutoDefault(Priority,PF,PS,Data);
 
 	unsigned int PGN;
 	PGN = ((Data[6] & 0xFF) << 24) + ((Data[5] & 0xFF) << 16) + ((Data[4] & 0xFF) << 8) + (Data[3] & 0xFF);
-//	__android_log_print(ANDROID_LOG_INFO, "NATIVE", "PGN[0x%x] Data 0x%2x 0x%2x 0x%2x 0x%2x 0x%2x 0x%2x 0x%2x 0x%2x", PGN
-//			,Data[7],Data[8],Data[9],Data[10],Data[11],Data[12],Data[13],Data[14]);
+
 }
 void CheckAutoDefault(int Priority, int PF, int PS, unsigned char* Data)
 {
@@ -611,14 +651,11 @@ void UART1_SeperateData_Default(int Priority, int PF, int PS, unsigned char* Dat
 		case 239:	// 0xEF00 61184
 
 			switch (Data[7]) {	// Message Type
-
-				case 122	:
-							memcpy((unsigned char*)&RX_ENGINE_SHUTDOWN_MODE_STATUS_61184_122,&Data[7],8);
-							CheckAutoShutDown();
-							break	;
-
+				case 122:
+					memcpy((unsigned char*)&RX_ENGINE_SHUTDOWN_MODE_STATUS_61184_122,&Data[7],8);
+					CheckAutoShutDown();
+					break;
 				case 0xFE:	// 0xFE
-
 					switch (Command) {	// Command
 					case 17:	// 0x11
 						memcpy((unsigned char*) &RX_SEND_BOOTLOADER_STATUS_61184_250_17, &Data[7], 8);
@@ -668,9 +705,18 @@ void UART1_SeperateData_Default(int Priority, int PF, int PS, unsigned char* Dat
 		case 255:	// 0xFF00
 		default:
 			switch (PS) {
-
-				default:
-					break;
+			case 250:
+				if(Data[7] == 17){
+					__android_log_print(ANDROID_LOG_INFO, "NATIVE","BKCU CTS");
+					memcpy((unsigned char*) &RX_BKCU_CTS_DOWNLOAD_MODE_65280_250_52, &Data[7], 8);
+				}
+				else if(Data[7] == 19){
+					__android_log_print(ANDROID_LOG_INFO, "NATIVE","BKCU COMPLETED");
+					memcpy((unsigned char*) &RX_BKCU_DOWNLOAD_COMPLETE_65280_250_52, &Data[7], 8);
+				}
+				break;
+			default:
+				break;
 			}
 
 			break;
@@ -1661,9 +1707,14 @@ jint _UART1_TxComm(JNIEnv *env, jobject this, jint PS) {
 			case 96:	// 0x60
 				MakeCANDataSingle(0x18,0xEF,TargetSourceAddress,SA_CANUPDATE,(unsigned char*)&TX_FW_UPDATE_START_61184_250_96);
 				break;
-
-			case 121	:
+			case 121:
 				MakeCANDataSingle(0x18,0xEF,SA_MCU,SA_MONITOR,(unsigned char*)&TX_ENGINE_SHUTDOWN_MODE_SETTING_61184_121);
+				break;
+			case 52: //0x34
+				MakeCANBKCURTSData(0x18,0xFF,TargetSourceAddress,SA_CANUPDATE,(unsigned char*)&TX_BKCU_RTS_DOWNLOAD_MODE_65280_250_52);
+				break;
+			case 53: //0x35
+				MakeCANBKCUSendData(0x18,0xFE,TargetSourceAddress,SA_CANUPDATE,(unsigned char*)&TX_BKCU_SEND_PACKET_65024_250_52);
 				break;
 
 		}

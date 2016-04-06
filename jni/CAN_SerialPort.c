@@ -854,6 +854,61 @@ jint Get_CheckBKCUComm(JNIEnv * env, jobject this) {
 jint Get_CheckRMCUComm(JNIEnv * env, jobject this) {
 	return CheckRMCUComm;
 }
+//BKCU
+
+jint Get_SentPacketNumber_RX_BKCU_CTS_DOWNLOAD_MODE_65280_250_52(JNIEnv * env, jobject this) {
+	return RX_BKCU_CTS_DOWNLOAD_MODE_65280_250_52.SentPacketNumber;
+}
+jint Get_NextStartPacketNumber_RX_BKCU_CTS_DOWNLOAD_MODE_65280_250_52(JNIEnv * env, jobject this) {
+	return RX_BKCU_CTS_DOWNLOAD_MODE_65280_250_52.NextStartPacketNumber;
+}
+void	Set_SentPacketNumber_RX_BKCU_CTS_DOWNLOAD_MODE_65280_250_52(JNIEnv * env, jobject this, int Data)
+{
+	RX_BKCU_CTS_DOWNLOAD_MODE_65280_250_52.SentPacketNumber= Data;
+}
+void	Set_NextStartPacketNumber_RX_BKCU_CTS_DOWNLOAD_MODE_65280_250_52(JNIEnv * env, jobject this, int Data)
+{
+	RX_BKCU_CTS_DOWNLOAD_MODE_65280_250_52.NextStartPacketNumber= Data;
+}
+
+
+jint Get_ControlByte_RX_BKCU_DOWNLOAD_COMPLETE_65280_250_52(JNIEnv * env, jobject this) {
+	return RX_BKCU_DOWNLOAD_COMPLETE_65280_250_52.ControlByte;
+}
+jint Get_TotalReceiveByte_RX_BKCU_DOWNLOAD_COMPLETE_65280_250_52(JNIEnv * env, jobject this) {
+	return RX_BKCU_DOWNLOAD_COMPLETE_65280_250_52.TotalReceiveByte;
+}
+jint Get_TotalReceivePacket_RX_BKCU_DOWNLOAD_COMPLETE_65280_250_52(JNIEnv * env, jobject this) {
+	return RX_BKCU_DOWNLOAD_COMPLETE_65280_250_52.TotalReceivePacket;
+}
+
+void	Set_TotalSendByte_TX_BKCU_RTS_DOWNLOAD_MODE_65280_250_52(JNIEnv * env, jobject this, int Data)
+{
+	TX_BKCU_RTS_DOWNLOAD_MODE_65280_250_52.TotalSendByte= Data;
+}
+void	Set_TotalSendPacket_TX_BKCU_RTS_DOWNLOAD_MODE_65280_250_52(JNIEnv * env, jobject this, int Data)
+{
+	TX_BKCU_RTS_DOWNLOAD_MODE_65280_250_52.TotalSendPacket= Data;
+}
+
+void	Set_SequenceNumber_TX_BKCU_SEND_PACKET_65024_250_52(JNIEnv * env, jobject this, int Data)
+{
+	TX_BKCU_SEND_PACKET_65024_250_52.SequenceNumber= Data;
+}
+
+void	Set_Data_TX_BKCU_SEND_PACKET_65024_250_52(JNIEnv * env, jobject this, jbyteArray Data)
+{
+	jbyte *pArr;
+	int i;
+	int size = sizeof(TX_BKCU_SEND_PACKET_65024_250_52.Data);
+	pArr = (*env)->GetByteArrayElements(env, Data, NULL);
+	for (i = 0; i < size; i++)
+		TX_BKCU_SEND_PACKET_65024_250_52.Data[i] = pArr[i];
+	(*env)->ReleaseByteArrayElements(env, Data, pArr, 0);
+}
+
+//BKCU
+
 
 static JNINativeMethod methods[] = {
 		{ "Open_UART1", "(Ljava/lang/String;II)Ljava/io/FileDescriptor;",(void*) _Open_UART1 },
@@ -1016,7 +1071,24 @@ static JNINativeMethod methods[] = {
 		{"Get_Status_RX_UPD_UPDATE_STATUS_61184_250_84", "()I", (void*)*Get_Status_RX_UPD_UPDATE_STATUS_61184_250_84},
 		{"Get_Progress_RX_UPD_UPDATE_STATUS_61184_250_84", "()I", (void*)*Get_Progress_RX_UPD_UPDATE_STATUS_61184_250_84},
 		{"Get_nRecvUPDFormatCompleteFlag_61184_250_85", "()I", (void*)*Get_nRecvUPDFormatCompleteFlag_61184_250_85},
+		//BKCU
+		{"Get_SentPacketNumber_RX_BKCU_CTS_DOWNLOAD_MODE_65280_250_52", "()I", (void*)*Get_SentPacketNumber_RX_BKCU_CTS_DOWNLOAD_MODE_65280_250_52},
+		{"Get_NextStartPacketNumber_RX_BKCU_CTS_DOWNLOAD_MODE_65280_250_52", "()I", (void*)*Get_NextStartPacketNumber_RX_BKCU_CTS_DOWNLOAD_MODE_65280_250_52},
+		{"Set_SentPacketNumber_RX_BKCU_CTS_DOWNLOAD_MODE_65280_250_52", "(I)V", (void*)Set_SentPacketNumber_RX_BKCU_CTS_DOWNLOAD_MODE_65280_250_52},
+		{"Set_NextStartPacketNumber_RX_BKCU_CTS_DOWNLOAD_MODE_65280_250_52", "(I)V", (void*)Set_NextStartPacketNumber_RX_BKCU_CTS_DOWNLOAD_MODE_65280_250_52},
 
+		{"Get_ControlByte_RX_BKCU_DOWNLOAD_COMPLETE_65280_250_52", "()I",(void*) Get_ControlByte_RX_BKCU_DOWNLOAD_COMPLETE_65280_250_52 },
+		{"Get_TotalReceiveByte_RX_BKCU_DOWNLOAD_COMPLETE_65280_250_52", "()I", (void*)*Get_TotalReceiveByte_RX_BKCU_DOWNLOAD_COMPLETE_65280_250_52},
+		{"Get_TotalReceivePacket_RX_BKCU_DOWNLOAD_COMPLETE_65280_250_52", "()I", (void*)*Get_TotalReceivePacket_RX_BKCU_DOWNLOAD_COMPLETE_65280_250_52},
+
+
+
+		{"Set_TotalSendByte_TX_BKCU_RTS_DOWNLOAD_MODE_65280_250_52", "(I)V", (void*)Set_TotalSendByte_TX_BKCU_RTS_DOWNLOAD_MODE_65280_250_52},
+		{"Set_TotalSendPacket_TX_BKCU_RTS_DOWNLOAD_MODE_65280_250_52", "(I)V", (void*)Set_TotalSendPacket_TX_BKCU_RTS_DOWNLOAD_MODE_65280_250_52},
+
+		{"Set_SequenceNumber_TX_BKCU_SEND_PACKET_65024_250_52", "(I)V", (void*)Set_SequenceNumber_TX_BKCU_SEND_PACKET_65024_250_52},
+		{"Set_Data_TX_BKCU_SEND_PACKET_65024_250_52", "([B)V", (void*)Set_Data_TX_BKCU_SEND_PACKET_65024_250_52},
+		//BKCU
 		{ "Get_CheckBKCUComm", "()I",(void*) Get_CheckBKCUComm },
 		{ "Get_CheckRMCUComm", "()I",(void*) Get_CheckRMCUComm },
 };

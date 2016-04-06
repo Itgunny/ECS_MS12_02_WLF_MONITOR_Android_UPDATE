@@ -29,7 +29,7 @@ public class MainActivity extends Activity {
 
 
 	public static final int VERSION_HIGH		= 3;
-	public static final int VERSION_LOW			= 3;
+	public static final int VERSION_LOW			= 4;
 	public static final int VERSION_SUB_HIGH	= 0;
 	//	public static final int VERSION_SUB_LOW		= 0;
 
@@ -100,6 +100,8 @@ public class MainActivity extends Activity {
 	// 2. Language Init 삭제 기능 추가. 
 	////3.3.0 16.01.12
 	// 1. Monitor - MCU CRC Error 문제 개선 - ACK 처리 부분 주석 처리.
+	////3.4.0 16.04.08
+	// 1. BKCU CAN UPDATE
 	////////////////////////////////////////////////////////////////////
 
 	public static final int INDEX_MAIN_TOP								= 0X1100;
@@ -147,6 +149,7 @@ public class MainActivity extends Activity {
 	MCUFragment 		_MCUFragment;
 	MCUListFragment 	_MCUListFragment; // ++, --, cjg 150601
 	BKCUFragment 		_BKCUFragment;
+	BKCUListFragment	_BKCUListFragment;
 	RMCUFragment		_RMCUFragment;
 	RMCUListFragment    _RMCUListFragment;
 	EtcFragment			_EtcFragment;
@@ -320,6 +323,7 @@ public class MainActivity extends Activity {
 		_MCUFragment = new MCUFragment();
 		_MCUListFragment = new MCUListFragment();// ++, --, 150601 cjg
 		_BKCUFragment = new BKCUFragment();
+		_BKCUListFragment = new BKCUListFragment();
 		_RMCUFragment = new RMCUFragment();
 		_RMCUListFragment = new RMCUListFragment();
 		_EtcFragment = new EtcFragment();
@@ -548,9 +552,9 @@ public class MainActivity extends Activity {
 		transaction.commit();
 	}
 
-	public void showBKCU(){
+	public void showBKCUList(){
 		android.app.FragmentTransaction transaction = getFragmentManager().beginTransaction();
-		transaction.replace(R.id.FrameLayout_fragment_body, _BKCUFragment);
+		transaction.replace(R.id.FrameLayout_fragment_body, _BKCUListFragment);
 		transaction.commit();
 	}
 
@@ -834,8 +838,6 @@ public class MainActivity extends Activity {
 			public void onDismiss(DialogInterface dialog) {
 				// TODO Auto-generated method stub
 				Log.d(TAG,"onDismiss");
-
-
 			}
 		});
 

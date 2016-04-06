@@ -384,6 +384,21 @@ public class CAN1CommManager extends ICAN1CommManager.Stub{		// ttySAC1(Linux), 
 	public 	int Get_Status_RX_UPD_UPDATE_STATUS_61184_250_84(){ return service.Get_Status_RX_UPD_UPDATE_STATUS_61184_250_84();}
 	public 	int Get_Progress_RX_UPD_UPDATE_STATUS_61184_250_84(){ return service.Get_Progress_RX_UPD_UPDATE_STATUS_61184_250_84();}
 	
+	public  int Get_SentPacketNumber_RX_BKCU_CTS_DOWNLOAD_MODE_65280_250_52(){return service.Get_SentPacketNumber_RX_BKCU_CTS_DOWNLOAD_MODE_65280_250_52();}
+	public  int Get_NextStartPacketNumber_RX_BKCU_CTS_DOWNLOAD_MODE_65280_250_52(){return service.Get_NextStartPacketNumber_RX_BKCU_CTS_DOWNLOAD_MODE_65280_250_52();}
+	public  void Set_SentPacketNumber_RX_BKCU_CTS_DOWNLOAD_MODE_65280_250_52(int Data){service.Set_SentPacketNumber_RX_BKCU_CTS_DOWNLOAD_MODE_65280_250_52(Data);};
+	public  void Set_NextStartPacketNumber_RX_BKCU_CTS_DOWNLOAD_MODE_65280_250_52(int Data){service.Set_NextStartPacketNumber_RX_BKCU_CTS_DOWNLOAD_MODE_65280_250_52(Data);};
+	
+	public  int Get_ControlByte_RX_BKCU_DOWNLOAD_COMPLETE_65280_250_52(){ return service.Get_ControlByte_RX_BKCU_DOWNLOAD_COMPLETE_65280_250_52();}
+	public  int Get_TotalReceiveByte_RX_BKCU_DOWNLOAD_COMPLETE_65280_250_52(){return service.Get_TotalReceiveByte_RX_BKCU_DOWNLOAD_COMPLETE_65280_250_52();}
+	public  int Get_TotalReceivePacket_RX_BKCU_DOWNLOAD_COMPLETE_65280_250_52(){return service.Get_TotalReceivePacket_RX_BKCU_DOWNLOAD_COMPLETE_65280_250_52();}
+	
+	public void	Set_TotalSendByte_TX_BKCU_RTS_DOWNLOAD_MODE_65280_250_52(int Data){service.Set_TotalSendByte_TX_BKCU_RTS_DOWNLOAD_MODE_65280_250_52(Data);}
+	public void	Set_TotalSendPacket_TX_BKCU_RTS_DOWNLOAD_MODE_65280_250_52(int Data){service.Set_TotalSendPacket_TX_BKCU_RTS_DOWNLOAD_MODE_65280_250_52(Data);}
+	
+	public void	Set_SequenceNumber_TX_BKCU_SEND_PACKET_65024_250_52(int Data){service.Set_SequenceNumber_TX_BKCU_SEND_PACKET_65024_250_52(Data);}
+	public void	Set_Data_TX_BKCU_SEND_PACKET_65024_250_52(byte[] Data){service.Set_Data_TX_BKCU_SEND_PACKET_65024_250_52(Data);}
+	
 	public int Get_CheckBKCUComm(){ return service.Get_CheckBKCUComm();}
 	public int Get_CheckRMCUComm(){ return service.Get_CheckRMCUComm();}
 	

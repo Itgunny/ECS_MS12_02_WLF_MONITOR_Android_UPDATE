@@ -69,7 +69,7 @@ public class UpdateFileFindClass {
 	public static String MCU_FIRMWARE_EXT = ".THM";
 	
 	// ++, cjg 150601
-	public static String BKCU_FIRMWARE_PATH = "/mnt/usb/UPDATE/BKCU/Firmware";
+	public static String BKCU_FIRMWARE_PATH = "/mnt/usb/UPDATE/BKCU";
 	public static String BKCU_FIRMWARE_NAME = "BKCU_v";
 	public static String BKCU_FIRMWARE_EXT = ".THM";
 	// --, cjg 150601
